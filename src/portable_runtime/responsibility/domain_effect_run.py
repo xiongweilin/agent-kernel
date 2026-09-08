@@ -13,6 +13,10 @@ from portable_runtime.responsibility.domain_effect_authorization_use import (
     DomainEffectAuthorizationUseConsumption,
     DomainEffectAuthorizationUseContext,
 )
+from portable_runtime.responsibility.domain_effect_completion_contract import (
+    freeze_domain_effect_completion_contract,
+    require_domain_effect_completion_contract,
+)
 
 DOMAIN_EFFECT_WORKFLOW_ID = "administrative-effect-v1"
 DOMAIN_EFFECT_RUN_SCHEMA = "domain-effect-run-v1"
@@ -52,6 +56,11 @@ class DomainEffectRunPreparation:
     Run preparation is orchestration, not action authority. It deliberately
     does not consume AuthorizationUse, issue InvocationPermit, select a
     provider, create an Attempt/dispatch, or change Work to ``running``.
+
+    Before the first Run is persisted, this stage freezes the exact Work-level
+    completion contract that later objective verification and CompletionAuthority
+    must consume. Replay validates that contract; it never backfills one after
+    execution has already begun.
     """
 
     def __init__(
@@ -100,7 +109,19 @@ class DomainEffectRunPreparation:
                     "administrative effect Work already has a non-canonical Run"
                 )
             if existing is not None:
-                self._validate_existing(existing, context, logical_effect_ref)
+                current_work = self.store.get_work(context.intent.work_ref)
+                if current_work is None:
+                    raise ValueError("canonical domain effect Run lost its Work")
+                _contract, completion_digest = require_domain_effect_completion_contract(
+                    current_work,
+                    context,
+                )
+                self._validate_existing(
+                    existing,
+                    context,
+                    logical_effect_ref,
+                    completion_digest,
+                )
                 return self._result(existing, context, logical_effect_ref)
 
             at = prepared_at or utcnow()
@@ -116,14 +137,24 @@ class DomainEffectRunPreparation:
                     "domain effect authorization was consumed before canonical Run preparation"
                 )
 
+            frozen_work = freeze_domain_effect_completion_contract(context.work, context)
+            _contract, completion_digest = require_domain_effect_completion_contract(
+                frozen_work,
+                context,
+            )
             run = Run(
                 id=run_id,
                 created_at=at,
                 work_id=context.intent.work_ref,
                 status="queued",
                 workflow_id=DOMAIN_EFFECT_WORKFLOW_ID,
-                metadata=self._metadata(context, logical_effect_ref),
+                metadata=self._metadata(
+                    context,
+                    logical_effect_ref,
+                    completion_digest,
+                ),
             )
+            self.store.save_work(frozen_work)
             self.store.save_run(run)
             return self._result(run, context, logical_effect_ref)
 
@@ -131,6 +162,7 @@ class DomainEffectRunPreparation:
     def _metadata(
         context: DomainEffectAuthorizationUseContext,
         logical_effect_ref: str,
+        completion_contract_digest: str,
     ) -> dict[str, Any]:
         return {
             "schema": DOMAIN_EFFECT_RUN_SCHEMA,
@@ -138,6 +170,7 @@ class DomainEffectRunPreparation:
             "domain_effect_authorization_ref": context.grant.id,
             "domain_effect_authorization_decision_ref": context.decision.id,
             "domain_effect_intent_evidence_ref": context.evidence.id,
+            "domain_effect_completion_contract_digest": completion_contract_digest,
             "responsibility_ref": context.grant.metadata.get("responsibility_ref"),
             "proposal_ref": context.grant.metadata.get("proposal_ref"),
             "capability": context.intent.capability,
@@ -155,12 +188,17 @@ class DomainEffectRunPreparation:
         run: Run,
         context: DomainEffectAuthorizationUseContext,
         logical_effect_ref: str,
+        completion_contract_digest: str,
     ) -> None:
         if run.work_id != context.intent.work_ref:
             raise ValueError("canonical domain effect Run rebound to another Work")
         if run.workflow_id != DOMAIN_EFFECT_WORKFLOW_ID:
             raise ValueError("canonical domain effect Run workflow identity rebound")
-        expected = self._metadata(context, logical_effect_ref)
+        expected = self._metadata(
+            context,
+            logical_effect_ref,
+            completion_contract_digest,
+        )
         metadata = run.metadata if isinstance(run.metadata, dict) else {}
         for key, expected_value in expected.items():
             if metadata.get(key) != expected_value:
