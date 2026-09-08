@@ -215,10 +215,11 @@ def test_qualification_input_exposes_only_run_identity() -> None:
 def test_qualification_resolves_authoritative_refs_into_immutable_digest() -> None:
     store = InMemoryStateStore()
     work, authorization, run_result, request_result, activation = _activated(store)
+    qualification_at = NOW + timedelta(minutes=5)
 
     result = DomainEffectQualificationAssessment(store).assess(
         DomainEffectQualificationInput(run_ref=run_result.run_ref),
-        assessed_at=NOW + timedelta(minutes=5),
+        assessed_at=qualification_at,
     )
 
     event = store.get_event(result.qualification_event_ref)
@@ -246,13 +247,21 @@ def test_qualification_resolves_authoritative_refs_into_immutable_digest() -> No
     assert len(resolved) == 3
     assert len(result.qualification_digest) == 64
     assert event.type == DOMAIN_EFFECT_QUALIFICATION_EVENT
+    assert event.created_at == qualification_at
     assert event.payload["schema"] == DOMAIN_EFFECT_QUALIFICATION_SCHEMA
     assert event.payload["authority_bearing"] is False
     assert event.payload["qualification_digest"] == result.qualification_digest
     assert store.list_authorization_uses() == []
 
-    fresh = AssessmentContext.resolve(store, result.request, work=work, run=run)
+    fresh = AssessmentContext.resolve(
+        store,
+        result.request,
+        work=work,
+        run=run,
+        now=qualification_at,
+    )
     assert fresh.digest == result.qualification_digest
+    assert fresh.captured_at == qualification_at
     assert fresh.has_authorization_refs
 
 
