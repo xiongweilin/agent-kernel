@@ -30,6 +30,15 @@ semantic_path = "contracts/semantics/core/domain-responsibility-proposal-v1.md"
 public_command = "domain-responsibility-proposal-v1"
 authority_bearing = false
 
+[contracts.responsibility_work_admission]
+current = "responsibility-work-admission-v1"
+schema_path = "contracts/schemas/responsibility/responsibility-work-admission-v1.schema.json"
+receipt = "responsibility-work-admission-receipt-v1"
+receipt_schema_path = "contracts/schemas/responsibility/responsibility-work-admission-receipt-v1.schema.json"
+semantic_path = "contracts/semantics/core/responsibility-work-admission-v1.md"
+public_command = "responsibility-work-admission-v1"
+authority_bearing = false
+
 [contracts.cognitive_control]
 current = "cognitive-control-v2"
 semantic_path = "contracts/semantics/core/cognitive-control-v2.md"
