@@ -139,6 +139,7 @@ class DomainEffectInvocationSpecificationCapture:
                 run,
                 work,
                 qualification_event,
+                request,
                 readiness_event,
                 provider_event,
                 binding,
@@ -205,6 +206,7 @@ class DomainEffectInvocationSpecificationCapture:
             current_run,
             work,
             qualification_event,
+            request,
             readiness_event,
             provider_event,
             binding,
@@ -335,6 +337,7 @@ class DomainEffectInvocationSpecificationCapture:
         run: Run,
         work: Work,
         qualification_event: Event,
+        request: CapabilityRequest,
         readiness_event: Event,
         provider_event: Event,
         binding: DomainEffectProviderBindingResult,
@@ -358,7 +361,7 @@ class DomainEffectInvocationSpecificationCapture:
             "readiness_event_ref": readiness_event.id,
             "provider_binding_event_ref": provider_event.id,
             "specification_ref": specification.id,
-            "source_request_ref": specification.source_request_ref,
+            "source_request_ref": request.id,
             "provider_execution_binding_ref": binding.provider_execution_binding.id,
             "semantic_identity": specification.semantic_identity,
             "semantic_contract_digest": specification.semantic_contract_digest,
@@ -371,7 +374,7 @@ class DomainEffectInvocationSpecificationCapture:
         persisted = self._get_specification(specification.id)
         if persisted != specification:
             raise ValueError("domain effect InvocationSpecification authority is unavailable")
-        self._assert_specification_matches_binding(persisted, binding_request(binding), binding)
+        self._assert_specification_matches_binding(persisted, request, binding)
         self.provider_binding.readiness._assert_authorization_unconsumed(
             self.provider_binding.readiness._required_ref(
                 self.provider_binding.readiness._run_metadata(run),
@@ -393,17 +396,6 @@ class DomainEffectInvocationSpecificationCapture:
             lease_owner=run.lease_owner or "",
             lease_generation=run.lease_generation,
         )
-
-
-def binding_request(binding: DomainEffectProviderBindingResult) -> CapabilityRequest:
-    payload = binding.semantic_projection.payload().get("request")
-    if not isinstance(payload, dict):
-        raise ValueError("domain effect provider semantic projection lacks request payload")
-    # The semantic projection intentionally omits runtime authority fields, so
-    # it cannot reconstruct the canonical CapabilityRequest. This helper is
-    # therefore never a source of request authority; callers must replace it
-    # with the persisted qualification request before use.
-    raise ValueError("canonical request must come from qualification, not semantic projection")
 
 
 __all__ = [
