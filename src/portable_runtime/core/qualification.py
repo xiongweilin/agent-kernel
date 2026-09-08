@@ -653,6 +653,7 @@ class AssessmentContext:
         *,
         work: Any | None = None,
         run: Any | None = None,
+        now: datetime | None = None,
     ) -> AssessmentContext:
         if store is None:
             raise QualificationResolutionError("authoritative qualification store unavailable")
@@ -713,7 +714,7 @@ class AssessmentContext:
 
         refs: list[QualificationRef] = []
         proofs: dict[str, list[Any]] = {bucket: [] for bucket in refs_by_bucket}
-        now = datetime.now(UTC)
+        assessment_time = now or datetime.now(UTC)
         seen: set[tuple[str, str | None, str | None]] = set()
         for bucket, bucket_refs in refs_by_bucket.items():
             for ref in bucket_refs:
@@ -726,7 +727,7 @@ class AssessmentContext:
                     continue
                 seen.add(dedupe_key)
                 value = _lookup(store, ref)
-                _assert_ref_valid(ref, value, now=now)
+                _assert_ref_valid(ref, value, now=assessment_time)
                 # Optional type discriminator is authoritative, not advisory.
                 if ref.kind:
                     expected = ref.kind.replace("_", "").replace("-", "").lower()
@@ -828,6 +829,7 @@ class AssessmentContext:
             proofs={key: list(values) for key, values in proofs.items()},
             refs=tuple(refs),
             digest=digest,
+            captured_at=assessment_time,
         )
 
     def refresh_matches(self, store: Any, request: Any) -> bool:
