@@ -229,6 +229,7 @@ class DomainEffectProcedureReadinessAssessment:
                 work,
                 updated_run,
                 request,
+                now=at,
             )
             self._assert_authorization_unconsumed(authorization_ref)
             event = Event(
@@ -425,12 +426,15 @@ class DomainEffectProcedureReadinessAssessment:
         work: Work,
         run: Run,
         request: CapabilityRequest,
+        *,
+        now: datetime,
     ) -> tuple[str, tuple[str, ...]]:
         profile = self._effective_profile(work, run, request)
         statuses = check_pre_action_readiness(
             assessment.work,
             assessment.run,
             profile,
+            now=now,
             proofs=assessment.procedure_proofs(),
             grants=(
                 assessment.proofs.get("grants")
@@ -538,6 +542,7 @@ class DomainEffectProcedureReadinessAssessment:
             work,
             run,
             request,
+            now=event.created_at,
         )
         if current_profile != profile:
             raise ValueError("domain effect procedure readiness profile changed")
