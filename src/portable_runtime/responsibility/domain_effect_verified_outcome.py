@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from portable_runtime.core.boundary import RealityBoundary
 from portable_runtime.core.capabilities import CapabilityRequest, CapabilityResult
+from portable_runtime.core.invocation import InvocationFactory
 from portable_runtime.core.models import Action, Event, Run, Step, StepAttempt, Work
 from portable_runtime.core.router import ExactProviderRouting, RoutingPolicy
 from portable_runtime.governance.dispatch import DISPATCH_COMMIT_EVENT
@@ -305,8 +306,8 @@ class DomainEffectVerifiedOutcomeVerification:
             "expected_postcondition": dict(authorization.intent.expected_postcondition),
         }
 
-    @staticmethod
     def _verification_request(
+        self,
         effect_request: CapabilityRequest,
         graph: _EffectExecutionGraph,
         verification_scope: dict[str, Any],
@@ -318,9 +319,11 @@ class DomainEffectVerifiedOutcomeVerification:
             verifier_binding_ref,
             _canonical_digest(verification_scope),
         )
-        return CapabilityRequest(
-            id=request_id,
-            capability=DOMAIN_EFFECT_VERIFICATION_CAPABILITY,
+        return InvocationFactory(
+            store=self.store,
+            contract_registry=self.boundary.contract_registry,
+        ).build(
+            DOMAIN_EFFECT_VERIFICATION_CAPABILITY,
             work_id=graph.work.id,
             run_id=graph.run.id,
             parameters={"verification_scope": verification_scope},
@@ -329,8 +332,7 @@ class DomainEffectVerifiedOutcomeVerification:
             effect_class="read",
             idempotency_key=f"verify:{graph.action.id}:{verifier_binding_ref}",
             step_key=f"verify-domain-effect:{graph.action.id}:{verifier_binding_ref}",
-            lease_generation=graph.run.lease_generation,
-            lease_owner=graph.run.lease_owner,
+            request_id=request_id,
         )
 
     def _validate_verifier_result(
