@@ -7,7 +7,10 @@ from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from portable_runtime.core.capability_contract import CapabilityContract, CapabilityContractRegistry
+from portable_runtime.core.capability_contract import (
+    CapabilityContract,
+    CapabilityContractRegistry,
+)
 from portable_runtime.core.models import Decision, Evidence, Work, utcnow
 from portable_runtime.records.authorization import AuthorizationGrant, TypedCondition
 from portable_runtime.responsibility.models import (
@@ -36,17 +39,14 @@ def _capability_for(target_system: str, operation: str) -> str:
     target = target_system.strip().lower().replace("_", "-")
     normalized_operation = operation.strip().lower().replace("_", "-")
     if not target or not normalized_operation:
-        raise ValueError("administrative responsibility scope has an empty target or operation")
+        raise ValueError(
+            "administrative responsibility scope has an empty target or operation"
+        )
     return f"administrative.{target}.{normalized_operation}.v1"
 
 
 class DomainEffectIntentEvidenceInput(BaseModel):
-    """Non-authoritative domain evidence for one already-admitted Kernel Work item.
-
-    The domain supplies business provenance and frozen parameters only. It does
-    not supply a runtime actor, resource scope, subject-version binding, effect
-    ceiling, policy outcome, AuthorizationGrant, InvocationPermit, or provider.
-    """
+    """Non-authoritative domain evidence for one admitted Kernel Work item."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -104,22 +104,52 @@ class ReferenceAdministrativeEffectAuthorizationPolicy:
     ) -> DomainEffectAuthorizationJudgment:
         contract = context.contract
         if context.intent.capability != ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE:
-            return DomainEffectAuthorizationJudgment(False, "capability is outside the bounded administrative authorization slice")
+            return DomainEffectAuthorizationJudgment(
+                False,
+                "capability is outside the bounded administrative authorization slice",
+            )
         if context.work.kind != "administrative-effect":
-            return DomainEffectAuthorizationJudgment(False, "Work is not an administrative effect")
+            return DomainEffectAuthorizationJudgment(
+                False,
+                "Work is not an administrative effect",
+            )
         if context.responsibility.responsibility_kind != "administrative-obligation":
-            return DomainEffectAuthorizationJudgment(False, "responsibility is not an administrative obligation")
+            return DomainEffectAuthorizationJudgment(
+                False,
+                "responsibility is not an administrative obligation",
+            )
         if contract.minimum_impact_class != "write-remote":
-            return DomainEffectAuthorizationJudgment(False, "capability impact is not the approved write-remote class")
-        if contract.effect_semantics != "reconcilable" or contract.reversibility != "compensatable":
-            return DomainEffectAuthorizationJudgment(False, "capability lacks the required reconciliation/compensation semantics")
+            return DomainEffectAuthorizationJudgment(
+                False,
+                "capability impact is not the approved write-remote class",
+            )
+        if (
+            contract.effect_semantics != "reconcilable"
+            or contract.reversibility != "compensatable"
+        ):
+            return DomainEffectAuthorizationJudgment(
+                False,
+                "capability lacks required reconciliation/compensation semantics",
+            )
         if contract.authorization_requirement != "required":
-            return DomainEffectAuthorizationJudgment(False, "capability must require runtime authorization")
+            return DomainEffectAuthorizationJudgment(
+                False,
+                "capability must require runtime authorization",
+            )
         if not contract.resource_required or not contract.subject_version_required:
-            return DomainEffectAuthorizationJudgment(False, "capability must require resource and subject-version binding")
+            return DomainEffectAuthorizationJudgment(
+                False,
+                "capability must require resource and subject-version binding",
+            )
         if context.work.metadata.get("external_effect_authority") != "required-separately":
-            return DomainEffectAuthorizationJudgment(False, "Work does not preserve separate external-effect authority")
-        return DomainEffectAuthorizationJudgment(True, "bounded administrative effect is eligible for runtime authorization")
+            return DomainEffectAuthorizationJudgment(
+                False,
+                "Work does not preserve separate external-effect authority",
+            )
+        return DomainEffectAuthorizationJudgment(
+            True,
+            "bounded administrative effect is eligible for runtime authorization",
+        )
 
 
 class DomainEffectAuthorizationResult(BaseModel):
@@ -138,13 +168,7 @@ class DomainEffectAuthorizationResult(BaseModel):
 
 
 class DomainEffectAuthorizationAdmission:
-    """Admit domain business evidence into Kernel runtime authorization semantics.
-
-    This is deliberately internal. The caller cannot mint runtime authority.
-    The Kernel validates the already-admitted responsibility chain, records the
-    domain effect intent as non-authoritative Evidence, makes its own Decision,
-    and only then may mint one narrow AuthorizationGrant.
-    """
+    """Admit domain evidence into Kernel-owned runtime authorization semantics."""
 
     def __init__(
         self,
@@ -166,7 +190,11 @@ class DomainEffectAuthorizationAdmission:
     ) -> DomainEffectAuthorizationResult:
         context = self._resolve_context(intent)
         evidence = self._evidence(context)
-        decision_id = _stable_id("decision_domain_effect_authorization", evidence.id, self.policy.policy_ref)
+        decision_id = _stable_id(
+            "decision_domain_effect_authorization",
+            evidence.id,
+            self.policy.policy_ref,
+        )
 
         existing_decision = self.store.get_decision(decision_id)
         if existing_decision is not None:
@@ -174,59 +202,20 @@ class DomainEffectAuthorizationAdmission:
 
         judgment = self.policy.evaluate(context)
         decided_at = now or utcnow()
-        decision = Decision(
-            id=decision_id,
-            created_at=decided_at,
-            work_id=context.work.id,
-            decision_type="runtime-authorization-admission",
-            selected_option="authorized" if judgment.admitted else "rejected",
-            authorized_by=[f"policy:{self.policy.policy_ref}"],
-            metadata={
-                "policy_ref": self.policy.policy_ref,
-                "domain_effect_intent_evidence_ref": evidence.id,
-                "responsibility_ref": context.responsibility.id,
-                "proposal_ref": context.proposal.id,
-                "capability": context.intent.capability,
-                "actor_ref": context.actor_ref,
-                "resource_ref": context.resource_ref,
-                "subject_version_ref": context.subject_version_ref,
-                "reason": judgment.reason,
-                "authority_bearing": False,
-            },
+        decision = self._decision(
+            context,
+            evidence,
+            judgment,
+            decision_id=decision_id,
+            decided_at=decided_at,
         )
-
-        grant: AuthorizationGrant | None = None
-        if judgment.admitted:
-            grant = AuthorizationGrant(
-                id=_stable_id("authz_domain_effect", decision.id),
-                created_at=decided_at,
-                principal_ref=f"policy:{self.policy.policy_ref}",
-                grantee_ref=context.actor_ref,
-                allowed_capabilities=[context.intent.capability],
-                resource_scope=[context.resource_ref],
-                effect_ceiling=context.contract.minimum_impact_class,
-                valid_from=decided_at,
-                expires_at=decided_at + timedelta(seconds=max(1, judgment.ttl_seconds)),
-                typed_conditions=[
-                    TypedCondition(
-                        kind="domain-business-authority-evidence",
-                        params={"evidence_ref": evidence.id},
-                        satisfied=True,
-                        authority_ref=evidence.id,
-                    )
-                ],
-                revocable=True,
-                source_decision_ref=decision.id,
-                subject_version_refs=[context.subject_version_ref],
-                metadata={
-                    "policy_ref": self.policy.policy_ref,
-                    "domain_effect_intent_evidence_ref": evidence.id,
-                    "responsibility_ref": context.responsibility.id,
-                    "proposal_ref": context.proposal.id,
-                    "work_ref": context.work.id,
-                    "authority_bearing": True,
-                },
-            )
+        grant = self._grant(
+            context,
+            evidence,
+            decision,
+            judgment,
+            decided_at=decided_at,
+        )
 
         with self.store.transaction():
             self.store.save_evidence(evidence)
@@ -247,7 +236,10 @@ class DomainEffectAuthorizationAdmission:
             authority_bearing=False,
         )
 
-    def _resolve_context(self, intent: DomainEffectIntentEvidenceInput) -> DomainEffectAuthorizationContext:
+    def _resolve_context(
+        self,
+        intent: DomainEffectIntentEvidenceInput,
+    ) -> DomainEffectAuthorizationContext:
         work = self.store.get_work(intent.work_ref)
         if work is None:
             raise ValueError("domain effect intent requires an existing admitted Work")
@@ -258,83 +250,50 @@ class DomainEffectAuthorizationAdmission:
         proposal_ref = work.metadata.get("responsibility_proposal_ref")
         responsibility_version = work.metadata.get("standing_responsibility_version")
         if not isinstance(responsibility_ref, str) or not isinstance(proposal_ref, str):
-            raise ValueError("admitted Work lacks canonical responsibility/proposal refs")
+            raise ValueError(
+                "admitted Work lacks canonical responsibility/proposal refs"
+            )
 
         responsibility = self.kernel.journal.get(responsibility_ref)
         proposal = self.kernel.journal.get(proposal_ref)
         if not isinstance(responsibility, StandingResponsibility):
-            raise ValueError("Work responsibility ref does not resolve to StandingResponsibility")
+            raise ValueError(
+                "Work responsibility ref does not resolve to StandingResponsibility"
+            )
         if not isinstance(proposal, WorkProposal):
             raise ValueError("Work proposal ref does not resolve to WorkProposal")
         assessment = self.kernel.journal.get(proposal.assessment_ref)
         if not isinstance(assessment, ResponsibilityAssessment):
             raise ValueError("Work proposal assessment ref is invalid")
 
-        admissions = [
-            value
-            for value in self.kernel.journal.list("ResponsibilityAdmission", responsibility.id)
-            if isinstance(value, ResponsibilityAdmission)
-            and value.responsibility_version == proposal.responsibility_version
-        ]
-        if len(admissions) != 1:
-            raise ValueError("responsibility must have exactly one current initial admission")
-        admission = admissions[0]
-
-        if self.kernel.current_status(responsibility.id) is not ResponsibilityStatus.ACTIVE:
-            raise ValueError("domain effect authorization requires active responsibility")
-        current_version, _statement, scope = self.kernel.current_definition(responsibility.id)
-        if current_version != proposal.responsibility_version or responsibility_version != current_version:
-            raise ValueError("admitted Work is bound to a stale responsibility version")
-        if proposal.effect_class is not EffectClass.EXTERNAL_EFFECT:
-            raise ValueError("domain effect authorization requires external-effect Work")
-        if proposal.requested_capabilities != [intent.capability] or work.requested_capabilities != [intent.capability]:
-            raise ValueError("domain effect capability must exactly match admitted proposal and Work")
-        if proposal.subject_ref != intent.subject_ref:
-            raise ValueError("domain effect subject does not match admitted proposal")
-
-        required_scope = {
-            "administrative_case_id",
-            "authority_epoch",
-            "execution_grant_id",
-            "governance_basis_id",
-            "target_system",
-            "operation",
-        }
-        if not required_scope.issubset(scope):
-            raise ValueError("administrative responsibility scope is incomplete")
-        if str(scope["authority_epoch"]) != str(intent.authority_epoch):
-            raise ValueError("domain effect intent is bound to a stale administrative authority epoch")
-        if str(scope["execution_grant_id"]) != intent.domain_grant_ref:
-            raise ValueError("domain effect intent does not bind the responsibility execution grant")
-        if str(scope["governance_basis_id"]) != intent.governance_basis_ref:
-            raise ValueError("domain effect intent does not bind the responsibility governance basis")
-
-        expected_capability = _capability_for(str(scope["target_system"]), str(scope["operation"]))
-        if intent.capability != expected_capability:
-            raise ValueError("domain effect capability does not match responsibility target/operation")
-
-        assessment_basis = set(assessment.basis_refs)
-        for required in (
-            f"administrative-intent:{intent.domain_intent_ref}",
-            f"administrative-grant:{intent.domain_grant_ref}",
-            f"governance-basis:{intent.governance_basis_ref}",
-        ):
-            if required not in assessment_basis:
-                raise ValueError("domain effect intent provenance does not match responsibility assessment")
-        admission_basis = set(admission.basis_refs)
-        for required in (
-            f"administrative-grant:{intent.domain_grant_ref}",
-            f"governance-basis:{intent.governance_basis_ref}",
-            f"approval-satisfaction:{intent.approval_satisfaction_ref}",
-        ):
-            if required not in admission_basis:
-                raise ValueError("domain effect authority provenance does not match responsibility admission")
+        admission = self._current_initial_admission(
+            responsibility,
+            proposal.responsibility_version,
+        )
+        current_version, _statement, scope = self.kernel.current_definition(
+            responsibility.id
+        )
+        self._validate_current_chain(
+            context_work=work,
+            responsibility=responsibility,
+            proposal=proposal,
+            intent=intent,
+            current_version=current_version,
+            work_responsibility_version=responsibility_version,
+        )
+        self._validate_scope_and_provenance(
+            scope=scope,
+            admission=admission,
+            assessment=assessment,
+            intent=intent,
+        )
 
         contract = self.contract_registry.resolve(intent.capability)
         actor_ref = RUNTIME_ADMINISTRATIVE_ACTOR
         resource_ref = f"administrative:{scope['target_system']}:{intent.subject_ref}"
         subject_version_ref = (
-            f"administrative-authority-epoch:{scope['administrative_case_id']}:{intent.authority_epoch}"
+            "administrative-authority-epoch:"
+            f"{scope['administrative_case_id']}:{intent.authority_epoch}"
         )
         return DomainEffectAuthorizationContext(
             work=work,
@@ -349,6 +308,123 @@ class DomainEffectAuthorizationAdmission:
             subject_version_ref=subject_version_ref,
         )
 
+    def _current_initial_admission(
+        self,
+        responsibility: StandingResponsibility,
+        responsibility_version: int,
+    ) -> ResponsibilityAdmission:
+        admissions = [
+            value
+            for value in self.kernel.journal.list(
+                "ResponsibilityAdmission",
+                responsibility.id,
+            )
+            if isinstance(value, ResponsibilityAdmission)
+            and value.responsibility_version == responsibility_version
+        ]
+        if len(admissions) != 1:
+            raise ValueError(
+                "responsibility must have exactly one current initial admission"
+            )
+        return admissions[0]
+
+    def _validate_current_chain(
+        self,
+        *,
+        context_work: Work,
+        responsibility: StandingResponsibility,
+        proposal: WorkProposal,
+        intent: DomainEffectIntentEvidenceInput,
+        current_version: int,
+        work_responsibility_version: object,
+    ) -> None:
+        if self.kernel.current_status(responsibility.id) is not ResponsibilityStatus.ACTIVE:
+            raise ValueError("domain effect authorization requires active responsibility")
+        if (
+            current_version != proposal.responsibility_version
+            or work_responsibility_version != current_version
+        ):
+            raise ValueError("admitted Work is bound to a stale responsibility version")
+        if proposal.effect_class is not EffectClass.EXTERNAL_EFFECT:
+            raise ValueError("domain effect authorization requires external-effect Work")
+        if (
+            proposal.requested_capabilities != [intent.capability]
+            or context_work.requested_capabilities != [intent.capability]
+        ):
+            raise ValueError(
+                "domain effect capability must exactly match admitted proposal and Work"
+            )
+        if proposal.subject_ref != intent.subject_ref:
+            raise ValueError("domain effect subject does not match admitted proposal")
+
+    def _validate_scope_and_provenance(
+        self,
+        *,
+        scope: dict[str, str],
+        admission: ResponsibilityAdmission,
+        assessment: ResponsibilityAssessment,
+        intent: DomainEffectIntentEvidenceInput,
+    ) -> None:
+        required_scope = {
+            "administrative_case_id",
+            "authority_epoch",
+            "execution_grant_id",
+            "governance_basis_id",
+            "target_system",
+            "operation",
+        }
+        if not required_scope.issubset(scope):
+            raise ValueError("administrative responsibility scope is incomplete")
+        if scope["authority_epoch"] != str(intent.authority_epoch):
+            raise ValueError(
+                "domain effect intent is bound to a stale administrative authority epoch"
+            )
+        if scope["execution_grant_id"] != intent.domain_grant_ref:
+            raise ValueError(
+                "domain effect intent does not bind the responsibility execution grant"
+            )
+        if scope["governance_basis_id"] != intent.governance_basis_ref:
+            raise ValueError(
+                "domain effect intent does not bind the responsibility governance basis"
+            )
+
+        expected_capability = _capability_for(
+            scope["target_system"],
+            scope["operation"],
+        )
+        if intent.capability != expected_capability:
+            raise ValueError(
+                "domain effect capability does not match responsibility target/operation"
+            )
+
+        self._require_basis_refs(
+            set(assessment.basis_refs),
+            (
+                f"administrative-intent:{intent.domain_intent_ref}",
+                f"administrative-grant:{intent.domain_grant_ref}",
+                f"governance-basis:{intent.governance_basis_ref}",
+            ),
+            "domain effect intent provenance does not match responsibility assessment",
+        )
+        self._require_basis_refs(
+            set(admission.basis_refs),
+            (
+                f"administrative-grant:{intent.domain_grant_ref}",
+                f"governance-basis:{intent.governance_basis_ref}",
+                f"approval-satisfaction:{intent.approval_satisfaction_ref}",
+            ),
+            "domain effect authority provenance does not match responsibility admission",
+        )
+
+    @staticmethod
+    def _require_basis_refs(
+        actual: set[str],
+        required: tuple[str, ...],
+        message: str,
+    ) -> None:
+        if any(value not in actual for value in required):
+            raise ValueError(message)
+
     def _evidence(self, context: DomainEffectAuthorizationContext) -> Evidence:
         intent = context.intent
         evidence_id = _stable_id(
@@ -361,7 +437,11 @@ class DomainEffectAuthorizationAdmission:
             id=evidence_id,
             created_at=intent.observed_at,
             kind="domain-effect-intent",
-            subject_refs=[context.work.id, context.responsibility.id, intent.subject_ref],
+            subject_refs=[
+                context.work.id,
+                context.responsibility.id,
+                intent.subject_ref,
+            ],
             source="domain:administrative-orchestrator",
             observed_at=intent.observed_at,
             status="supported",
@@ -386,6 +466,78 @@ class DomainEffectAuthorizationAdmission:
             },
         )
 
+    def _decision(
+        self,
+        context: DomainEffectAuthorizationContext,
+        evidence: Evidence,
+        judgment: DomainEffectAuthorizationJudgment,
+        *,
+        decision_id: str,
+        decided_at: datetime,
+    ) -> Decision:
+        return Decision(
+            id=decision_id,
+            created_at=decided_at,
+            work_id=context.work.id,
+            decision_type="runtime-authorization-admission",
+            selected_option="authorized" if judgment.admitted else "rejected",
+            authorized_by=[f"policy:{self.policy.policy_ref}"],
+            metadata={
+                "policy_ref": self.policy.policy_ref,
+                "domain_effect_intent_evidence_ref": evidence.id,
+                "responsibility_ref": context.responsibility.id,
+                "proposal_ref": context.proposal.id,
+                "capability": context.intent.capability,
+                "actor_ref": context.actor_ref,
+                "resource_ref": context.resource_ref,
+                "subject_version_ref": context.subject_version_ref,
+                "reason": judgment.reason,
+                "authority_bearing": False,
+            },
+        )
+
+    def _grant(
+        self,
+        context: DomainEffectAuthorizationContext,
+        evidence: Evidence,
+        decision: Decision,
+        judgment: DomainEffectAuthorizationJudgment,
+        *,
+        decided_at: datetime,
+    ) -> AuthorizationGrant | None:
+        if not judgment.admitted:
+            return None
+        return AuthorizationGrant(
+            id=_stable_id("authz_domain_effect", decision.id),
+            created_at=decided_at,
+            principal_ref=f"policy:{self.policy.policy_ref}",
+            grantee_ref=context.actor_ref,
+            allowed_capabilities=[context.intent.capability],
+            resource_scope=[context.resource_ref],
+            effect_ceiling=context.contract.minimum_impact_class,
+            valid_from=decided_at,
+            expires_at=decided_at + timedelta(seconds=max(1, judgment.ttl_seconds)),
+            typed_conditions=[
+                TypedCondition(
+                    kind="domain-business-authority-evidence",
+                    params={"evidence_ref": evidence.id},
+                    satisfied=True,
+                    authority_ref=evidence.id,
+                )
+            ],
+            revocable=True,
+            source_decision_ref=decision.id,
+            subject_version_refs=[context.subject_version_ref],
+            metadata={
+                "policy_ref": self.policy.policy_ref,
+                "domain_effect_intent_evidence_ref": evidence.id,
+                "responsibility_ref": context.responsibility.id,
+                "proposal_ref": context.proposal.id,
+                "work_ref": context.work.id,
+                "authority_bearing": True,
+            },
+        )
+
     def _replay_result(
         self,
         context: DomainEffectAuthorizationContext,
@@ -395,23 +547,34 @@ class DomainEffectAuthorizationAdmission:
         existing_evidence = self.store.get_evidence(evidence.id)
         if existing_evidence != evidence:
             raise ValueError("domain effect intent evidence identity rebound")
-        if decision.work_id != context.work.id or decision.metadata.get("policy_ref") != self.policy.policy_ref:
+        if (
+            decision.work_id != context.work.id
+            or decision.metadata.get("policy_ref") != self.policy.policy_ref
+        ):
             raise ValueError("runtime authorization decision identity rebound")
         if decision.metadata.get("domain_effect_intent_evidence_ref") != evidence.id:
-            raise ValueError("runtime authorization decision does not bind current evidence")
+            raise ValueError(
+                "runtime authorization decision does not bind current evidence"
+            )
 
         authorization_ref = _stable_id("authz_domain_effect", decision.id)
         grant = self.store.get_authorization(authorization_ref)
         if decision.selected_option == "authorized":
             if grant is None:
-                raise ValueError("authorized runtime decision is missing its AuthorizationGrant")
+                raise ValueError(
+                    "authorized runtime decision is missing its AuthorizationGrant"
+                )
             status: Literal["authorized", "rejected"] = "authorized"
         elif decision.selected_option == "rejected":
             if grant is not None:
-                raise ValueError("rejected runtime decision unexpectedly has an AuthorizationGrant")
+                raise ValueError(
+                    "rejected runtime decision unexpectedly has an AuthorizationGrant"
+                )
             status = "rejected"
         else:
-            raise ValueError("runtime authorization decision has an invalid selected option")
+            raise ValueError(
+                "runtime authorization decision has an invalid selected option"
+            )
 
         return DomainEffectAuthorizationResult(
             status=status,
