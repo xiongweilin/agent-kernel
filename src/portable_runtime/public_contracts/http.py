@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from fastapi import APIRouter, FastAPI, HTTPException, Request
@@ -27,13 +28,23 @@ from portable_runtime.public_contracts.responsibility import (
     admit_responsibility_work,
     record_domain_responsibility_proposal,
 )
-from portable_runtime.responsibility.admission import (
-    BoundedLocalResponsibilityAdmissionPolicy,
-    ResponsibilityAdmissionPolicy,
+from portable_runtime.responsibility.admission import ResponsibilityAdmissionPolicy
+from portable_runtime.responsibility.admission_profiles import (
+    BOUNDED_LOCAL_PROFILE,
+    responsibility_admission_policy_for_profile,
+)
+
+RESPONSIBILITY_ADMISSION_PROFILE_ENV = (
+    "PORTABLE_RUNTIME_RESPONSIBILITY_ADMISSION_PROFILE"
 )
 
 
-def _problem(code: str, message: str, *, details: dict[str, Any] | None = None) -> dict[str, Any]:
+def _problem(
+    code: str,
+    message: str,
+    *,
+    details: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     return ApiProblemV1(
         schema="api-problem-v1",
         code=code,
@@ -45,21 +56,44 @@ def _problem(code: str, message: str, *, details: dict[str, Any] | None = None) 
 def _require_local_mutation(request: Request) -> None:
     client = request.client
     host = client.host if client is not None else None
-    if host not in {None, "127.0.0.1", "::1", "localhost", "testclient", "testserver"}:
+    if host not in {
+        None,
+        "127.0.0.1",
+        "::1",
+        "localhost",
+        "testclient",
+        "testserver",
+    }:
         raise HTTPException(
             status_code=403,
             detail=_problem("LocalControlRequired", "mutating contract API is local-only"),
         )
 
 
+def _select_responsibility_admission_policy(
+    *,
+    policy: ResponsibilityAdmissionPolicy | None,
+    profile: str | None,
+) -> ResponsibilityAdmissionPolicy:
+    if policy is not None and profile is not None:
+        raise ValueError(
+            "responsibility admission policy object and profile selector are mutually exclusive"
+        )
+    if policy is not None:
+        return policy
+    return responsibility_admission_policy_for_profile(profile or BOUNDED_LOCAL_PROFILE)
+
+
 def contract_router(
     runtime: Runtime,
     *,
     responsibility_admission_policy: ResponsibilityAdmissionPolicy | None = None,
+    responsibility_admission_profile: str | None = None,
 ) -> APIRouter:
     router = APIRouter()
-    admission_policy = (
-        responsibility_admission_policy or BoundedLocalResponsibilityAdmissionPolicy()
+    admission_policy = _select_responsibility_admission_policy(
+        policy=responsibility_admission_policy,
+        profile=responsibility_admission_profile,
     )
 
     @router.get("/v1/contracts")
@@ -67,7 +101,9 @@ def contract_router(
         return contract_catalog()
 
     @router.post("/v1/experience/use/evaluate", response_model=ExperienceUseAdmissionV1)
-    def evaluate_experience(value: ExperienceUseRequirementV1) -> ExperienceUseAdmissionV1:
+    def evaluate_experience(
+        value: ExperienceUseRequirementV1,
+    ) -> ExperienceUseAdmissionV1:
         try:
             return evaluate_experience_use_contract(runtime, value)
         except ValueError as exc:
@@ -76,7 +112,10 @@ def contract_router(
                 detail=_problem("InvalidContractInput", str(exc)),
             ) from exc
 
-    @router.post("/v1/experience/historical-use/commit", response_model=HistoricalExperienceUseV1)
+    @router.post(
+        "/v1/experience/historical-use/commit",
+        response_model=HistoricalExperienceUseV1,
+    )
     def commit_historical_experience(
         value: HistoricalExperienceUseCommitV1,
         request: Request,
@@ -95,13 +134,19 @@ def contract_router(
                 code = "HistoricalUseDigestMismatch"
             raise HTTPException(status_code=409, detail=_problem(code, message)) from exc
 
-    @router.get("/v1/experience/historical-use/{judgment_id}", response_model=HistoricalExperienceUseV1)
+    @router.get(
+        "/v1/experience/historical-use/{judgment_id}",
+        response_model=HistoricalExperienceUseV1,
+    )
     def historical_experience(judgment_id: str) -> HistoricalExperienceUseV1:
         value = get_historical_experience_use_contract(runtime, judgment_id)
         if value is None:
             raise HTTPException(
                 status_code=404,
-                detail=_problem("HistoricalUseNotFound", "historical experience use not found"),
+                detail=_problem(
+                    "HistoricalUseNotFound",
+                    "historical experience use not found",
+                ),
             )
         return value
 
@@ -163,8 +208,9 @@ def create_public_app(
     runtime: Runtime | None = None,
     *,
     responsibility_admission_policy: ResponsibilityAdmissionPolicy | None = None,
+    responsibility_admission_profile: str | None = None,
 ) -> FastAPI:
-    """Return the existing control-plane app with canonical contract routes attached."""
+    """Return the control-plane app with an explicitly selected admission policy."""
 
     runtime = runtime or Runtime()
     app = create_app(runtime)
@@ -172,6 +218,22 @@ def create_public_app(
         contract_router(
             runtime,
             responsibility_admission_policy=responsibility_admission_policy,
+            responsibility_admission_profile=responsibility_admission_profile,
         )
     )
     return app
+
+
+def create_configured_public_app() -> FastAPI:
+    """ASGI factory using an explicit server-side admission profile selector."""
+
+    profile = os.getenv(RESPONSIBILITY_ADMISSION_PROFILE_ENV, BOUNDED_LOCAL_PROFILE)
+    return create_public_app(responsibility_admission_profile=profile)
+
+
+__all__ = [
+    "RESPONSIBILITY_ADMISSION_PROFILE_ENV",
+    "contract_router",
+    "create_configured_public_app",
+    "create_public_app",
+]
