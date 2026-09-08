@@ -22,7 +22,14 @@ from portable_runtime.public_contracts.models import (
 from portable_runtime.public_contracts.responsibility import (
     DomainResponsibilityProposalReceiptV1,
     DomainResponsibilityProposalV1,
+    ResponsibilityWorkAdmissionReceiptV1,
+    ResponsibilityWorkAdmissionV1,
+    admit_responsibility_work,
     record_domain_responsibility_proposal,
+)
+from portable_runtime.responsibility.admission import (
+    BoundedLocalResponsibilityAdmissionPolicy,
+    ResponsibilityAdmissionPolicy,
 )
 
 
@@ -45,8 +52,15 @@ def _require_local_mutation(request: Request) -> None:
         )
 
 
-def contract_router(runtime: Runtime) -> APIRouter:
+def contract_router(
+    runtime: Runtime,
+    *,
+    responsibility_admission_policy: ResponsibilityAdmissionPolicy | None = None,
+) -> APIRouter:
     router = APIRouter()
+    admission_policy = (
+        responsibility_admission_policy or BoundedLocalResponsibilityAdmissionPolicy()
+    )
 
     @router.get("/v1/contracts")
     def get_contracts() -> dict[str, Any]:
@@ -111,13 +125,53 @@ def contract_router(runtime: Runtime) -> APIRouter:
                 code = "DomainResponsibilityProposalStale"
             raise HTTPException(status_code=409, detail=_problem(code, message)) from exc
 
+    @router.post(
+        "/v1/responsibilities/work-admissions",
+        response_model=ResponsibilityWorkAdmissionReceiptV1,
+    )
+    def responsibility_work_admission(
+        value: ResponsibilityWorkAdmissionV1,
+        request: Request,
+    ) -> ResponsibilityWorkAdmissionReceiptV1:
+        _require_local_mutation(request)
+        try:
+            return admit_responsibility_work(
+                runtime,
+                value,
+                policy=admission_policy,
+            )
+        except ValueError as exc:
+            message = str(exc)
+            if "unknown WorkProposal" in message:
+                raise HTTPException(
+                    status_code=404,
+                    detail=_problem("ResponsibilityProposalNotFound", message),
+                ) from exc
+            code = "ResponsibilityWorkAdmissionRejected"
+            if "policy mismatch" in message or "different priority policy" in message:
+                code = "ResponsibilityAdmissionPolicyMismatch"
+            elif "stale" in message or "fresh" in message:
+                code = "ResponsibilityProposalStale"
+            elif "rebound" in message:
+                code = "ResponsibilityAdmissionIdentityRebound"
+            raise HTTPException(status_code=409, detail=_problem(code, message)) from exc
+
     return router
 
 
-def create_public_app(runtime: Runtime | None = None) -> FastAPI:
+def create_public_app(
+    runtime: Runtime | None = None,
+    *,
+    responsibility_admission_policy: ResponsibilityAdmissionPolicy | None = None,
+) -> FastAPI:
     """Return the existing control-plane app with canonical contract routes attached."""
 
     runtime = runtime or Runtime()
     app = create_app(runtime)
-    app.include_router(contract_router(runtime))
+    app.include_router(
+        contract_router(
+            runtime,
+            responsibility_admission_policy=responsibility_admission_policy,
+        )
+    )
     return app
