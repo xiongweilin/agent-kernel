@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "portable-runtime://contracts/responsibility/responsibility-work-admission-receipt-v1",
+  "title": "ResponsibilityWorkAdmissionReceiptV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "status",
+    "proposal_ref",
+    "policy_ref",
+    "priority_judgment_ref",
+    "resource_pool_ref",
+    "portfolio_admission_ref",
+    "reservation_ref",
+    "commitment_ref",
+    "work_ref",
+    "processed_at",
+    "authority_bearing"
+  ],
+  "properties": {
+    "schema": {"const": "responsibility-work-admission-receipt-v1"},
+    "status": {
+      "enum": ["work-materialized", "priority-rejected", "portfolio-rejected"]
+    },
+    "proposal_ref": {"type": "string", "minLength": 1},
+    "policy_ref": {"type": "string", "minLength": 1},
+    "priority_judgment_ref": {"type": "string", "minLength": 1},
+    "resource_pool_ref": {"type": ["string", "null"]},
+    "portfolio_admission_ref": {"type": ["string", "null"]},
+    "reservation_ref": {"type": ["string", "null"]},
+    "commitment_ref": {"type": ["string", "null"]},
+    "work_ref": {"type": ["string", "null"]},
+    "processed_at": {"type": "string", "format": "date-time"},
+    "authority_bearing": {"const": false}
+  }
+}

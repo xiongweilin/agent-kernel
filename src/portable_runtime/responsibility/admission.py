@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Protocol
+from typing import Literal, Protocol
 
 from portable_runtime.core.models import Work
 from portable_runtime.responsibility.models import (
@@ -131,9 +131,16 @@ class BoundedLocalResponsibilityAdmissionPolicy:
         )
 
 
+ResponsibilityWorkAdmissionStatus = Literal[
+    "work-materialized",
+    "priority-rejected",
+    "portfolio-rejected",
+]
+
+
 @dataclass(frozen=True, slots=True)
 class ResponsibilityWorkAdmissionResult:
-    status: str
+    status: ResponsibilityWorkAdmissionStatus
     proposal_ref: str
     policy_ref: str
     priority_judgment_ref: str
@@ -361,5 +368,6 @@ __all__ = [
     "PriorityPolicyDecision",
     "ResponsibilityAdmissionPolicy",
     "ResponsibilityWorkAdmissionResult",
+    "ResponsibilityWorkAdmissionStatus",
     "admit_responsibility_proposal",
 ]

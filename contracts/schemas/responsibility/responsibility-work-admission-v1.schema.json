@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "portable-runtime://contracts/responsibility/responsibility-work-admission-v1",
+  "title": "ResponsibilityWorkAdmissionV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "proposal_ref", "expected_policy_ref"],
+  "properties": {
+    "schema": {"const": "responsibility-work-admission-v1"},
+    "proposal_ref": {"type": "string", "minLength": 1},
+    "expected_policy_ref": {"type": "string", "minLength": 1}
+  }
+}

@@ -7,6 +7,10 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from portable_runtime.core.models import utcnow
 from portable_runtime.core.runtime import Runtime
+from portable_runtime.responsibility.admission import (
+    ResponsibilityAdmissionPolicy,
+    admit_responsibility_proposal,
+)
 from portable_runtime.responsibility.domain import record_domain_assessment
 from portable_runtime.responsibility.models import (
     ResponsibilityAdmission,
@@ -61,6 +65,53 @@ class DomainResponsibilityProposalReceiptV1(BaseModel):
     authority_bearing: Literal[False] = False
 
 
+class ResponsibilityWorkAdmissionV1(BaseModel):
+    """Ask Kernel to admit one already-recorded WorkProposal.
+
+    The caller supplies no priority decision, capacity threshold, reservation,
+    commitment, Work object, or execution authority. Those remain Kernel-owned.
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+        serialize_by_alias=True,
+    )
+
+    schema_: Literal["responsibility-work-admission-v1"] = Field(
+        "responsibility-work-admission-v1",
+        alias="schema",
+    )
+    proposal_ref: str
+    expected_policy_ref: str
+
+
+class ResponsibilityWorkAdmissionReceiptV1(BaseModel):
+    """Non-authoritative receipt for Kernel-owned Work admission."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+        serialize_by_alias=True,
+    )
+
+    schema_: Literal["responsibility-work-admission-receipt-v1"] = Field(
+        "responsibility-work-admission-receipt-v1",
+        alias="schema",
+    )
+    status: Literal["work-materialized", "priority-rejected", "portfolio-rejected"]
+    proposal_ref: str
+    policy_ref: str
+    priority_judgment_ref: str
+    resource_pool_ref: str | None = None
+    portfolio_admission_ref: str | None = None
+    reservation_ref: str | None = None
+    commitment_ref: str | None = None
+    work_ref: str | None = None
+    processed_at: datetime = Field(default_factory=utcnow)
+    authority_bearing: Literal[False] = False
+
+
 def record_domain_responsibility_proposal(
     runtime: Runtime,
     command: DomainResponsibilityProposalV1,
@@ -103,8 +154,47 @@ def record_domain_responsibility_proposal(
     )
 
 
+def admit_responsibility_work(
+    runtime: Runtime,
+    command: ResponsibilityWorkAdmissionV1,
+    *,
+    policy: ResponsibilityAdmissionPolicy,
+    now: datetime | None = None,
+) -> ResponsibilityWorkAdmissionReceiptV1:
+    """Run Kernel-owned proposal admission without minting execution authority."""
+
+    if command.expected_policy_ref != policy.policy_ref:
+        raise ValueError(
+            "responsibility admission policy mismatch: "
+            f"expected {command.expected_policy_ref!r}, active {policy.policy_ref!r}"
+        )
+    now = now or utcnow()
+    result = admit_responsibility_proposal(
+        ResponsibilityKernel(runtime.store),
+        command.proposal_ref,
+        policy=policy,
+        now=now,
+    )
+    return ResponsibilityWorkAdmissionReceiptV1(
+        schema="responsibility-work-admission-receipt-v1",
+        status=result.status,
+        proposal_ref=result.proposal_ref,
+        policy_ref=result.policy_ref,
+        priority_judgment_ref=result.priority_judgment_ref,
+        resource_pool_ref=result.resource_pool_ref,
+        portfolio_admission_ref=result.portfolio_admission_ref,
+        reservation_ref=result.reservation_ref,
+        commitment_ref=result.commitment_ref,
+        work_ref=result.work_ref,
+        processed_at=now,
+    )
+
+
 __all__ = [
     "DomainResponsibilityProposalReceiptV1",
     "DomainResponsibilityProposalV1",
+    "ResponsibilityWorkAdmissionReceiptV1",
+    "ResponsibilityWorkAdmissionV1",
+    "admit_responsibility_work",
     "record_domain_responsibility_proposal",
 ]
