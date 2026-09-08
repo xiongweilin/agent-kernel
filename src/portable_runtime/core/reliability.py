@@ -137,7 +137,7 @@ class ReliabilityRiskEvaluator:
         elif side_effect and observation.requested_exposure < 1:
             reasons.append("exposure_positive")
 
-        enhanced = procedure_profile == "enhanced" or irreversible
+        enhanced = side_effect and (procedure_profile == "enhanced" or irreversible)
         if not reasons and enhanced:
             if not isinstance(timing, dict):
                 reasons.append("recovery_timing_required")
@@ -230,6 +230,8 @@ class DefaultLocalReliabilityPolicy:
         observation: ReliabilityObservation,
         risk: ReliabilityRiskAssessment,
         limits: ReliabilityLimits | None = None,
+        *,
+        side_effect: bool = True,
     ) -> ReliabilityDisposition:
         limits = limits or self.limits
         reason_text = "allowed"
@@ -237,15 +239,15 @@ class DefaultLocalReliabilityPolicy:
         if reason is None:
             if observation.action_rate >= limits.max_action_rate:
                 reason = "max_action_rate"
-            elif observation.requested_blast_radius > limits.blast_radius:
+            elif side_effect and observation.requested_blast_radius > limits.blast_radius:
                 reason = "blast_radius_limit"
-            elif observation.active_side_effects >= limits.max_parallel_side_effects:
+            elif side_effect and observation.active_side_effects >= limits.max_parallel_side_effects:
                 reason = "parallel_side_effect_limit"
-            elif observation.side_effect_count >= limits.side_effect_budget:
+            elif side_effect and observation.side_effect_count >= limits.side_effect_budget:
                 reason = "side_effect_budget"
-            elif observation.exposure_used + observation.requested_exposure > limits.exposure_budget:
+            elif side_effect and observation.exposure_used + observation.requested_exposure > limits.exposure_budget:
                 reason = "exposure_budget"
-            elif observation.cooldown_remaining > 0:
+            elif side_effect and observation.cooldown_remaining > 0:
                 reason = "cooldown"
         if reason == "max_action_rate":
             reason_text = "max_action_rate exceeded"
@@ -294,7 +296,12 @@ class DefaultLocalReliabilityPolicy:
             procedure_profile=procedure_profile,
             timing=timing,
         )
-        return risk, self.decide(observation, risk, self.limits)
+        return risk, self.decide(
+            observation,
+            risk,
+            self.limits,
+            side_effect=side_effect,
+        )
 
 
 @dataclass(init=False)
@@ -417,7 +424,12 @@ class ReliabilityControls:
             procedure_profile=procedure_profile,
             timing=timing,
         )
-        disposition = self.policy.decide(observation, risk, self.policy.limits)
+        disposition = self.policy.decide(
+            observation,
+            risk,
+            self.policy.limits,
+            side_effect=side_effect,
+        )
         self._last_risk_assessment = risk
         self._last_disposition = disposition
         if disposition.action == "allow":
@@ -493,4 +505,3 @@ class ReliabilityControls:
         self, t_detect: float, t_judge: float, t_correct: float, t_irreversible: float
     ) -> bool:
         return (t_detect + t_judge + t_correct) < t_irreversible
-
