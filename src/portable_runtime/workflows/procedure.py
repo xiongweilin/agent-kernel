@@ -169,7 +169,12 @@ def _has_purpose_typed(work_fields: dict[str, Any], combined_meta: dict[str, Any
     return False
 
 
-def _has_authorization_typed(combined_meta: dict[str, Any], proofs: dict[str, Any]) -> tuple[bool, str]:
+def _has_authorization_typed(
+    combined_meta: dict[str, Any],
+    proofs: dict[str, Any],
+    *,
+    now: datetime | None = None,
+) -> tuple[bool, str]:
     # Hint only: metadata authorized / grant_id etc is hint, not proof
     grants = proofs.get("grants") or proofs.get("authorization_grants") or proofs.get("authorizations")
     if grants is None:
@@ -187,7 +192,7 @@ def _has_authorization_typed(combined_meta: dict[str, Any], proofs: dict[str, An
     hint_matched = False
     for g in grants:
         try:
-            if is_grant_valid(g):  # type: ignore[arg-type]
+            if is_grant_valid(g, now=now):  # type: ignore[arg-type]
                 valid_any = True
                 if hint_id and getattr(g, "id", None) == hint_id:
                     hint_matched = True
@@ -402,7 +407,7 @@ def _has_reauthorization_typed(proofs: dict[str, Any]) -> tuple[bool, str]:
     pools = proofs.get("reauthorization_proofs") or proofs.get("reauthorization_grants") or proofs.get("reapproved_grants")
     if isinstance(pools, list) and pools:
         return True, "reauthorization typed proof present"
-    return False, "reauthorization requires typed Reauthorization proof (metadata boolean insufficient)" 
+    return False, "reauthorization requires typed Reauthorization proof (metadata boolean insufficient)"
 
 
 def _check_gate(
@@ -410,6 +415,8 @@ def _check_gate(
     work_fields: dict[str, Any],
     run_fields: dict[str, Any],
     proofs: dict[str, Any],
+    *,
+    now: datetime | None = None,
 ) -> tuple[ObligationStatusLiteral, str]:
     """Typed-record backed gate evaluation. Metadata is hint only."""
     work_meta = work_fields.get("metadata") if isinstance(work_fields.get("metadata"), dict) else {}
@@ -447,7 +454,7 @@ def _check_gate(
         ok, msg = _has_evidence_typed(combined_meta, work_fields, proofs)
         return ("satisfied", msg) if ok else ("open", msg)
     if gate == "authorization":
-        ok, msg = _has_authorization_typed(combined_meta, proofs)
+        ok, msg = _has_authorization_typed(combined_meta, proofs, now=now)
         return ("satisfied", msg) if ok else ("open", msg)
     if gate == "verification":
         ok, msg = _has_verification_typed(proofs, combined_meta)
@@ -576,7 +583,7 @@ def check_procedure(
         if combined.get(f"{gate}_blocked"):
             out.append(ObligationStatus(obligation=gate, status="blocked", reason=f"{gate} blocked by policy", checked_at=ts))
             continue
-        status, reason = _check_gate(gate, wf, rf, merged_proofs)
+        status, reason = _check_gate(gate, wf, rf, merged_proofs, now=ts)
         out.append(ObligationStatus(obligation=gate, status=status, reason=reason, checked_at=ts))
 
     return ProcedureAssessment(out)
