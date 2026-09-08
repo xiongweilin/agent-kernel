@@ -24,6 +24,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from portable_runtime.core.policies import Obligation
+from portable_runtime.workflows.procedure_phase import ProcedureAssessment
 
 ObligationStatusLiteral = Literal[
     "required",
@@ -578,7 +579,7 @@ def check_procedure(
         status, reason = _check_gate(gate, wf, rf, merged_proofs)
         out.append(ObligationStatus(obligation=gate, status=status, reason=reason, checked_at=ts))
 
-    return out
+    return ProcedureAssessment(out)
 
 
 def is_procedure_blocked(statuses: list[ObligationStatus]) -> bool:
