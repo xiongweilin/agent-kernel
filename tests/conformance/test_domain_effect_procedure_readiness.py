@@ -62,7 +62,7 @@ def test_readiness_closes_only_standard_pre_action_obligations() -> None:
     assert event.payload["authority_bearing"] is False
     assert event.payload["readiness_digest"] == result.readiness_digest
 
-    assert run.metadata["purpose"] == work.description
+    assert run.metadata["purpose"] == (work.description or work.title)
     assert run.metadata["execution_boundary"] == "provider"
     assert run.metadata["candidate"] == [run.metadata["logical_effect_ref"]]
     assert run.metadata["procedure_profile"] == "standard"
@@ -122,14 +122,14 @@ def test_readiness_replay_revalidates_the_authoritative_snapshot() -> None:
     assert len(events) == 1
     assert events[0].created_at == NOW + timedelta(minutes=6)
 
-    recovery_ref = next(
-        ref.ref_id for ref in first.readiness_refs if ref.kind == "recovery"
-    )
-    recovery = store.get_record(recovery_ref)
-    assert recovery is not None
-    changed_metadata = dict(recovery.metadata)
-    changed_metadata["required_effect_semantics"] = "pure"
-    store.save_record(recovery.model_copy(update={"metadata": changed_metadata}))
+    run = store.get_run(run_result.run_ref)
+    assert run is not None
+    metadata = dict(run.metadata)
+    procedure_refs = list(metadata["procedure_proof_refs"])
+    metadata["procedure_proof_refs"] = [
+        ref for ref in procedure_refs if ref.get("kind") != "recovery"
+    ]
+    store.save_run(run.model_copy(update={"metadata": metadata}))
 
     with pytest.raises(ValueError, match="snapshot is stale"):
         assessment.assess(command, assessed_at=NOW + timedelta(minutes=8))
