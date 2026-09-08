@@ -25,9 +25,16 @@ class DomainResponsibilityProposalV1(BaseModel):
     provider execution, or Outcome.
     """
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+        serialize_by_alias=True,
+    )
 
-    schema: Literal["domain-responsibility-proposal-v1"] = "domain-responsibility-proposal-v1"
+    schema_: Literal["domain-responsibility-proposal-v1"] = Field(
+        "domain-responsibility-proposal-v1",
+        alias="schema",
+    )
     responsibility: StandingResponsibility
     admission: ResponsibilityAdmission
     assessment: ResponsibilityAssessment
@@ -35,10 +42,15 @@ class DomainResponsibilityProposalV1(BaseModel):
 
 
 class DomainResponsibilityProposalReceiptV1(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+        serialize_by_alias=True,
+    )
 
-    schema: Literal["domain-responsibility-proposal-receipt-v1"] = (
-        "domain-responsibility-proposal-receipt-v1"
+    schema_: Literal["domain-responsibility-proposal-receipt-v1"] = Field(
+        "domain-responsibility-proposal-receipt-v1",
+        alias="schema",
     )
     status: Literal["proposal-recorded"] = "proposal-recorded"
     responsibility_ref: str
