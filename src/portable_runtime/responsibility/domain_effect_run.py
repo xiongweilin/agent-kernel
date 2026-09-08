@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from portable_runtime.core.capability_contract import CapabilityContractRegistry
 from portable_runtime.core.models import Run, utcnow
+from portable_runtime.records.authorization import is_grant_valid
 from portable_runtime.responsibility.domain_effect_authorization_use import (
     DomainEffectAuthorizationUseConsumption,
     DomainEffectAuthorizationUseContext,
@@ -102,6 +103,11 @@ class DomainEffectRunPreparation:
                 self._validate_existing(existing, context, logical_effect_ref)
                 return self._result(existing, context, logical_effect_ref)
 
+            at = prepared_at or utcnow()
+            if not is_grant_valid(context.grant, now=at):
+                raise ValueError(
+                    "domain effect runtime grant is not current for Run preparation"
+                )
             if any(
                 getattr(use, "authorization_ref", None) == context.grant.id
                 for use in self.store.list_authorization_uses()
@@ -112,7 +118,7 @@ class DomainEffectRunPreparation:
 
             run = Run(
                 id=run_id,
-                created_at=prepared_at or utcnow(),
+                created_at=at,
                 work_id=context.intent.work_ref,
                 status="queued",
                 workflow_id=DOMAIN_EFFECT_WORKFLOW_ID,
