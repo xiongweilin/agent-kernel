@@ -12,7 +12,7 @@ This document records research lineage, formal-verification evidence and cross-r
 Current ownership is:
 
 ```text
-ratio/责任拓扑
+ratio/元模型
     owns the upstream Framework V1 semantic/design definitions,
     responsibility cuts and handoff rules
 
@@ -33,7 +33,7 @@ upstream Framework semantic/design source
 != formal-specialization/proof owner
 ```
 
-`ratio/责任拓扑` may motivate or define an upstream Framework distinction, but it is not a runtime dependency. A Framework change does not change portable-runtime behavior unless the relevant semantics are deliberately adopted and versioned in `portable-runtime/contracts/`.
+`ratio/元模型` may motivate or define an upstream Framework distinction, but it is not a runtime dependency. A Framework change does not change portable-runtime behavior unless the relevant semantics are deliberately adopted and versioned in `portable-runtime/contracts/`.
 
 `responsibility_topology` may prove or check a formal specialization, but that proof surface does not become portable-runtime semantic authority.
 
@@ -44,7 +44,7 @@ No external repository is a normative dependency for determining portable-runtim
 ### Framework -> product protocol / runtime
 
 ```text
-ratio/责任拓扑 Framework definitions and responsibility cuts
+ratio/元模型 Framework definitions and responsibility cuts
         |
         | reference / boundary-reference / deliberate product adoption
         v
@@ -68,7 +68,7 @@ upstream Framework change
 ### Framework -> formal specialization
 
 ```text
-ratio/责任拓扑 Framework definitions
+ratio/元模型 Framework definitions
         |
         | reference / boundary-reference / specialize
         v
