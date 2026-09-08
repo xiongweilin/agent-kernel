@@ -50,7 +50,8 @@ from portable_runtime.responsibility.models import (
 from portable_runtime.responsibility.service import ResponsibilityKernel
 from portable_runtime.stores.memory import InMemoryStateStore
 
-NOW = datetime(2026, 9, 8, 17, 0, tzinfo=UTC)
+# Keep one stable clock per test process while avoiding a wall-clock-expiring fixture.
+NOW = datetime.now(UTC).replace(microsecond=0)
 RESP_REF = "resp-admin-qualification-1"
 ASSESSMENT_REF = "assessment-admin-qualification-1"
 PROPOSAL_REF = "proposal-admin-qualification-1"
