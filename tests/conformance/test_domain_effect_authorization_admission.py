@@ -208,7 +208,10 @@ def test_domain_evidence_mints_only_kernel_derived_runtime_grant() -> None:
     decision = store.get_decision(result.decision_ref)
     grant = store.get_authorization(result.authorization_ref)
     assert evidence is not None and decision is not None and grant is not None
+    assert evidence.subject_refs == [work.id]
     assert evidence.metadata["authority_bearing"] is False
+    assert evidence.metadata["responsibility_ref"] == RESP_REF
+    assert evidence.metadata["subject_ref"] == SUBJECT_REF
     assert evidence.metadata["parameters"]["department_ref"] == "department:engineering"
     assert decision.selected_option == "authorized"
     assert grant.source_decision_ref == decision.id
@@ -226,10 +229,7 @@ def test_domain_evidence_mints_only_kernel_derived_runtime_grant() -> None:
 def test_runtime_grant_covers_only_exact_kernel_binding() -> None:
     store = InMemoryStateStore()
     work = _admitted_work(store)
-    result = DomainEffectAuthorizationAdmission(store).admit(
-        _intent(work.id),
-        now=NOW + timedelta(minutes=1),
-    )
+    result = DomainEffectAuthorizationAdmission(store).admit(_intent(work.id))
     boundary = RealityBoundary(store=store, contract_registry=CapabilityContractRegistry())
     request = CapabilityRequest(
         id="request-admin-1",
