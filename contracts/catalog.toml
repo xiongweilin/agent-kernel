@@ -21,6 +21,15 @@ semantic_path = "contracts/semantics/core/persistent-responsibility-v1.md"
 public_read = true
 public_write = "authority-gated"
 
+[contracts.domain_responsibility_proposal]
+current = "domain-responsibility-proposal-v1"
+schema_path = "contracts/schemas/responsibility/domain-responsibility-proposal-v1.schema.json"
+receipt = "domain-responsibility-proposal-receipt-v1"
+receipt_schema_path = "contracts/schemas/responsibility/domain-responsibility-proposal-receipt-v1.schema.json"
+semantic_path = "contracts/semantics/core/domain-responsibility-proposal-v1.md"
+public_command = "domain-responsibility-proposal-v1"
+authority_bearing = false
+
 [contracts.cognitive_control]
 current = "cognitive-control-v2"
 semantic_path = "contracts/semantics/core/cognitive-control-v2.md"

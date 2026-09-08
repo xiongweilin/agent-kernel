@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "portable-runtime://contracts/responsibility/domain-responsibility-proposal-v1",
+  "title": "DomainResponsibilityProposalV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "responsibility", "admission", "assessment", "proposal"],
+  "properties": {
+    "schema": {"const": "domain-responsibility-proposal-v1"},
+    "responsibility": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "object_type", "created_at", "responsibility_kind", "statement", "scope", "schema_version"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "object_type": {"const": "StandingResponsibility"},
+        "created_at": {"type": "string", "format": "date-time"},
+        "responsibility_kind": {"type": "string", "minLength": 1},
+        "statement": {"type": "string", "minLength": 1},
+        "scope": {"type": "object", "additionalProperties": {"type": "string"}},
+        "schema_version": {"const": "persistent-responsibility-v1"}
+      }
+    },
+    "admission": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "object_type", "created_at", "responsibility_ref", "responsibility_version", "principal_ref", "basis_refs", "admitted_at"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "object_type": {"const": "ResponsibilityAdmission"},
+        "created_at": {"type": "string", "format": "date-time"},
+        "responsibility_ref": {"type": "string", "minLength": 1},
+        "responsibility_version": {"const": 1},
+        "principal_ref": {"type": "string", "minLength": 1},
+        "basis_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "admitted_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "assessment": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "object_type", "created_at", "responsibility_ref", "responsibility_version", "subject_ref", "assessment_kind", "basis_refs", "assessed_at", "rationale"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "object_type": {"const": "ResponsibilityAssessment"},
+        "created_at": {"type": "string", "format": "date-time"},
+        "responsibility_ref": {"type": "string", "minLength": 1},
+        "responsibility_version": {"const": 1},
+        "subject_ref": {"type": "string", "minLength": 1},
+        "assessment_kind": {"type": "string", "minLength": 1},
+        "basis_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "assessed_at": {"type": "string", "format": "date-time"},
+        "fresh_until": {"type": ["string", "null"], "format": "date-time"},
+        "rationale": {"type": "string"}
+      }
+    },
+    "proposal": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "object_type", "created_at", "responsibility_ref", "responsibility_version", "assessment_ref", "subject_ref", "work_kind", "title", "requested_resources", "requested_capabilities", "effect_class"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "object_type": {"const": "WorkProposal"},
+        "created_at": {"type": "string", "format": "date-time"},
+        "responsibility_ref": {"type": "string", "minLength": 1},
+        "responsibility_version": {"const": 1},
+        "assessment_ref": {"type": "string", "minLength": 1},
+        "subject_ref": {"type": "string", "minLength": 1},
+        "work_kind": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "requested_resources": {"type": "object"},
+        "requested_capabilities": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "effect_class": {"enum": ["read-only", "internal-reversible", "external-effect"]}
+      }
+    }
+  }
+}
