@@ -348,7 +348,7 @@ class GovernanceDispatchCommitter:
 
         try:
             with _dispatch_linearized_write(self.store):
-                current_snapshot_digest = permit.governance_snapshot_digest
+                current_snapshot_digest: str | None = permit.governance_snapshot_digest
                 if permit.governance_applicable:
                     current = GovernanceUseAdmission(self.store).evaluate(request, resolver)
                     current_snapshot_digest = current.snapshot_digest
