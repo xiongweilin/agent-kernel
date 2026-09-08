@@ -437,11 +437,10 @@ class DomainEffectAuthorizationAdmission:
             id=evidence_id,
             created_at=intent.observed_at,
             kind="domain-effect-intent",
-            subject_refs=[
-                context.work.id,
-                context.responsibility.id,
-                intent.subject_ref,
-            ],
+            # Responsibility and business subject identities live in separate
+            # semantic planes. Keep them as provenance metadata rather than
+            # creating invalid core state-graph subject edges.
+            subject_refs=[context.work.id],
             source="domain:administrative-orchestrator",
             observed_at=intent.observed_at,
             status="supported",
