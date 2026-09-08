@@ -6,6 +6,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from portable_runtime.core.capabilities import CapabilityRequest
 from portable_runtime.core.capability_contract import (
     CapabilityContractRegistry,
     compute_effective_procedure_profile,
@@ -75,7 +76,7 @@ class DomainEffectProcedureReadinessAssessment:
     """Close the standard pre-action procedure without inventing post-action truth.
 
     The stage derives deterministic typed procedure substrate from the already
-    admitted administrative lineage.  It creates no VerificationResult,
+    admitted administrative lineage. It creates no VerificationResult,
     result-confirmation fact, AuthorizationUse, provider selection,
     InvocationPermit, Attempt, dispatch, Action or Outcome.
     """
@@ -116,8 +117,15 @@ class DomainEffectProcedureReadinessAssessment:
         )
         existing = self.store.get_event(event_id)
         if existing is not None:
-            return self._validate_event(existing, run, work, qualification_event)
+            return self._validate_event(
+                existing,
+                run,
+                work,
+                qualification_event,
+                request,
+            )
 
+        at = assessed_at or utcnow()
         failure_stop = BaseRecord(
             id=_stable_id(
                 "record_domain_effect_failure_stop",
@@ -125,8 +133,9 @@ class DomainEffectProcedureReadinessAssessment:
                 run.lease_generation,
                 qualification_event.id,
             ),
+            created_at=at,
             record_type="Policy",
-            lifecycle_status="current",
+            lifecycle_status="candidate",
             metadata={
                 "qualification_kind": "failure-stop",
                 "condition": "provider failure, timeout, or ambiguous completion",
@@ -143,6 +152,7 @@ class DomainEffectProcedureReadinessAssessment:
                 run.lease_generation,
                 qualification_event.id,
             ),
+            created_at=at,
             record_type="EvidenceArtifact",
             lifecycle_status="current",
             metadata={
@@ -158,6 +168,7 @@ class DomainEffectProcedureReadinessAssessment:
         )
         evidence_relation = RecordRelation(
             id=_stable_id("relation_domain_effect_execution_evidence", work.id, evidence.id),
+            created_at=at,
             relation_type="records",
             subject_ref=work.id,
             object_ref=evidence.id,
@@ -169,8 +180,9 @@ class DomainEffectProcedureReadinessAssessment:
                 run.lease_generation,
                 qualification_event.id,
             ),
-            record_type="Procedure",
-            lifecycle_status="current",
+            created_at=at,
+            record_type="Policy",
+            lifecycle_status="candidate",
             metadata={
                 "qualification_kind": "recovery",
                 "procedure": (
@@ -197,7 +209,6 @@ class DomainEffectProcedureReadinessAssessment:
             evidence_relation,
             context.intent.expected_postcondition,
         )
-        at = assessed_at or utcnow()
 
         with self.store.transaction():
             self._recheck_fencing(run)
@@ -213,28 +224,12 @@ class DomainEffectProcedureReadinessAssessment:
                 work=work,
                 run=updated_run,
             )
-            profile = self._effective_profile(work, updated_run, request)
-            statuses = check_pre_action_readiness(
-                assessment.work,
-                assessment.run,
-                profile,
-                proofs=assessment.procedure_proofs(),
-                grants=(
-                    assessment.proofs.get("grants")
-                    if assessment.has_authorization_refs
-                    else None
-                ),
+            profile, obligations = self._assert_pre_action_ready(
+                assessment,
+                work,
+                updated_run,
+                request,
             )
-            blocking = [
-                str(getattr(status.obligation, "kind", status.obligation))
-                for status in statuses
-                if status.status in _BLOCKING_PROCEDURE_STATUSES
-            ]
-            if blocking:
-                raise ValueError(
-                    "domain effect pre-action procedure remains incomplete: "
-                    + ", ".join(blocking)
-                )
             self._assert_authorization_unconsumed(authorization_ref)
             event = Event(
                 id=event_id,
@@ -252,10 +247,7 @@ class DomainEffectProcedureReadinessAssessment:
                         for ref in readiness_refs
                     ],
                     "procedure_profile": profile,
-                    "pre_action_obligations": [
-                        str(getattr(status.obligation, "kind", status.obligation))
-                        for status in statuses
-                    ],
+                    "pre_action_obligations": list(obligations),
                     "lease_owner": run.lease_owner,
                     "lease_generation": run.lease_generation,
                 },
@@ -266,7 +258,13 @@ class DomainEffectProcedureReadinessAssessment:
         persisted = self.store.get_event(event_id)
         if not isinstance(current_run, Run) or not isinstance(persisted, Event):
             raise ValueError("domain effect procedure readiness commit is incomplete")
-        return self._validate_event(persisted, current_run, work, qualification_event)
+        return self._validate_event(
+            persisted,
+            current_run,
+            work,
+            qualification_event,
+            request,
+        )
 
     def _require_active_run(self, run_ref: str) -> Run:
         run = self.store.get_run(run_ref)
@@ -312,7 +310,7 @@ class DomainEffectProcedureReadinessAssessment:
             raise ValueError(f"domain effect Run lacks {key}")
         return value
 
-    def _require_qualification(self, run: Run) -> tuple[Event, Any]:
+    def _require_qualification(self, run: Run) -> tuple[Event, CapabilityRequest]:
         events = [
             event
             for event in self.store.list_events(run.id)
@@ -337,8 +335,6 @@ class DomainEffectProcedureReadinessAssessment:
         raw_request = payload.get("request")
         if not isinstance(raw_request, dict):
             raise ValueError("domain effect qualification event lacks request snapshot")
-        from portable_runtime.core.capabilities import CapabilityRequest
-
         request = CapabilityRequest.model_validate(raw_request)
         if request.work_id != run.work_id or request.run_id != run.id:
             raise ValueError("domain effect qualification request rebound")
@@ -411,7 +407,7 @@ class DomainEffectProcedureReadinessAssessment:
         )
         return run.model_copy(update={"metadata": metadata})
 
-    def _effective_profile(self, work: Work, run: Run, request: Any) -> str:
+    def _effective_profile(self, work: Work, run: Run, request: CapabilityRequest) -> str:
         contract = self.contract_registry.resolve(request.capability)
         work_metadata = work.metadata if isinstance(work.metadata, dict) else {}
         run_metadata = run.metadata if isinstance(run.metadata, dict) else {}
@@ -422,6 +418,41 @@ class DomainEffectProcedureReadinessAssessment:
             run_metadata.get("procedure_profile"),
             request_metadata.get("procedure_profile"),
         )
+
+    def _assert_pre_action_ready(
+        self,
+        assessment: AssessmentContext,
+        work: Work,
+        run: Run,
+        request: CapabilityRequest,
+    ) -> tuple[str, tuple[str, ...]]:
+        profile = self._effective_profile(work, run, request)
+        statuses = check_pre_action_readiness(
+            assessment.work,
+            assessment.run,
+            profile,
+            proofs=assessment.procedure_proofs(),
+            grants=(
+                assessment.proofs.get("grants")
+                if assessment.has_authorization_refs
+                else None
+            ),
+        )
+        obligations = tuple(
+            str(getattr(status.obligation, "kind", status.obligation))
+            for status in statuses
+        )
+        blocking = [
+            obligation
+            for obligation, status in zip(obligations, statuses, strict=True)
+            if status.status in _BLOCKING_PROCEDURE_STATUSES
+        ]
+        if blocking:
+            raise ValueError(
+                "domain effect pre-action procedure remains incomplete: "
+                + ", ".join(blocking)
+            )
+        return profile, obligations
 
     def _save_record_exact(self, record: BaseRecord) -> None:
         existing = self.store.get_record(record.id)
@@ -460,6 +491,7 @@ class DomainEffectProcedureReadinessAssessment:
         run: Run,
         work: Work,
         qualification_event: Event,
+        request: CapabilityRequest,
     ) -> DomainEffectProcedureReadinessResult:
         if (
             event.type != DOMAIN_EFFECT_PROCEDURE_READINESS_EVENT
@@ -492,6 +524,28 @@ class DomainEffectProcedureReadinessAssessment:
         refs = tuple(QualificationRef.model_validate(ref) for ref in raw_refs)
         if len(refs) != 4:
             raise ValueError("domain effect procedure readiness ref graph is incomplete")
+
+        fresh = AssessmentContext.resolve(
+            self.store,
+            request,
+            work=work,
+            run=run,
+        )
+        if fresh.digest != digest:
+            raise ValueError("domain effect procedure readiness snapshot is stale")
+        current_profile, current_obligations = self._assert_pre_action_ready(
+            fresh,
+            work,
+            run,
+            request,
+        )
+        if current_profile != profile:
+            raise ValueError("domain effect procedure readiness profile changed")
+        if tuple(str(value) for value in obligations) != current_obligations:
+            raise ValueError("domain effect procedure readiness obligations changed")
+        self._assert_authorization_unconsumed(
+            self._required_ref(self._run_metadata(run), "domain_effect_authorization_ref")
+        )
         return DomainEffectProcedureReadinessResult(
             run_ref=run.id,
             work_ref=work.id,
@@ -500,7 +554,7 @@ class DomainEffectProcedureReadinessAssessment:
             readiness_digest=digest,
             readiness_refs=refs,
             procedure_profile=profile,
-            pre_action_obligations=tuple(str(value) for value in obligations),
+            pre_action_obligations=current_obligations,
             lease_owner=run.lease_owner or "",
             lease_generation=run.lease_generation,
         )
