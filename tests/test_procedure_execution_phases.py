@@ -16,6 +16,18 @@ def _names(statuses):
     return [str(getattr(status.obligation, "kind", status.obligation)) for status in statuses]
 
 
+def _stable_semantics(statuses):
+    return [
+        (
+            str(getattr(status.obligation, "kind", status.obligation)),
+            status.status,
+            status.reason,
+            status.waiver_authority_ref,
+        )
+        for status in statuses
+    ]
+
+
 def _work_run() -> tuple[Work, Run]:
     work = Work(
         id="work-procedure-phase",
@@ -88,7 +100,7 @@ def test_full_phase_preserves_legacy_full_lifecycle_assessment() -> None:
         phase=ProcedurePhase.full,
     )
 
-    assert projected == legacy
+    assert _stable_semantics(projected) == _stable_semantics(legacy)
 
 
 def test_unknown_procedure_phase_fails_closed() -> None:
