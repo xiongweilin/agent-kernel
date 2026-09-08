@@ -3,19 +3,19 @@ from __future__ import annotations
 import pytest
 
 from portable_runtime.core.capabilities import CapabilityRequest, ProviderDescriptor
-from portable_runtime.core.router import DeterministicPriorityRouting
+from portable_runtime.core.router import DeterministicPriorityRouting, ExactProviderRouting
 
 
-@pytest.mark.asyncio
-async def test_exact_provider_constraint_beats_preference_and_priority() -> None:
-    routing = DeterministicPriorityRouting()
-    request = CapabilityRequest(
+def _request() -> CapabilityRequest:
+    return CapabilityRequest(
         id="request:exact-provider",
         capability="administrative.hris.employee.create.v1",
-        constraints={"exact_provider_id": "provider:b"},
         preferred_provider_ids=["provider:a"],
     )
-    candidates = [
+
+
+def _candidates(request: CapabilityRequest) -> list[ProviderDescriptor]:
+    return [
         ProviderDescriptor(
             id="provider:a",
             name="A",
@@ -32,48 +32,29 @@ async def test_exact_provider_constraint_beats_preference_and_priority() -> None
         ),
     ]
 
-    selected = await routing.select(request, candidates)
+
+@pytest.mark.asyncio
+async def test_exact_provider_routing_beats_request_preference_and_priority() -> None:
+    request = _request()
+    routing = ExactProviderRouting("provider:b", DeterministicPriorityRouting())
+
+    selected = await routing.select(request, _candidates(request))
 
     assert selected is not None
     assert selected.id == "provider:b"
+    assert request.preferred_provider_ids == ["provider:a"]
+    assert request.constraints == {}
 
 
 @pytest.mark.asyncio
-async def test_exact_provider_constraint_fails_closed_when_target_is_absent() -> None:
-    routing = DeterministicPriorityRouting()
-    request = CapabilityRequest(
-        id="request:missing-exact-provider",
-        capability="administrative.hris.employee.create.v1",
-        constraints={"exact_provider_id": "provider:missing"},
-    )
-    candidates = [
-        ProviderDescriptor(
-            id="provider:a",
-            name="A",
-            version="1",
-            capabilities=[request.capability],
-        )
-    ]
+async def test_exact_provider_routing_fails_closed_when_target_is_absent() -> None:
+    request = _request()
+    routing = ExactProviderRouting("provider:missing", DeterministicPriorityRouting())
 
-    assert await routing.select(request, candidates) is None
+    assert await routing.select(request, _candidates(request)) is None
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize("value", ["", "   ", 7, False])
-async def test_exact_provider_constraint_rejects_malformed_identity(value: object) -> None:
-    routing = DeterministicPriorityRouting()
-    request = CapabilityRequest(
-        id="request:malformed-exact-provider",
-        capability="administrative.hris.employee.create.v1",
-        constraints={"exact_provider_id": value},
-    )
-    candidates = [
-        ProviderDescriptor(
-            id="provider:a",
-            name="A",
-            version="1",
-            capabilities=[request.capability],
-        )
-    ]
-
-    assert await routing.select(request, candidates) is None
+@pytest.mark.parametrize("value", ["", "   "])
+def test_exact_provider_routing_rejects_malformed_identity(value: str) -> None:
+    with pytest.raises(ValueError, match="non-empty provider id"):
+        ExactProviderRouting(value, DeterministicPriorityRouting())
