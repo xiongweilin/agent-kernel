@@ -18,6 +18,7 @@ from portable_runtime.responsibility.domain_effect_completion_contract import (
 from portable_runtime.responsibility.domain_effect_verified_outcome import (
     DOMAIN_EFFECT_VERIFICATION_EVIDENCE_SCHEMA,
 )
+from portable_runtime.responsibility.models import ResponsibilityStatus
 from portable_runtime.responsibility.service import ResponsibilityKernel
 from portable_runtime.workflows.completion import CompletionAuthority
 
@@ -40,7 +41,7 @@ class DomainEffectTerminalCompletionResult(BaseModel):
     work_ref: str
     run_ref: str
     responsibility_ref: str
-    responsibility_status: Literal["active", "suspended", "discharged"]
+    responsibility_status: ResponsibilityStatus
     authority_bearing: bool = False
 
 
@@ -139,7 +140,7 @@ class DomainEffectTerminalCompletion:
         responsibility_ref = completed_work.metadata.get("standing_responsibility_ref")
         if not isinstance(responsibility_ref, str) or not responsibility_ref:
             raise ValueError("completed domain effect Work lacks standing responsibility ref")
-        responsibility_status = self.kernel.current_status(responsibility_ref).value
+        responsibility_status = self.kernel.current_status(responsibility_ref)
         return DomainEffectTerminalCompletionResult(
             outcome_ref=outcome.id,
             evidence_refs=evidence_refs,
