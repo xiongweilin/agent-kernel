@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 from fastapi.testclient import TestClient
 
 from portable_runtime.core.runtime import Runtime
+from portable_runtime.public_contracts.catalog import contract_catalog
 from portable_runtime.public_contracts.http import create_public_app
 from portable_runtime.responsibility.models import (
     EffectClass,
@@ -72,6 +73,14 @@ def _payload() -> dict[str, object]:
     }
 
 
+def test_domain_proposal_is_registered_in_canonical_catalog() -> None:
+    contract = contract_catalog()["contracts"]["domain_responsibility_proposal"]
+
+    assert contract["current"] == "domain-responsibility-proposal-v1"
+    assert contract["receipt"] == "domain-responsibility-proposal-receipt-v1"
+    assert contract["authority_bearing"] is False
+
+
 def test_domain_proposal_records_canonical_chain_but_does_not_admit_work() -> None:
     runtime = Runtime()
     client = TestClient(create_public_app(runtime))
@@ -93,6 +102,7 @@ def test_domain_proposal_records_canonical_chain_but_does_not_admit_work() -> No
     assert kernel.journal.get("assessment_admin_1") is not None
     assert kernel.journal.get("proposal_admin_1") is not None
     assert runtime.list_work() == []
+    assert runtime.store.list_authorizations() == []
 
 
 def test_domain_proposal_rejects_cross_responsibility_admission() -> None:
@@ -108,3 +118,4 @@ def test_domain_proposal_rejects_cross_responsibility_admission() -> None:
     assert response.status_code == 409
     assert "bind the standing responsibility" in str(response.json())
     assert runtime.list_work() == []
+    assert runtime.store.list_authorizations() == []
