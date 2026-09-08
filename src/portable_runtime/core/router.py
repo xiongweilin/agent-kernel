@@ -32,26 +32,15 @@ class DeterministicPriorityRouting:
             provider_id: index
             for index, provider_id in enumerate(request.preferred_provider_ids)
         }
-        exact_provider_id = request.constraints.get("exact_provider_id")
-        if exact_provider_id is not None and (
-            not isinstance(exact_provider_id, str) or not exact_provider_id.strip()
-        ):
-            return None
         hard_constraints = {
             key: value
             for key, value in request.constraints.items()
-            if key
-            not in {
-                "required_failure_domains",
-                "independence_constraints",
-                "exact_provider_id",
-            }
+            if key not in {"required_failure_domains", "independence_constraints"}
         }
         matching = [
             descriptor
             for descriptor in candidates
-            if (exact_provider_id is None or descriptor.id == exact_provider_id)
-            and all(
+            if all(
                 descriptor.constraints.get(key) == value
                 for key, value in hard_constraints.items()
             )
@@ -66,6 +55,36 @@ class DeterministicPriorityRouting:
                 descriptor.id,
             ),
         )[0]
+
+
+class ExactProviderRouting:
+    """Restrict one routing decision to an exact runtime-owned provider identity.
+
+    The exact provider identity is intentionally not written into
+    ``CapabilityRequest``. Provider routing control is runtime provenance, not
+    reusable provider-visible operation meaning. The wrapped policy still owns
+    every other selection rule after the candidate set has been narrowed.
+    """
+
+    def __init__(self, provider_id: str, delegate: RoutingPolicy) -> None:
+        exact = provider_id.strip()
+        if not exact:
+            raise ValueError("exact provider routing requires a non-empty provider id")
+        self.provider_id = exact
+        self.delegate = delegate
+
+    async def select(
+        self,
+        request: CapabilityRequest,
+        candidates: list[ProviderDescriptor],
+    ) -> ProviderDescriptor | None:
+        exact = [descriptor for descriptor in candidates if descriptor.id == self.provider_id]
+        if len(exact) != 1:
+            return None
+        selected = await self.delegate.select(request, exact)
+        if selected is None or selected.id != self.provider_id:
+            return None
+        return selected
 
 
 class ConstraintRouter(DeterministicPriorityRouting):
