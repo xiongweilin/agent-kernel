@@ -32,15 +32,26 @@ class DeterministicPriorityRouting:
             provider_id: index
             for index, provider_id in enumerate(request.preferred_provider_ids)
         }
+        exact_provider_id = request.constraints.get("exact_provider_id")
+        if exact_provider_id is not None and (
+            not isinstance(exact_provider_id, str) or not exact_provider_id.strip()
+        ):
+            return None
         hard_constraints = {
             key: value
             for key, value in request.constraints.items()
-            if key not in {"required_failure_domains", "independence_constraints"}
+            if key
+            not in {
+                "required_failure_domains",
+                "independence_constraints",
+                "exact_provider_id",
+            }
         }
         matching = [
             descriptor
             for descriptor in candidates
-            if all(
+            if (exact_provider_id is None or descriptor.id == exact_provider_id)
+            and all(
                 descriptor.constraints.get(key) == value
                 for key, value in hard_constraints.items()
             )
