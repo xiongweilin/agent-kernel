@@ -94,6 +94,7 @@ def record_domain_responsibility_proposal(
     assessment = record_domain_assessment(kernel, command.assessment, now=now)
     proposal = kernel.propose(command.proposal, now=now)
     return DomainResponsibilityProposalReceiptV1(
+        schema="domain-responsibility-proposal-receipt-v1",
         responsibility_ref=identity.id,
         admission_ref=admission.id,
         assessment_ref=assessment.id,
