@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "portable-runtime://contracts/responsibility/domain-responsibility-proposal-receipt-v1",
+  "title": "DomainResponsibilityProposalReceiptV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "status", "responsibility_ref", "admission_ref", "assessment_ref", "proposal_ref", "recorded_at", "authority_bearing"],
+  "properties": {
+    "schema": {"const": "domain-responsibility-proposal-receipt-v1"},
+    "status": {"const": "proposal-recorded"},
+    "responsibility_ref": {"type": "string", "minLength": 1},
+    "admission_ref": {"type": "string", "minLength": 1},
+    "assessment_ref": {"type": "string", "minLength": 1},
+    "proposal_ref": {"type": "string", "minLength": 1},
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "authority_bearing": {"const": false}
+  }
+}
