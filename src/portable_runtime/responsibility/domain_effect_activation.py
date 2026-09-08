@@ -126,7 +126,8 @@ class DomainEffectRunActivation:
                 raise ValueError("domain effect Run disappeared during activation")
             if current.lease_owner != owner or current.lease_generation != generation:
                 raise ValueError("domain effect Run fencing changed during activation")
-            if current.lease_expires_at is None:
+            lease_expires_at = current.lease_expires_at
+            if lease_expires_at is None:
                 raise ValueError("domain effect Run lost lease expiry during activation")
             if current.status not in {"queued", "running"}:
                 raise ValueError(
@@ -152,7 +153,7 @@ class DomainEffectRunActivation:
                     "request_event_ref": request_event.id,
                     "lease_owner": owner,
                     "lease_generation": generation,
-                    "lease_expires_at": updated.lease_expires_at.isoformat(),
+                    "lease_expires_at": lease_expires_at.isoformat(),
                     "started_at": started_at.isoformat(),
                 },
             )
