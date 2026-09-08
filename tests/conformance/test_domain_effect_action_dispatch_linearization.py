@@ -62,11 +62,15 @@ def _prepared(store: InvocationSpecificationInMemoryStateStore):
         captured_at=NOW + timedelta(minutes=8),
     )
     request = qualification.request
+    current_run = store.get_run(run_result.run_ref)
+    assert current_run is not None
+    lease_generation = current_run.lease_generation
+    assert lease_generation >= 1
     permit = InvocationPermit.issue(
         request,
         provider_id=provider.descriptor.id,
         qualification_digest=readiness.readiness_digest,
-        lease_generation=run_result.lease_generation,
+        lease_generation=lease_generation,
         governance_applicable=False,
     )
     precommit = precommit_execution_records(
@@ -74,7 +78,7 @@ def _prepared(store: InvocationSpecificationInMemoryStateStore):
         permit.materialize_request(),
         provider_id=provider.descriptor.id,
         permit_digest=permit.request_digest,
-        lease_generation=run_result.lease_generation,
+        lease_generation=lease_generation,
         side_effect=True,
         side_effect_class=provider.descriptor.side_effect_class,
         effect_semantics=provider.descriptor.effect_semantics,
