@@ -19,6 +19,11 @@ from portable_runtime.public_contracts.models import (
     HistoricalExperienceUseCommitV1,
     HistoricalExperienceUseV1,
 )
+from portable_runtime.public_contracts.responsibility import (
+    DomainResponsibilityProposalReceiptV1,
+    DomainResponsibilityProposalV1,
+    record_domain_responsibility_proposal,
+)
 
 
 def _problem(code: str, message: str, *, details: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -85,6 +90,26 @@ def contract_router(runtime: Runtime) -> APIRouter:
                 detail=_problem("HistoricalUseNotFound", "historical experience use not found"),
             )
         return value
+
+    @router.post(
+        "/v1/responsibilities/domain-proposals",
+        response_model=DomainResponsibilityProposalReceiptV1,
+    )
+    def domain_responsibility_proposal(
+        value: DomainResponsibilityProposalV1,
+        request: Request,
+    ) -> DomainResponsibilityProposalReceiptV1:
+        _require_local_mutation(request)
+        try:
+            return record_domain_responsibility_proposal(runtime, value)
+        except ValueError as exc:
+            message = str(exc)
+            code = "DomainResponsibilityProposalRejected"
+            if "rebound" in message:
+                code = "DomainResponsibilityIdentityRebound"
+            elif "stale" in message or "fresh" in message:
+                code = "DomainResponsibilityProposalStale"
+            raise HTTPException(status_code=409, detail=_problem(code, message)) from exc
 
     return router
 
