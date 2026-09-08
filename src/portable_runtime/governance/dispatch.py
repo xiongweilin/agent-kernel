@@ -186,7 +186,7 @@ def dispatch_commit_identity_from_payload(payload: dict[str, Any]) -> str:
 
     Absence of optional B/C/action-authority refs preserves earlier deterministic
     identities byte-for-byte. Presence of any ref makes that authority identity
-    part of the dispatch identity. A malformed present ref is never interpreted
+    part of the new dispatch identity. A malformed present ref is never interpreted
     as an older case.
     """
 
