@@ -37,10 +37,11 @@ def _qualified(store: InMemoryStateStore):
 def test_readiness_closes_only_standard_pre_action_obligations() -> None:
     store = InMemoryStateStore()
     work, _authorization, run_result, qualification = _qualified(store)
+    readiness_at = NOW + timedelta(minutes=6)
 
     result = DomainEffectProcedureReadinessAssessment(store).assess(
         DomainEffectProcedureReadinessInput(run_ref=run_result.run_ref),
-        assessed_at=NOW + timedelta(minutes=6),
+        assessed_at=readiness_at,
     )
 
     run = store.get_run(run_result.run_ref)
@@ -82,16 +83,19 @@ def test_readiness_closes_only_standard_pre_action_obligations() -> None:
         fresh.work,
         fresh.run,
         ProcedureProfile.standard,
+        now=readiness_at,
         proofs=fresh.procedure_proofs(),
         grants=fresh.proofs.get("grants"),
     )
     assert [_name(status) for status in pre] == list(result.pre_action_obligations)
     assert all(status.status == "satisfied" for status in pre)
+    assert all(status.checked_at == readiness_at for status in pre)
 
     full = check_procedure(
         fresh.work,
         fresh.run,
         ProcedureProfile.standard,
+        now=readiness_at,
         proofs=fresh.procedure_proofs(),
         grants=fresh.proofs.get("grants"),
     )
