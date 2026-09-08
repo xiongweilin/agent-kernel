@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any
 
 from portable_runtime.core.capabilities import CapabilityRequest
 from portable_runtime.core.models import Event, Run, utcnow
