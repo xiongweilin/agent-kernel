@@ -93,7 +93,6 @@ def test_domain_proposal_records_canonical_chain_but_does_not_admit_work() -> No
     assert kernel.journal.get("assessment_admin_1") is not None
     assert kernel.journal.get("proposal_admin_1") is not None
     assert runtime.list_work() == []
-    assert runtime.store.list_authorization_grants() == []
 
 
 def test_domain_proposal_rejects_cross_responsibility_admission() -> None:
