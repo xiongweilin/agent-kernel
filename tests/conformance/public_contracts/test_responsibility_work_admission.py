@@ -1,11 +1,22 @@
 from datetime import UTC, datetime, timedelta
 
+import pytest
 from fastapi.testclient import TestClient
 
 from portable_runtime.core.runtime import Runtime
 from portable_runtime.public_contracts.catalog import contract_catalog
-from portable_runtime.public_contracts.http import create_public_app
+from portable_runtime.public_contracts.http import (
+    RESPONSIBILITY_ADMISSION_PROFILE_ENV,
+    create_configured_public_app,
+    create_public_app,
+)
 from portable_runtime.responsibility.admission import BoundedLocalResponsibilityAdmissionPolicy
+from portable_runtime.responsibility.admission_profiles import (
+    ADMINISTRATIVE_PUBLIC_POLICY_REF,
+    BOUNDED_LOCAL_POLICY_REF,
+    administrative_public_responsibility_admission_policy,
+    responsibility_admission_policy_for_profile,
+)
 from portable_runtime.responsibility.models import (
     EffectClass,
     ResourceVector,
@@ -77,25 +88,20 @@ def _domain_payload() -> dict[str, object]:
 
 
 def _policy() -> BoundedLocalResponsibilityAdmissionPolicy:
-    return BoundedLocalResponsibilityAdmissionPolicy(
-        profile_id="administrative-public",
-        version="1",
-        max_request=ResourceVector(
-            api_calls=2,
-            concurrency_slots=1,
-            domain_quota={"administrative:hris": 1},
-        ),
-        capacity=ResourceVector(
-            api_calls=8,
-            concurrency_slots=4,
-            domain_quota={"administrative:hris": 4},
-        ),
-    )
+    return administrative_public_responsibility_admission_policy()
 
 
 def _record_proposal(client: TestClient) -> None:
     response = client.post("/v1/responsibilities/domain-proposals", json=_domain_payload())
     assert response.status_code == 200
+
+
+def _admission_command(policy_ref: str) -> dict[str, object]:
+    return {
+        "schema": "responsibility-work-admission-v1",
+        "proposal_ref": "proposal_public_1",
+        "expected_policy_ref": policy_ref,
+    }
 
 
 def test_work_admission_is_registered_as_non_authoritative_contract() -> None:
@@ -106,19 +112,47 @@ def test_work_admission_is_registered_as_non_authoritative_contract() -> None:
     assert contract["authority_bearing"] is False
 
 
-def test_public_work_admission_materializes_kernel_owned_chain_without_authorization() -> None:
-    runtime = Runtime()
+def test_administrative_public_profile_is_explicit_and_bounded() -> None:
     policy = _policy()
+
+    assert policy.policy_ref == ADMINISTRATIVE_PUBLIC_POLICY_REF
+    assert policy.allowed_effect_classes == (EffectClass.EXTERNAL_EFFECT,)
+    assert policy.max_request.domain_quota == {"administrative:hris": 1}
+    assert policy.pool_capacity.domain_quota == {"administrative:hris": 4}
+    assert responsibility_admission_policy_for_profile("administrative-public") == policy
+    assert responsibility_admission_policy_for_profile(ADMINISTRATIVE_PUBLIC_POLICY_REF) == policy
+
+
+def test_default_bounded_local_profile_does_not_silently_admit_admin_quota() -> None:
+    runtime = Runtime()
+    client = TestClient(create_public_app(runtime))
+    _record_proposal(client)
+
+    response = client.post(
+        "/v1/responsibilities/work-admissions",
+        json=_admission_command(BOUNDED_LOCAL_POLICY_REF),
+    )
+
+    assert response.status_code == 200
+    receipt = response.json()
+    assert receipt["status"] == "priority-rejected"
+    assert receipt["policy_ref"] == BOUNDED_LOCAL_POLICY_REF
+    assert receipt["work_ref"] is None
+    assert runtime.list_work() == []
+    assert runtime.store.list_authorizations() == []
+
+
+def test_named_administrative_profile_materializes_kernel_owned_chain() -> None:
+    runtime = Runtime()
     client = TestClient(
-        create_public_app(runtime, responsibility_admission_policy=policy)
+        create_public_app(
+            runtime,
+            responsibility_admission_profile="administrative-public",
+        )
     )
     _record_proposal(client)
 
-    command = {
-        "schema": "responsibility-work-admission-v1",
-        "proposal_ref": "proposal_public_1",
-        "expected_policy_ref": policy.policy_ref,
-    }
+    command = _admission_command(ADMINISTRATIVE_PUBLIC_POLICY_REF)
     first = client.post("/v1/responsibilities/work-admissions", json=command)
     second = client.post("/v1/responsibilities/work-admissions", json=command)
 
@@ -128,7 +162,7 @@ def test_public_work_admission_materializes_kernel_owned_chain_without_authoriza
     replay = second.json()
     assert receipt["status"] == "work-materialized"
     assert receipt["authority_bearing"] is False
-    assert receipt["policy_ref"] == policy.policy_ref
+    assert receipt["policy_ref"] == ADMINISTRATIVE_PUBLIC_POLICY_REF
     assert receipt["priority_judgment_ref"]
     assert receipt["resource_pool_ref"]
     assert receipt["portfolio_admission_ref"]
@@ -158,21 +192,45 @@ def test_public_work_admission_materializes_kernel_owned_chain_without_authoriza
     assert runtime.store.list_authorizations() == []
 
 
-def test_public_work_admission_policy_mismatch_fails_before_chain_materialization() -> None:
-    runtime = Runtime()
-    policy = _policy()
-    client = TestClient(
-        create_public_app(runtime, responsibility_admission_policy=policy)
+def test_configured_asgi_factory_selects_admin_profile_from_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(
+        RESPONSIBILITY_ADMISSION_PROFILE_ENV,
+        "administrative-public",
     )
+    client = TestClient(create_configured_public_app())
     _record_proposal(client)
 
     response = client.post(
         "/v1/responsibilities/work-admissions",
-        json={
-            "schema": "responsibility-work-admission-v1",
-            "proposal_ref": "proposal_public_1",
-            "expected_policy_ref": "responsibility-admission:other@9",
-        },
+        json=_admission_command(ADMINISTRATIVE_PUBLIC_POLICY_REF),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "work-materialized"
+
+
+def test_unknown_or_ambiguous_server_profile_configuration_fails_closed() -> None:
+    with pytest.raises(ValueError, match="unknown responsibility admission profile"):
+        create_public_app(responsibility_admission_profile="administrative-future")
+
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        create_public_app(
+            responsibility_admission_policy=_policy(),
+            responsibility_admission_profile="administrative-public",
+        )
+
+
+def test_public_work_admission_policy_mismatch_fails_before_chain_materialization() -> None:
+    runtime = Runtime()
+    policy = _policy()
+    client = TestClient(create_public_app(runtime, responsibility_admission_policy=policy))
+    _record_proposal(client)
+
+    response = client.post(
+        "/v1/responsibilities/work-admissions",
+        json=_admission_command("responsibility-admission:other@9"),
     )
 
     assert response.status_code == 409
@@ -184,17 +242,13 @@ def test_public_work_admission_policy_mismatch_fails_before_chain_materializatio
 def test_public_work_admission_does_not_accept_client_policy_configuration() -> None:
     runtime = Runtime()
     policy = _policy()
-    client = TestClient(
-        create_public_app(runtime, responsibility_admission_policy=policy)
-    )
+    client = TestClient(create_public_app(runtime, responsibility_admission_policy=policy))
     _record_proposal(client)
 
     response = client.post(
         "/v1/responsibilities/work-admissions",
         json={
-            "schema": "responsibility-work-admission-v1",
-            "proposal_ref": "proposal_public_1",
-            "expected_policy_ref": policy.policy_ref,
+            **_admission_command(policy.policy_ref),
             "capacity": {"api_calls": 999999},
         },
     )
@@ -221,18 +275,12 @@ def test_public_work_admission_can_return_priority_rejection_without_work() -> N
         ),
         allowed_effect_classes=(EffectClass.READ_ONLY,),
     )
-    client = TestClient(
-        create_public_app(runtime, responsibility_admission_policy=policy)
-    )
+    client = TestClient(create_public_app(runtime, responsibility_admission_policy=policy))
     _record_proposal(client)
 
     response = client.post(
         "/v1/responsibilities/work-admissions",
-        json={
-            "schema": "responsibility-work-admission-v1",
-            "proposal_ref": "proposal_public_1",
-            "expected_policy_ref": policy.policy_ref,
-        },
+        json=_admission_command(policy.policy_ref),
     )
 
     assert response.status_code == 200
@@ -249,9 +297,7 @@ def test_public_work_admission_can_return_priority_rejection_without_work() -> N
 def test_public_work_admission_unknown_proposal_is_not_found() -> None:
     runtime = Runtime()
     policy = _policy()
-    client = TestClient(
-        create_public_app(runtime, responsibility_admission_policy=policy)
-    )
+    client = TestClient(create_public_app(runtime, responsibility_admission_policy=policy))
 
     response = client.post(
         "/v1/responsibilities/work-admissions",
