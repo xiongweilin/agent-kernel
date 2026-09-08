@@ -117,11 +117,13 @@ class DomainEffectQualificationAssessment:
                 },
             }
         )
+        at = assessed_at or utcnow()
         assessment = AssessmentContext.resolve(
             self.store,
             current_request,
             work=self.store.get_work(run.work_id),
             run=run,
+            now=at,
         )
         expected_refs = {
             (authorization_ref, "authorization"),
@@ -134,7 +136,6 @@ class DomainEffectQualificationAssessment:
         if not assessment.has_authorization_refs:
             raise ValueError("domain effect qualification lacks runtime authorization proof")
 
-        at = assessed_at or utcnow()
         event = Event(
             id=event_id,
             created_at=at,

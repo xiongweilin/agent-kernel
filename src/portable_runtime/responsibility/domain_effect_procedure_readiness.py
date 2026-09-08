@@ -223,6 +223,7 @@ class DomainEffectProcedureReadinessAssessment:
                 request,
                 work=work,
                 run=updated_run,
+                now=at,
             )
             profile, obligations = self._assert_pre_action_ready(
                 assessment,
@@ -534,6 +535,7 @@ class DomainEffectProcedureReadinessAssessment:
             request,
             work=work,
             run=run,
+            now=event.created_at,
         )
         if fresh.digest != digest:
             raise ValueError("domain effect procedure readiness snapshot is stale")
