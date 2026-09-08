@@ -76,8 +76,10 @@ def test_readiness_closes_only_standard_pre_action_obligations() -> None:
         qualification.request,
         work=work,
         run=run,
+        now=readiness_at,
     )
     assert fresh.digest == result.readiness_digest
+    assert fresh.captured_at == readiness_at
     assert fresh.has_authorization_refs
     pre = check_pre_action_readiness(
         fresh.work,
