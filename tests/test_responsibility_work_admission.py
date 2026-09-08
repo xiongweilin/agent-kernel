@@ -135,10 +135,30 @@ def test_kernel_admission_replay_returns_same_work_without_duplicate_chain() -> 
 
     assert first == second
     assert len(kernel.store.list_work()) == 1
-    assert len(kernel.journal.list("PriorityJudgment", proposal.responsibility_ref)) == 1
-    assert len(kernel.journal.list("PortfolioAdmissionDecision", proposal.responsibility_ref)) == 1
-    assert len(kernel.journal.list("ResourceReservation", proposal.responsibility_ref)) == 1
-    assert len(kernel.journal.list("Commitment", proposal.responsibility_ref)) == 1
+    priorities = [
+        value
+        for value in kernel.journal.list("PriorityJudgment")
+        if getattr(value, "proposal_ref", None) == proposal.id
+    ]
+    portfolios = [
+        value
+        for value in kernel.journal.list("PortfolioAdmissionDecision")
+        if getattr(value, "proposal_ref", None) == proposal.id
+    ]
+    reservations = [
+        value
+        for value in kernel.journal.list("ResourceReservation")
+        if getattr(value, "proposal_ref", None) == proposal.id
+    ]
+    commitments = [
+        value
+        for value in kernel.journal.list("Commitment")
+        if getattr(value, "proposal_ref", None) == proposal.id
+    ]
+    assert len(priorities) == 1
+    assert len(portfolios) == 1
+    assert len(reservations) == 1
+    assert len(commitments) == 1
     assert kernel.store.list_authorizations() == []
 
 
