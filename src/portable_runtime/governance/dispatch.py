@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, Literal, cast
@@ -19,6 +19,7 @@ from portable_runtime.governance.use_admission import (
     GovernanceUseAdmission,
     GovernanceUseRequirementResolver,
 )
+from portable_runtime.records.authorization import AuthorizationUse
 from portable_runtime.stores.memory import InMemoryStateStore
 from portable_runtime.stores.sqlite import SQLiteStateStore
 
@@ -39,6 +40,10 @@ DispatchRecoveryMode = Literal[
     "reconcile",
     "unknown",
 ]
+DispatchAuthorizationUseFactory = Callable[
+    [CapabilityRequest, InvocationPermit, ProviderExecutionBinding | None, Any | None],
+    AuthorizationUse,
+]
 
 
 @dataclass(frozen=True)
@@ -49,6 +54,8 @@ class DispatchCommitDecision:
     current_snapshot_digest: str | None = None
     provider_execution_binding_ref: str | None = None
     reconciliation_repeatability_authority_ref: str | None = None
+    authorization_use_ref: str | None = None
+    invocation_specification_ref: str | None = None
 
 
 class DispatchLinearizationError(RuntimeError):
@@ -112,12 +119,27 @@ def _provider_binding_dispatch_authority(store: Any, *, bound: bool) -> Iterator
         setattr(store, attribute, int(getattr(store, attribute)) - 1)
 
 
-def dispatch_commit_identity_from_payload(payload: dict[str, Any]) -> str:
-    """Reconstruct one dispatch identity with exact legacy/B/C compatibility.
+def _optional_identity_ref(
+    payload: dict[str, Any],
+    key: str,
+    label: str,
+    identity: dict[str, Any],
+) -> None:
+    if key not in payload:
+        return
+    value = payload.get(key)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"dispatch {label} ref is malformed")
+    identity[key] = value
 
-    Absence of B/C refs preserves earlier deterministic identities byte-for-byte.
-    Presence of either ref makes that authority identity part of the new dispatch
-    identity. A malformed present ref is never interpreted as an older case.
+
+def dispatch_commit_identity_from_payload(payload: dict[str, Any]) -> str:
+    """Reconstruct one dispatch identity with exact additive compatibility.
+
+    Absence of optional B/C/action-authority refs preserves earlier deterministic
+    identities byte-for-byte. Presence of any ref makes that authority identity
+    part of the dispatch identity. A malformed present ref is never interpreted
+    as an older case.
     """
 
     identity: dict[str, Any] = {
@@ -129,16 +151,30 @@ def dispatch_commit_identity_from_payload(payload: dict[str, Any]) -> str:
         "governance_requirement_digest": payload.get("governance_requirement_digest"),
         "governance_snapshot_digest": payload.get("governance_snapshot_digest"),
     }
-    if "provider_execution_binding_ref" in payload:
-        binding_ref = payload.get("provider_execution_binding_ref")
-        if not isinstance(binding_ref, str) or not binding_ref.strip():
-            raise ValueError("dispatch provider execution binding ref is malformed")
-        identity["provider_execution_binding_ref"] = binding_ref
-    if "reconciliation_repeatability_authority_ref" in payload:
-        repeatability_ref = payload.get("reconciliation_repeatability_authority_ref")
-        if not isinstance(repeatability_ref, str) or not repeatability_ref.strip():
-            raise ValueError("dispatch reconciliation repeatability authority ref is malformed")
-        identity["reconciliation_repeatability_authority_ref"] = repeatability_ref
+    _optional_identity_ref(
+        payload,
+        "provider_execution_binding_ref",
+        "provider execution binding",
+        identity,
+    )
+    _optional_identity_ref(
+        payload,
+        "reconciliation_repeatability_authority_ref",
+        "reconciliation repeatability authority",
+        identity,
+    )
+    _optional_identity_ref(
+        payload,
+        "authorization_use_ref",
+        "authorization use",
+        identity,
+    )
+    _optional_identity_ref(
+        payload,
+        "invocation_specification_ref",
+        "invocation specification",
+        identity,
+    )
     raw = json.dumps(identity, sort_keys=True, separators=(",", ":"))
     return f"dispatch_{hashlib.sha256(raw.encode()).hexdigest()}"
 
@@ -149,6 +185,8 @@ def _dispatch_commit_ref(
     attempt_id: str | None,
     provider_execution_binding_ref: str | None = None,
     reconciliation_repeatability_authority_ref: str | None = None,
+    authorization_use_ref: str | None = None,
+    invocation_specification_ref: str | None = None,
 ) -> str:
     payload: dict[str, Any] = {
         "schema": DISPATCH_COMMIT_SCHEMA,
@@ -165,6 +203,10 @@ def _dispatch_commit_ref(
         payload["reconciliation_repeatability_authority_ref"] = (
             reconciliation_repeatability_authority_ref
         )
+    if authorization_use_ref is not None:
+        payload["authorization_use_ref"] = authorization_use_ref
+    if invocation_specification_ref is not None:
+        payload["invocation_specification_ref"] = invocation_specification_ref
     return dispatch_commit_identity_from_payload(payload)
 
 
@@ -183,20 +225,99 @@ def dispatch_recovery_mode(step: Any, attempt: Any) -> DispatchRecoveryMode:
 
 
 class GovernanceDispatchCommitter:
-    """Linearize one governed dispatch claim against canonical governance.
+    """Linearize one dispatch claim against canonical governance/action authority.
 
     The normal RealityBoundary path first resolves the live provider object
-    from ProviderRegistry. That lookup is task-local provenance only; inside
-    this dispatch linearization the registry is re-entered with
-    ``expected_provider`` so same-id replacement between lookup and dispatch
-    fails closed. B is durable provider-target provenance. When the exact
-    registry registration also carries an explicit repeat-safe reconciliation
-    contract, C is instantiated for this request-id and made durable in the same
-    dispatch commitment. Neither B nor C grants provider capability.
+    from ProviderRegistry. Inside this dispatch linearization the registry is
+    re-entered with ``expected_provider`` so same-id replacement between lookup
+    and dispatch fails closed. B is durable provider-target provenance. When an
+    explicit repeat-safe reconciliation contract exists, C is instantiated for
+    this request-id in the same commitment.
+
+    Optional action-authority inputs are additive. When supplied, a fresh
+    AuthorizationUse and/or DurableInvocationSpecification reference is bound
+    to the exact same dispatch commitment. Legacy callers that supply neither
+    retain the frozen Phase-E governed/non-governed behavior and identity.
     """
 
     def __init__(self, store: Any) -> None:
         self.store = store
+
+    @staticmethod
+    def _validate_specification(
+        store: Any,
+        specification_ref: str | None,
+        request: CapabilityRequest,
+        permit: InvocationPermit,
+        execution_binding: ProviderExecutionBinding | None,
+    ) -> Any | None:
+        if specification_ref is None:
+            return None
+        if not specification_ref.strip():
+            raise DispatchLinearizationError(
+                "dispatch InvocationSpecification ref must be non-empty"
+            )
+        if execution_binding is None:
+            raise DispatchLinearizationError(
+                "InvocationSpecification-bound dispatch requires exact provider execution binding"
+            )
+        getter = getattr(store, "get_invocation_specification", None)
+        if not callable(getter):
+            raise DispatchLinearizationError(
+                "StateStore cannot resolve InvocationSpecification authority"
+            )
+        specification = getter(specification_ref)
+        if specification is None:
+            raise DispatchLinearizationError(
+                "dispatch references unavailable InvocationSpecification authority"
+            )
+        if getattr(specification, "id", None) != specification_ref:
+            raise DispatchLinearizationError(
+                "InvocationSpecification identity rebound before dispatch"
+            )
+        if getattr(specification, "source_request_ref", None) != request.id:
+            raise DispatchLinearizationError(
+                "InvocationSpecification is bound to a different request"
+            )
+        provider_binding = getattr(specification, "provider_binding", None)
+        if getattr(provider_binding, "provider_id", None) != permit.provider_id:
+            raise DispatchLinearizationError(
+                "InvocationSpecification provider does not match InvocationPermit"
+            )
+        if (
+            getattr(provider_binding, "provider_binding_id", None)
+            != execution_binding.id
+        ):
+            raise DispatchLinearizationError(
+                "InvocationSpecification provider binding does not match configured target"
+            )
+        return specification
+
+    @staticmethod
+    def _validate_authorization_use(
+        use: AuthorizationUse,
+        request: CapabilityRequest,
+    ) -> None:
+        if use.capability != request.capability:
+            raise DispatchLinearizationError(
+                "AuthorizationUse capability does not match dispatch request"
+            )
+        if use.actor_ref != (request.actor_ref or ""):
+            raise DispatchLinearizationError(
+                "AuthorizationUse actor does not match dispatch request"
+            )
+        if use.resource_ref != (request.resource_ref or ""):
+            raise DispatchLinearizationError(
+                "AuthorizationUse resource does not match dispatch request"
+            )
+        if use.effect_class != request.effect_class:
+            raise DispatchLinearizationError(
+                "AuthorizationUse effect class does not match dispatch request"
+            )
+        if set(use.subject_version_refs) != set(request.subject_version_refs):
+            raise DispatchLinearizationError(
+                "AuthorizationUse subject versions do not match dispatch request"
+            )
 
     def commit(
         self,
@@ -207,8 +328,14 @@ class GovernanceDispatchCommitter:
         attempt_id: str | None,
         provider_registry: Any | None = None,
         expected_provider: Any | None = None,
+        authorization_use_factory: DispatchAuthorizationUseFactory | None = None,
+        invocation_specification_ref: str | None = None,
     ) -> DispatchCommitDecision:
-        if not permit.governance_applicable:
+        action_authority_bound = (
+            authorization_use_factory is not None
+            or invocation_specification_ref is not None
+        )
+        if not permit.governance_applicable and not action_authority_bound:
             return DispatchCommitDecision(
                 status="not-applicable",
                 reason="invocation permit is explicitly not governance-bound",
@@ -216,45 +343,48 @@ class GovernanceDispatchCommitter:
         if self.store is None:
             return DispatchCommitDecision(
                 status="unavailable",
-                reason="governed dispatch requires an authoritative StateStore",
+                reason="dispatch requires an authoritative StateStore",
             )
 
         try:
             with _dispatch_linearized_write(self.store):
-                current = GovernanceUseAdmission(self.store).evaluate(request, resolver)
-                if current.status == "unavailable":
-                    return DispatchCommitDecision(
-                        status="unavailable",
-                        reason=current.reason,
-                        current_snapshot_digest=current.snapshot_digest,
-                    )
-                if current.status == "stale":
-                    return DispatchCommitDecision(
-                        status="stale",
-                        reason=current.reason,
-                        current_snapshot_digest=current.snapshot_digest,
-                    )
-                if current.status == "blocked":
-                    return DispatchCommitDecision(
-                        status="blocked",
-                        reason=current.reason,
-                        current_snapshot_digest=current.snapshot_digest,
-                    )
-                if current.status != "allowed":
-                    return DispatchCommitDecision(
-                        status="changed",
-                        reason="governed dispatch no longer has an applicable allowed judgment",
-                        current_snapshot_digest=current.snapshot_digest,
-                    )
-                if (
-                    current.requirement_digest != permit.governance_requirement_digest
-                    or current.snapshot_digest != permit.governance_snapshot_digest
-                ):
-                    return DispatchCommitDecision(
-                        status="changed",
-                        reason="dispatch governance judgment does not match InvocationPermit",
-                        current_snapshot_digest=current.snapshot_digest,
-                    )
+                current_snapshot_digest = permit.governance_snapshot_digest
+                if permit.governance_applicable:
+                    current = GovernanceUseAdmission(self.store).evaluate(request, resolver)
+                    current_snapshot_digest = current.snapshot_digest
+                    if current.status == "unavailable":
+                        return DispatchCommitDecision(
+                            status="unavailable",
+                            reason=current.reason,
+                            current_snapshot_digest=current.snapshot_digest,
+                        )
+                    if current.status == "stale":
+                        return DispatchCommitDecision(
+                            status="stale",
+                            reason=current.reason,
+                            current_snapshot_digest=current.snapshot_digest,
+                        )
+                    if current.status == "blocked":
+                        return DispatchCommitDecision(
+                            status="blocked",
+                            reason=current.reason,
+                            current_snapshot_digest=current.snapshot_digest,
+                        )
+                    if current.status != "allowed":
+                        return DispatchCommitDecision(
+                            status="changed",
+                            reason="governed dispatch no longer has an applicable allowed judgment",
+                            current_snapshot_digest=current.snapshot_digest,
+                        )
+                    if (
+                        current.requirement_digest != permit.governance_requirement_digest
+                        or current.snapshot_digest != permit.governance_snapshot_digest
+                    ):
+                        return DispatchCommitDecision(
+                            status="changed",
+                            reason="dispatch governance judgment does not match InvocationPermit",
+                            current_snapshot_digest=current.snapshot_digest,
+                        )
 
                 if provider_registry is None:
                     from portable_runtime.core.registry import consume_execution_target_lookup
@@ -312,11 +442,48 @@ class GovernanceDispatchCommitter:
                                 "reconciliation repeatability authority does not match dispatch request"
                             )
 
+                specification = self._validate_specification(
+                    self.store,
+                    invocation_specification_ref,
+                    request,
+                    permit,
+                    execution_binding,
+                )
+
+                authorization_use: AuthorizationUse | None = None
+                if authorization_use_factory is not None:
+                    authorization_use = authorization_use_factory(
+                        request,
+                        permit,
+                        execution_binding,
+                        specification,
+                    )
+                    if not isinstance(authorization_use, AuthorizationUse):
+                        raise DispatchLinearizationError(
+                            "dispatch authorization factory returned non-AuthorizationUse"
+                        )
+                    self._validate_authorization_use(authorization_use, request)
+                    if not hasattr(self.store, "get_authorization_use") or not hasattr(
+                        self.store,
+                        "save_authorization_use",
+                    ):
+                        raise DispatchLinearizationError(
+                            "StateStore cannot persist dispatch AuthorizationUse"
+                        )
+                    if self.store.get_authorization_use(authorization_use.id) is not None:
+                        raise DispatchLinearizationError(
+                            "dispatch AuthorizationUse already exists; automatic redispatch is forbidden"
+                        )
+                    self.store.save_authorization_use(authorization_use)
+
                 binding_ref = execution_binding.id if execution_binding is not None else None
                 repeatability_ref = (
                     repeatability_authority.id
                     if repeatability_authority is not None
                     else None
+                )
+                authorization_use_ref = (
+                    authorization_use.id if authorization_use is not None else None
                 )
                 commit_ref = _dispatch_commit_ref(
                     request,
@@ -324,6 +491,8 @@ class GovernanceDispatchCommitter:
                     attempt_id,
                     binding_ref,
                     repeatability_ref,
+                    authorization_use_ref,
+                    invocation_specification_ref,
                 )
                 event_payload: dict[str, Any] = {
                     "schema": DISPATCH_COMMIT_SCHEMA,
@@ -347,6 +516,10 @@ class GovernanceDispatchCommitter:
                     event_payload["reconciliation_repeatability_authority"] = (
                         repeatability_authority.model_dump(mode="json")
                     )
+                if authorization_use_ref is not None:
+                    event_payload["authorization_use_ref"] = authorization_use_ref
+                if invocation_specification_ref is not None:
+                    event_payload["invocation_specification_ref"] = invocation_specification_ref
                 event = Event(
                     id=commit_ref,
                     type=DISPATCH_COMMIT_EVENT,
@@ -356,7 +529,8 @@ class GovernanceDispatchCommitter:
 
                 if attempt_id is not None:
                     if not hasattr(self.store, "get_attempt") or not hasattr(
-                        self.store, "save_attempt"
+                        self.store,
+                        "save_attempt",
                     ):
                         raise DispatchLinearizationError(
                             "dispatch attempt binding is unavailable"
@@ -386,6 +560,10 @@ class GovernanceDispatchCommitter:
                         metadata["reconciliation_repeatability_authority_ref"] = (
                             repeatability_authority.id
                         )
+                    if authorization_use_ref is not None:
+                        metadata["authorization_use_ref"] = authorization_use_ref
+                    if invocation_specification_ref is not None:
+                        metadata["invocation_specification_ref"] = invocation_specification_ref
                     self.store.save_attempt(
                         attempt.model_copy(update={"metadata": metadata})
                     )
@@ -398,10 +576,16 @@ class GovernanceDispatchCommitter:
                 return DispatchCommitDecision(
                     status="committed",
                     commit_ref=commit_ref,
-                    reason="governed dispatch commitment linearized",
-                    current_snapshot_digest=current.snapshot_digest,
+                    reason=(
+                        "governed dispatch commitment linearized"
+                        if permit.governance_applicable
+                        else "action-authority dispatch commitment linearized"
+                    ),
+                    current_snapshot_digest=current_snapshot_digest,
                     provider_execution_binding_ref=binding_ref,
                     reconciliation_repeatability_authority_ref=repeatability_ref,
+                    authorization_use_ref=authorization_use_ref,
+                    invocation_specification_ref=invocation_specification_ref,
                 )
         except Exception as exc:
             return DispatchCommitDecision(
