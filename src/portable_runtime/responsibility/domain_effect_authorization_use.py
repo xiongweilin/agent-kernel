@@ -7,7 +7,10 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from portable_runtime.core.capability_contract import CapabilityContract, CapabilityContractRegistry
+from portable_runtime.core.capability_contract import (
+    CapabilityContract,
+    CapabilityContractRegistry,
+)
 from portable_runtime.core.models import Decision, Evidence, utcnow
 from portable_runtime.records.authorization import (
     AuthorizationGrant,
@@ -17,6 +20,7 @@ from portable_runtime.records.authorization import (
     create_authorization_use,
 )
 from portable_runtime.responsibility.domain_effect_authorization import (
+    ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE,
     DOMAIN_EFFECT_INTENT_EVIDENCE_SCHEMA,
     REFERENCE_AUTHORIZATION_POLICY_REF,
     DomainEffectAuthorizationAdmission,
@@ -118,30 +122,39 @@ class DomainEffectAuthorizationUseConsumption:
             if existing is not None:
                 return self._replay_result(context, existing, use_id)
 
-            at = authorized_at or utcnow()
-            use = create_authorization_use(
+            created = create_authorization_use(
                 context.grant,
                 context.request,
-                authorized_at=at,
-            ).model_copy(
+                authorized_at=authorized_at or utcnow(),
+            )
+            use = created.model_copy(
                 update={
                     "id": use_id,
-                    "created_at": at,
+                    "created_at": created.authorized_at,
                 }
             )
             self.store.save_authorization_use(use)
             return self._result(context, use)
 
-    def _resolve_context(self, authorization_ref: str) -> DomainEffectAuthorizationUseContext:
+    def _resolve_context(
+        self,
+        authorization_ref: str,
+    ) -> DomainEffectAuthorizationUseContext:
         grant = self.store.get_authorization(authorization_ref)
         if not isinstance(grant, AuthorizationGrant):
-            raise ValueError("domain effect authorization use requires an existing AuthorizationGrant")
+            raise ValueError(
+                "domain effect authorization use requires an existing AuthorizationGrant"
+            )
 
         policy_ref = grant.metadata.get("policy_ref")
         if policy_ref != REFERENCE_AUTHORIZATION_POLICY_REF:
-            raise ValueError("domain effect authorization use requires the bounded reference policy")
+            raise ValueError(
+                "domain effect authorization use requires the bounded reference policy"
+            )
         if grant.principal_ref != f"policy:{REFERENCE_AUTHORIZATION_POLICY_REF}":
-            raise ValueError("runtime grant principal does not match the bounded reference policy")
+            raise ValueError(
+                "runtime grant principal does not match the bounded reference policy"
+            )
 
         decision_ref = grant.source_decision_ref
         if not isinstance(decision_ref, str) or not decision_ref:
@@ -154,16 +167,24 @@ class DomainEffectAuthorizationUseConsumption:
         if decision.selected_option != "authorized":
             raise ValueError("source Decision did not authorize the domain effect")
         if decision.metadata.get("policy_ref") != REFERENCE_AUTHORIZATION_POLICY_REF:
-            raise ValueError("source Decision policy does not match the bounded reference policy")
+            raise ValueError(
+                "source Decision policy does not match the bounded reference policy"
+            )
 
         evidence_ref = grant.metadata.get("domain_effect_intent_evidence_ref")
         if not isinstance(evidence_ref, str) or not evidence_ref:
-            raise ValueError("domain effect runtime grant lacks intent Evidence provenance")
+            raise ValueError(
+                "domain effect runtime grant lacks intent Evidence provenance"
+            )
         if decision.metadata.get("domain_effect_intent_evidence_ref") != evidence_ref:
-            raise ValueError("runtime Decision and AuthorizationGrant disagree on intent Evidence")
+            raise ValueError(
+                "runtime Decision and AuthorizationGrant disagree on intent Evidence"
+            )
         evidence = self.store.get_evidence(evidence_ref)
         if not isinstance(evidence, Evidence):
-            raise ValueError("domain effect runtime grant references unknown intent Evidence")
+            raise ValueError(
+                "domain effect runtime grant references unknown intent Evidence"
+            )
 
         intent = self._intent_from_evidence(evidence)
         if decision.work_id != intent.work_ref:
@@ -176,14 +197,30 @@ class DomainEffectAuthorizationUseConsumption:
             contract_registry=self.contract_registry,
         ).admit(intent)
         if admission.status != "authorized":
-            raise ValueError("current domain effect lineage no longer resolves to authorized")
+            raise ValueError(
+                "current domain effect lineage no longer resolves to authorized"
+            )
         if admission.authorization_ref != grant.id:
-            raise ValueError("current domain effect lineage resolves to a different runtime grant")
-        if admission.evidence_ref != evidence.id or admission.decision_ref != decision.id:
-            raise ValueError("current domain effect lineage does not match stored authorization provenance")
+            raise ValueError(
+                "current domain effect lineage resolves to a different runtime grant"
+            )
+        if (
+            admission.evidence_ref != evidence.id
+            or admission.decision_ref != decision.id
+        ):
+            raise ValueError(
+                "current domain effect lineage does not match stored authorization provenance"
+            )
 
         contract = self.contract_registry.resolve(intent.capability)
-        self._validate_exact_grant(grant, evidence, decision, admission, contract)
+        self._validate_exact_grant(
+            grant,
+            evidence,
+            decision,
+            intent,
+            admission,
+            contract,
+        )
         request = CanonicalAuthorizationRequest(
             capability=intent.capability,
             actor_ref=admission.actor_ref,
@@ -211,11 +248,15 @@ class DomainEffectAuthorizationUseConsumption:
         if metadata.get("schema") != DOMAIN_EFFECT_INTENT_EVIDENCE_SCHEMA:
             raise ValueError("runtime authorization Evidence has the wrong schema")
         if metadata.get("authority_bearing") is not False:
-            raise ValueError("domain effect intent Evidence must remain non-authoritative")
+            raise ValueError(
+                "domain effect intent Evidence must remain non-authoritative"
+            )
         parameters = metadata.get("parameters")
         postcondition = metadata.get("expected_postcondition")
         if not isinstance(parameters, dict) or not isinstance(postcondition, dict):
-            raise ValueError("domain effect intent Evidence lacks frozen parameters/postcondition")
+            raise ValueError(
+                "domain effect intent Evidence lacks frozen parameters/postcondition"
+            )
         intent = DomainEffectIntentEvidenceInput.model_validate(
             {
                 "work_ref": metadata.get("work_ref"),
@@ -232,7 +273,9 @@ class DomainEffectAuthorizationUseConsumption:
             }
         )
         if evidence.subject_refs != [intent.work_ref]:
-            raise ValueError("domain effect intent Evidence has invalid core subject refs")
+            raise ValueError(
+                "domain effect intent Evidence has invalid core subject refs"
+            )
         return intent
 
     @staticmethod
@@ -240,14 +283,26 @@ class DomainEffectAuthorizationUseConsumption:
         grant: AuthorizationGrant,
         evidence: Evidence,
         decision: Decision,
+        intent: DomainEffectIntentEvidenceInput,
         admission: DomainEffectAuthorizationResult,
         contract: CapabilityContract,
     ) -> None:
+        if intent.capability != ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE:
+            raise ValueError("capability is outside the bounded authorization-use slice")
+        if (
+            contract.minimum_impact_class != "write-remote"
+            or contract.effect_semantics != "reconcilable"
+            or contract.reversibility != "compensatable"
+            or contract.authorization_requirement != "required"
+            or not contract.resource_required
+            or not contract.subject_version_required
+        ):
+            raise ValueError("current capability contract no longer permits bounded use")
         if grant.source_decision_ref != decision.id:
             raise ValueError("runtime grant source Decision rebound")
         if grant.grantee_ref != admission.actor_ref:
             raise ValueError("runtime grant actor binding drifted")
-        if grant.allowed_capabilities != [admission.evidence_ref and str(evidence.metadata["capability"])]:
+        if grant.allowed_capabilities != [intent.capability]:
             raise ValueError("runtime grant capability binding drifted")
         if grant.resource_scope != [admission.resource_ref]:
             raise ValueError("runtime grant resource binding drifted")
@@ -256,7 +311,9 @@ class DomainEffectAuthorizationUseConsumption:
         if grant.effect_ceiling != contract.minimum_impact_class:
             raise ValueError("runtime grant effect ceiling drifted")
         if grant.conditions:
-            raise ValueError("runtime grant contains unsupported free-form conditions")
+            raise ValueError(
+                "runtime grant contains unsupported free-form conditions"
+            )
         bindings = [
             condition
             for condition in grant.typed_conditions
@@ -266,11 +323,22 @@ class DomainEffectAuthorizationUseConsumption:
             and condition.params.get("evidence_ref") == evidence.id
         ]
         if len(grant.typed_conditions) != 1 or len(bindings) != 1:
-            raise ValueError("runtime grant does not exactly bind domain business authority Evidence")
+            raise ValueError(
+                "runtime grant does not exactly bind domain business authority Evidence"
+            )
         if grant.metadata.get("domain_effect_intent_evidence_ref") != evidence.id:
             raise ValueError("runtime grant intent Evidence metadata drifted")
         if grant.metadata.get("work_ref") != decision.work_id:
             raise ValueError("runtime grant Work metadata drifted")
+        for metadata_key in ("responsibility_ref", "proposal_ref"):
+            if grant.metadata.get(metadata_key) != decision.metadata.get(metadata_key):
+                raise ValueError(
+                    f"runtime grant {metadata_key} metadata drifted from Decision"
+                )
+            if grant.metadata.get(metadata_key) != evidence.metadata.get(metadata_key):
+                raise ValueError(
+                    f"runtime grant {metadata_key} metadata drifted from Evidence"
+                )
 
     def _replay_result(
         self,
@@ -285,7 +353,9 @@ class DomainEffectAuthorizationUseConsumption:
             context.grant,
             context.request,
         ):
-            raise ValueError("existing domain effect AuthorizationUse does not cover the canonical request")
+            raise ValueError(
+                "existing domain effect AuthorizationUse does not cover the canonical request"
+            )
         return self._result(context, existing)
 
     @staticmethod
