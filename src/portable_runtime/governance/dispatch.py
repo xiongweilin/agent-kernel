@@ -5,6 +5,7 @@ import json
 import sqlite3
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import Any, Literal, cast
 
@@ -44,6 +45,53 @@ DispatchAuthorizationUseFactory = Callable[
     [CapabilityRequest, InvocationPermit, ProviderExecutionBinding | None, Any | None],
     AuthorizationUse,
 ]
+
+
+@dataclass(frozen=True)
+class DispatchActionAuthorityBinding:
+    """Task-local runtime authority inputs consumed only at dispatch linearization."""
+
+    request_id: str
+    provider_id: str
+    provider_execution_binding_ref: str
+    invocation_specification_ref: str
+    authorization_use_factory: DispatchAuthorizationUseFactory
+
+
+_DISPATCH_ACTION_AUTHORITY: ContextVar[DispatchActionAuthorityBinding | None] = ContextVar(
+    "portable_runtime_dispatch_action_authority",
+    default=None,
+)
+
+
+@contextmanager
+def bind_dispatch_action_authority(
+    binding: DispatchActionAuthorityBinding,
+) -> Iterator[None]:
+    """Bind action authority to the current task without mutating request metadata.
+
+    The scope is runtime provenance, not caller input and not reusable provider
+    operation meaning. Nested bindings are rejected so an outer execution
+    context cannot silently replace or inherit another action authority.
+    """
+
+    for label, value in (
+        ("request", binding.request_id),
+        ("provider", binding.provider_id),
+        ("provider execution binding", binding.provider_execution_binding_ref),
+        ("InvocationSpecification", binding.invocation_specification_ref),
+    ):
+        if not isinstance(value, str) or not value.strip():
+            raise DispatchLinearizationError(
+                f"dispatch action authority {label} identity must be non-empty"
+            )
+    if _DISPATCH_ACTION_AUTHORITY.get() is not None:
+        raise DispatchLinearizationError("nested dispatch action authority is forbidden")
+    token = _DISPATCH_ACTION_AUTHORITY.set(binding)
+    try:
+        yield
+    finally:
+        _DISPATCH_ACTION_AUTHORITY.reset(token)
 
 
 @dataclass(frozen=True)
@@ -138,7 +186,7 @@ def dispatch_commit_identity_from_payload(payload: dict[str, Any]) -> str:
 
     Absence of optional B/C/action-authority refs preserves earlier deterministic
     identities byte-for-byte. Presence of any ref makes that authority identity
-    part of the dispatch identity. A malformed present ref is never interpreted
+    part of the new dispatch identity. A malformed present ref is never interpreted
     as an older case.
     """
 
@@ -331,6 +379,26 @@ class GovernanceDispatchCommitter:
         authorization_use_factory: DispatchAuthorizationUseFactory | None = None,
         invocation_specification_ref: str | None = None,
     ) -> DispatchCommitDecision:
+        scoped_action_authority = _DISPATCH_ACTION_AUTHORITY.get()
+        if scoped_action_authority is not None:
+            if authorization_use_factory is not None or invocation_specification_ref is not None:
+                return DispatchCommitDecision(
+                    status="unavailable",
+                    reason="dispatch action authority cannot be supplied both explicitly and by runtime scope",
+                )
+            if scoped_action_authority.request_id != request.id:
+                return DispatchCommitDecision(
+                    status="unavailable",
+                    reason="dispatch action authority request does not match current request",
+                )
+            if scoped_action_authority.provider_id != permit.provider_id:
+                return DispatchCommitDecision(
+                    status="unavailable",
+                    reason="dispatch action authority provider does not match InvocationPermit",
+                )
+            authorization_use_factory = scoped_action_authority.authorization_use_factory
+            invocation_specification_ref = scoped_action_authority.invocation_specification_ref
+
         action_authority_bound = (
             authorization_use_factory is not None
             or invocation_specification_ref is not None
@@ -428,6 +496,13 @@ class GovernanceDispatchCommitter:
                     if execution_binding.provider_id != permit.provider_id:
                         raise DispatchLinearizationError(
                             "provider execution binding does not match InvocationPermit provider"
+                        )
+                    if scoped_action_authority is not None and (
+                        execution_binding.id
+                        != scoped_action_authority.provider_execution_binding_ref
+                    ):
+                        raise DispatchLinearizationError(
+                            "runtime action authority provider execution binding changed before dispatch"
                         )
                     if repeatability_authority is not None:
                         if (
