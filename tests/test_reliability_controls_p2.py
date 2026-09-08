@@ -118,3 +118,68 @@ def test_risk_evaluator_and_policy_decision_are_independent() -> None:
     assert risk.reason_refs == ()
     assert disposition.action == "deny"
     assert disposition.reason == "blast_radius 4 exceeds limit 2"
+
+
+def test_policy_side_effect_limits_do_not_block_pure_observation() -> None:
+    limits = ReliabilityLimits(
+        max_action_rate=100,
+        max_parallel_side_effects=1,
+        blast_radius=1,
+        exposure_budget=1,
+        side_effect_budget=1,
+    )
+    observation = ReliabilityObservation(
+        action_rate=1,
+        active_side_effects=1,
+        side_effect_count=1,
+        exposure_used=1,
+        requested_blast_radius=999,
+        requested_exposure=999,
+        cooldown_remaining=60,
+    )
+    evaluator = ReliabilityRiskEvaluator()
+    risk = evaluator.evaluate(
+        observation,
+        side_effect=False,
+        irreversible=False,
+        procedure_profile="enhanced",
+        timing=None,
+    )
+    policy = DefaultLocalReliabilityPolicy(limits=limits, cooldown_seconds=60)
+
+    disposition = policy.decide(
+        observation,
+        risk,
+        limits,
+        side_effect=False,
+    )
+
+    assert risk.reason_refs == ()
+    assert disposition.action == "allow"
+    assert disposition.reason == "allowed"
+
+
+def test_pure_read_can_follow_side_effect_during_cooldown_and_budget_exhaustion() -> None:
+    controls = ReliabilityControls(
+        max_parallel_side_effects=1,
+        blast_radius=1,
+        cooldown_seconds=60,
+        exposure_budget=1,
+        side_effect_budget=1,
+    )
+    assert controls.can_execute(side_effect=True, action_blast_radius=1, exposure=1)
+    controls.record_action(side_effect=True, action_blast_radius=1, exposure=1)
+
+    assert controls.can_execute(
+        side_effect=False,
+        action_blast_radius=999,
+        exposure=999,
+        procedure_profile="enhanced",
+    )
+    assert controls.last_block_reason is None
+
+    assert not controls.can_execute(side_effect=True, action_blast_radius=1, exposure=1)
+    assert controls.last_block_reason == "max_parallel_side_effects exceeded"
+    controls.complete_action(side_effect=True)
+    assert not controls.can_execute(side_effect=True, action_blast_radius=1, exposure=1)
+    assert controls.last_block_reason == "side_effect_budget exhausted"
