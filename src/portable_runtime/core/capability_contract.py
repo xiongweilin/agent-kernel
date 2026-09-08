@@ -68,17 +68,12 @@ class CapabilityEffectRule(BaseModel):
     authorization_required: bool = False
     resource_required: bool = False
     version_required: bool = False
-    # Reliability declaration used by the RealityBoundary before provider
-    # invocation.  ``None`` means a high-impact capability has not declared a
-    # bounded exposure and must fail closed.
     blast_radius: int | None = None
     exposure: int | None = None
     recovery_timing: dict[str, float] | None = None
 
     @property
     def subject_version_required(self) -> bool:
-        """Compatibility spelling used by ``CapabilityContract``."""
-
         return self.version_required
 
 
@@ -114,9 +109,6 @@ class CapabilityEffectRegistry:
 
 
 def _builtin_effect_rules() -> list[CapabilityEffectRule]:
-    # Keep this registry deliberately small.  More detailed workflow
-    # requirements remain in CapabilityContract; these rules only answer the
-    # boundary's effect and authorization questions.
     return [
         CapabilityEffectRule(capability="observe.*", impact_class="read"),
         CapabilityEffectRule(capability="verify.*", impact_class="read"),
@@ -165,9 +157,6 @@ def _is_side_effect_capability(contract, capability: str) -> bool:
     if contract is not None:
         return contract.minimum_impact_class != "read" or contract.effect_semantics != "pure"
     lower = capability.lower()
-    # Unknown action namespaces must fail closed.  Only explicit read-only
-    # compatibility prefixes are safe defaults; an unknown ``code.*`` action
-    # must not become a read merely because it shares the namespace.
     if lower == "test.read" or lower.endswith(".read"):
         return False
     if lower.startswith(("observe.", "verify.", "human.", "reason.")):
@@ -199,8 +188,6 @@ class CapabilityContractRegistry:
         self.effect_registry = effect_registry or CapabilityEffectRegistry()
         for c in _builtin_contracts():
             self._contracts[c.capability] = c
-            # A contract is also an authoritative effect rule.  Do not let a
-            # legacy contract silently disappear from the strict registry.
             self.effect_registry.register(
                 CapabilityEffectRule(
                     capability=c.capability,
@@ -216,8 +203,6 @@ class CapabilityContractRegistry:
         if contracts:
             for c in contracts:
                 self.register(c)
-        # A caller-supplied registry is an explicit runtime authority and
-        # therefore wins over compatibility built-ins on exact/pattern match.
         for rule in supplied_effect_rules:
             self.effect_registry.register(rule)
     def register(self, contract):
@@ -233,8 +218,6 @@ class CapabilityContractRegistry:
         )
 
     def register_effect_rule(self, rule: CapabilityEffectRule | dict[str, Any]) -> CapabilityEffectRule:
-        """Register the minimal rule without requiring a full contract."""
-
         value = self.effect_registry.register(rule)
         self._contracts[value.capability] = CapabilityContract(
             capability=value.capability,
@@ -276,6 +259,7 @@ class CapabilityContractRegistry:
         return list(self._contracts.values())
 def _builtin_contracts():
     return [
+        CapabilityContract(capability="administrative.hris.employee.create.v1", minimum_impact_class="write-remote", effect_semantics="reconcilable", reversibility="compensatable", authorization_requirement="required", minimum_procedure_profile="standard", resource_required=True, subject_version_required=True, default_independence_requirements=[], blast_radius=1, exposure=1),
         CapabilityContract(capability="deploy.prod", minimum_impact_class="deploy", effect_semantics="reconcilable", reversibility="compensatable", authorization_requirement="required", minimum_procedure_profile="standard", resource_required=True, subject_version_required=True, default_independence_requirements=["credential_domain", "provider_family"], blast_radius=5, exposure=5),
         CapabilityContract(capability="deploy.*", minimum_impact_class="deploy", effect_semantics="reconcilable", reversibility="compensatable", authorization_requirement="required", minimum_procedure_profile="standard", resource_required=True, subject_version_required=True, default_independence_requirements=["credential_domain", "provider_family"], blast_radius=5, exposure=5),
         CapabilityContract(capability="code.edit", minimum_impact_class="write-local", effect_semantics="idempotent", reversibility="reversible", authorization_requirement="required", minimum_procedure_profile="standard", resource_required=True, subject_version_required=True, default_independence_requirements=[], blast_radius=1, exposure=1),
