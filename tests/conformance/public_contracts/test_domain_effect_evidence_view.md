@@ -1,1 +1,0 @@
-The executable conformance lives in `test_domain_effect_evidence_view.py`. It proves the public read view returns the actual observed postcondition from canonical Kernel verification evidence, is read-only and non-authoritative, and fails closed for unknown or non-domain-effect evidence identities.
