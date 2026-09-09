@@ -9,9 +9,6 @@ from pydantic import BaseModel, ConfigDict, Field
 from portable_runtime.core.models import Action, Run, Work
 from portable_runtime.records.models import EvidenceArtifact, OutcomeRecord
 from portable_runtime.responsibility.domain import record_domain_assessment
-from portable_runtime.responsibility.domain_effect_authorization import (
-    ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE,
-)
 from portable_runtime.responsibility.domain_effect_authorization_use import (
     DomainEffectAuthorizationUseConsumption,
 )
@@ -101,8 +98,6 @@ class DomainEffectResponsibilityReassessment:
         action = self.store.get_action(outcome.action_ref)
         if not isinstance(action, Action):
             raise ValueError("domain effect responsibility reassessment requires durable effect Action")
-        if action.capability != ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE:
-            raise ValueError("Outcome Action is outside the bounded reassessment slice")
         work = self.store.get_work(action.work_id)
         run = self.store.get_run(action.run_id)
         if not isinstance(work, Work) or not isinstance(run, Run):
@@ -144,6 +139,8 @@ class DomainEffectResponsibilityReassessment:
         if not isinstance(authorization_ref, str) or not authorization_ref:
             raise ValueError("domain effect Run lacks runtime authorization ref")
         authorization = self.authorization._resolve_context(authorization_ref)
+        if action.capability != authorization.intent.capability:
+            raise ValueError("Outcome Action capability drifted from runtime authorization")
         contract, contract_digest = require_domain_effect_completion_contract(work, authorization)
         if run_metadata.get("domain_effect_completion_contract_digest") != contract_digest:
             raise ValueError("domain effect Run completion contract binding drifted")
