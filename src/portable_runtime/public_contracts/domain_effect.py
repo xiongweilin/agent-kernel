@@ -304,6 +304,7 @@ class BoundedDomainEffectExecutionService:
             DomainEffectActionAuthorityResolver(
                 self.runtime.store,
                 self.runtime.registry,
+                contract_registry=self.runtime.contract_registry,
             ),
         ).execute(request)
         attempt = self._attempt_for_request(run_result.run_ref, request.id)
