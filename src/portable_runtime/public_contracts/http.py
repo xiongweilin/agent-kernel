@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import os
 from typing import Any
 
@@ -42,6 +43,7 @@ from portable_runtime.responsibility.admission_profiles import (
 RESPONSIBILITY_ADMISSION_PROFILE_ENV = (
     "PORTABLE_RUNTIME_RESPONSIBILITY_ADMISSION_PROFILE"
 )
+BOUNDED_DOMAIN_EFFECT_FACTORY_ENV = "PORTABLE_RUNTIME_BOUNDED_DOMAIN_EFFECT_FACTORY"
 
 
 def _problem(
@@ -87,6 +89,48 @@ def _select_responsibility_admission_policy(
     if policy is not None:
         return policy
     return responsibility_admission_policy_for_profile(profile or BOUNDED_LOCAL_PROFILE)
+
+
+def _load_bounded_domain_effect_stack(
+    factory_spec: str,
+) -> tuple[Runtime, BoundedDomainEffectExecutionService]:
+    """Load one deployment-owned execution stack without importing domain policy.
+
+    ``factory_spec`` uses ``module:function`` syntax. The callable must return
+    ``(Runtime, BoundedDomainEffectExecutionService)`` and the service must be
+    bound to that exact Runtime instance. The deployment factory owns provider
+    registration, durable store selection, credentials and capability profiles;
+    Kernel owns only the generic execution protocol and validates the seam.
+    """
+
+    module_name, separator, attribute = factory_spec.strip().partition(":")
+    if not separator or not module_name or not attribute:
+        raise ValueError(
+            f"{BOUNDED_DOMAIN_EFFECT_FACTORY_ENV} must use module:function syntax"
+        )
+    module = importlib.import_module(module_name)
+    factory = getattr(module, attribute, None)
+    if not callable(factory):
+        raise ValueError(
+            f"configured bounded domain-effect factory {factory_spec!r} is not callable"
+        )
+    configured = factory()
+    if not isinstance(configured, tuple) or len(configured) != 2:
+        raise ValueError(
+            "bounded domain-effect factory must return (Runtime, BoundedDomainEffectExecutionService)"
+        )
+    runtime, service = configured
+    if not isinstance(runtime, Runtime):
+        raise ValueError("bounded domain-effect factory returned an invalid Runtime")
+    if not isinstance(service, BoundedDomainEffectExecutionService):
+        raise ValueError(
+            "bounded domain-effect factory returned an invalid execution service"
+        )
+    if service.runtime is not runtime:
+        raise ValueError(
+            "bounded domain-effect execution service must share the configured Runtime"
+        )
+    return runtime, service
 
 
 def contract_router(
@@ -295,13 +339,22 @@ def create_public_app(
 
 
 def create_configured_public_app() -> FastAPI:
-    """ASGI factory using an explicit server-side admission profile selector."""
+    """ASGI factory using deployment-owned policy and execution configuration."""
 
     profile = os.getenv(RESPONSIBILITY_ADMISSION_PROFILE_ENV, BOUNDED_LOCAL_PROFILE)
-    return create_public_app(responsibility_admission_profile=profile)
+    factory_spec = os.getenv(BOUNDED_DOMAIN_EFFECT_FACTORY_ENV)
+    if not factory_spec:
+        return create_public_app(responsibility_admission_profile=profile)
+    runtime, execution = _load_bounded_domain_effect_stack(factory_spec)
+    return create_public_app(
+        runtime,
+        responsibility_admission_profile=profile,
+        bounded_domain_effect_execution=execution,
+    )
 
 
 __all__ = [
+    "BOUNDED_DOMAIN_EFFECT_FACTORY_ENV",
     "RESPONSIBILITY_ADMISSION_PROFILE_ENV",
     "contract_router",
     "create_configured_public_app",
