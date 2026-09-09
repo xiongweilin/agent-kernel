@@ -1,0 +1,97 @@
+name: Propagate Runtime capability contract registry
+
+on:
+  push:
+    branches: [codex/second-admin-capability]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/second-admin-capability
+      - name: Thread Runtime contract registry through bounded execution stages
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace(path: str, old: str, new: str) -> None:
+              file = Path(path)
+              text = file.read_text()
+              if old not in text:
+                  raise SystemExit(f"expected block not found in {path}: {old[:100]!r}")
+              file.write_text(text.replace(old, new, 1))
+
+          for path in (
+              "src/portable_runtime/responsibility/domain_effect_activation.py",
+              "src/portable_runtime/responsibility/domain_effect_qualification.py",
+              "src/portable_runtime/responsibility/domain_effect_terminal_completion.py",
+              "src/portable_runtime/responsibility/domain_effect_responsibility_reassessment.py",
+          ):
+              replace(
+                  path,
+                  "from pydantic import BaseModel, ConfigDict, Field\n\n",
+                  "from pydantic import BaseModel, ConfigDict, Field\n\nfrom portable_runtime.core.capability_contract import CapabilityContractRegistry\n",
+              )
+
+          replace(
+              "src/portable_runtime/responsibility/domain_effect_activation.py",
+              '''    def __init__(self, store: Any) -> None:\n        self.store = store\n        self.authorization = DomainEffectAuthorizationUseConsumption(store)\n''',
+              '''    def __init__(\n        self,\n        store: Any,\n        *,\n        contract_registry: CapabilityContractRegistry | None = None,\n    ) -> None:\n        self.store = store\n        self.contract_registry = contract_registry or CapabilityContractRegistry()\n        self.authorization = DomainEffectAuthorizationUseConsumption(\n            store,\n            contract_registry=self.contract_registry,\n        )\n''',
+          )
+          replace(
+              "src/portable_runtime/responsibility/domain_effect_qualification.py",
+              '''    def __init__(self, store: Any) -> None:\n        self.store = store\n        self.authorization = DomainEffectAuthorizationUseConsumption(store)\n''',
+              '''    def __init__(\n        self,\n        store: Any,\n        *,\n        contract_registry: CapabilityContractRegistry | None = None,\n    ) -> None:\n        self.store = store\n        self.contract_registry = contract_registry or CapabilityContractRegistry()\n        self.authorization = DomainEffectAuthorizationUseConsumption(\n            store,\n            contract_registry=self.contract_registry,\n        )\n''',
+          )
+          replace(
+              "src/portable_runtime/responsibility/domain_effect_terminal_completion.py",
+              '''    def __init__(self, store: Any) -> None:\n        self.store = store\n        self.kernel = ResponsibilityKernel(store)\n        self.completion = CompletionAuthority(store)\n        self.authorization = DomainEffectAuthorizationUseConsumption(store)\n''',
+              '''    def __init__(\n        self,\n        store: Any,\n        *,\n        contract_registry: CapabilityContractRegistry | None = None,\n    ) -> None:\n        self.store = store\n        self.kernel = ResponsibilityKernel(store)\n        self.completion = CompletionAuthority(store)\n        self.contract_registry = contract_registry or CapabilityContractRegistry()\n        self.authorization = DomainEffectAuthorizationUseConsumption(\n            store,\n            contract_registry=self.contract_registry,\n        )\n''',
+          )
+          replace(
+              "src/portable_runtime/responsibility/domain_effect_responsibility_reassessment.py",
+              '''    def __init__(self, store: Any) -> None:\n        self.store = store\n        self.kernel = ResponsibilityKernel(store)\n        self.authorization = DomainEffectAuthorizationUseConsumption(store)\n''',
+              '''    def __init__(\n        self,\n        store: Any,\n        *,\n        contract_registry: CapabilityContractRegistry | None = None,\n    ) -> None:\n        self.store = store\n        self.kernel = ResponsibilityKernel(store)\n        self.contract_registry = contract_registry or CapabilityContractRegistry()\n        self.authorization = DomainEffectAuthorizationUseConsumption(\n            store,\n            contract_registry=self.contract_registry,\n        )\n''',
+          )
+
+          replace(
+              "src/portable_runtime/responsibility/domain_effect_verified_outcome.py",
+              '''        self.boundary = boundary\n        self.store = boundary.store\n        self.registry = boundary.registry\n        self.verifier_provider_id = verifier_provider_id\n''',
+              '''        self.boundary = boundary\n        self.store = boundary.store\n        self.registry = boundary.registry\n        self.authorization = DomainEffectAuthorizationUseConsumption(\n            self.store,\n            contract_registry=boundary.contract_registry,\n        )\n        self.verifier_provider_id = verifier_provider_id\n''',
+          )
+          replace(
+              "src/portable_runtime/responsibility/domain_effect_verified_outcome.py",
+              '''        authorization = DomainEffectAuthorizationUseConsumption(self.store)._resolve_context(\n            authorization_ref\n        )\n''',
+              '''        authorization = self.authorization._resolve_context(authorization_ref)\n''',
+          )
+
+          replace(
+              "src/portable_runtime/public_contracts/domain_effect.py",
+              '''        activation = DomainEffectRunActivation(self.runtime.store).activate(\n''',
+              '''        activation = DomainEffectRunActivation(\n            self.runtime.store,\n            contract_registry=self.runtime.contract_registry,\n        ).activate(\n''',
+          )
+          replace(
+              "src/portable_runtime/public_contracts/domain_effect.py",
+              '''        qualification = DomainEffectQualificationAssessment(self.runtime.store).assess(\n''',
+              '''        qualification = DomainEffectQualificationAssessment(\n            self.runtime.store,\n            contract_registry=self.runtime.contract_registry,\n        ).assess(\n''',
+          )
+          replace(
+              "src/portable_runtime/public_contracts/domain_effect.py",
+              '''        completed = DomainEffectTerminalCompletion(self.runtime.store).complete(\n''',
+              '''        completed = DomainEffectTerminalCompletion(\n            self.runtime.store,\n            contract_registry=self.runtime.contract_registry,\n        ).complete(\n''',
+          )
+
+          Path(".github/workflows/propagate-runtime-contract-registry.yml").unlink()
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Preserve Runtime capability contracts across bounded execution"
+          git push origin HEAD:codex/second-admin-capability
