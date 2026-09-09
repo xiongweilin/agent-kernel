@@ -1,8 +1,8 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from portable_runtime.core.models import Event, Run, Step, StepAttempt
 from portable_runtime.governance.dispatch import DISPATCH_COMMIT_EVENT
-from portable_runtime.records.authorization import AuthorizationUse
+from portable_runtime.records.authorization import AuthorizationGrant, AuthorizationUse
 from portable_runtime.responsibility.domain_effect_activation import (
     DOMAIN_EFFECT_ACTIVATION_EVENT,
     DOMAIN_EFFECT_ACTIVATION_SCHEMA,
@@ -32,9 +32,21 @@ def test_committed_action_boundary_requires_exact_activation_dispatch_use_attemp
         payload={"request": {"id": "request:recovery"}},
     )
     store.save_event(request_event)
+    grant = AuthorizationGrant(
+        id="authz:recovery",
+        principal_ref="policy:test",
+        grantee_ref="service:administrative-orchestrator",
+        allowed_capabilities=["administrative.hris.employee.create.v1"],
+        resource_scope=["employee:recovery"],
+        effect_ceiling="write-remote",
+        valid_from=NOW - timedelta(minutes=1),
+        expires_at=NOW + timedelta(minutes=30),
+        subject_version_refs=["authority-epoch:1"],
+    )
+    store.save_authorization(grant)
     use = AuthorizationUse(
         id="authuse:recovery",
-        authorization_ref="authz:recovery",
+        authorization_ref=grant.id,
         capability="administrative.hris.employee.create.v1",
         actor_ref="service:administrative-orchestrator",
         resource_ref="employee:recovery",
