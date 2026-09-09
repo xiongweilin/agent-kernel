@@ -56,7 +56,7 @@ def _domain_payload() -> dict[str, object]:
         assessment_kind="administrative-obligation-ready",
         basis_refs=["administrative-grant:grant-1"],
         assessed_at=NOW,
-        fresh_until=NOW + timedelta(days=1),
+        fresh_until=NOW + timedelta(days=3650),
         rationale="domain policy and governance are closed",
     )
     proposal = WorkProposal(
@@ -76,7 +76,7 @@ def _domain_payload() -> dict[str, object]:
         requested_capabilities=["administrative.hris.employee.create.v1"],
         expected_result="employee exists with governed onboarding fields",
         effect_class=EffectClass.EXTERNAL_EFFECT,
-        fresh_until=NOW + timedelta(days=1),
+        fresh_until=NOW + timedelta(days=3650),
     )
     return {
         "schema": "domain-responsibility-proposal-v1",

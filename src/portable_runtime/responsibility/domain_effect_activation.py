@@ -7,8 +7,9 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from portable_runtime.core.capability_contract import CapabilityContractRegistry
-from portable_runtime.core.models import Event, Run, utcnow
-from portable_runtime.records.authorization import is_grant_valid
+from portable_runtime.core.models import Event, Run, StepAttempt, utcnow
+from portable_runtime.governance.dispatch import DISPATCH_COMMIT_EVENT
+from portable_runtime.records.authorization import AuthorizationUse, is_grant_valid
 from portable_runtime.responsibility.domain_effect_authorization_use import (
     DomainEffectAuthorizationUseConsumption,
 )
@@ -60,6 +61,11 @@ class DomainEffectRunActivation:
     The execution owner is supplied by the Kernel scheduler/service boundary,
     not by the domain request. Activation does not consume AuthorizationUse,
     select a provider, issue InvocationPermit, or create an Action/Attempt.
+
+    A fresh process may acquire a new fencing generation after the physical
+    action boundary only when the store proves the exact historical activation,
+    dispatch commitment, AuthorizationUse, Attempt, and Run binding. Consumed
+    authority without that committed lineage remains invalid pre-activation use.
     """
 
     def __init__(
@@ -104,16 +110,25 @@ class DomainEffectRunActivation:
         )
         context = self.authorization._resolve_context(authorization_ref)
         self._validate_run_context(run, metadata, context)
-        if not is_grant_valid(context.grant, now=at):
-            raise ValueError(
-                "domain effect runtime grant is not current for Run activation"
-            )
-        if any(
-            getattr(use, "authorization_ref", None) == context.grant.id
+        uses = [
+            use
             for use in self.store.list_authorization_uses()
-        ):
+            if isinstance(use, AuthorizationUse)
+            and use.authorization_ref == context.grant.id
+        ]
+        committed_resume = self._has_committed_action_boundary(
+            run,
+            request_event,
+            authorization_ref=context.grant.id,
+            authorization_uses=uses,
+        )
+        if uses and not committed_resume:
             raise ValueError(
                 "domain effect authorization was consumed before Run activation"
+            )
+        if not committed_resume and not is_grant_valid(context.grant, now=at):
+            raise ValueError(
+                "domain effect runtime grant is not current for Run activation"
             )
 
         leased = self._ensure_lease(run, owner, ttl_seconds)
@@ -165,6 +180,7 @@ class DomainEffectRunActivation:
                     "lease_generation": generation,
                     "lease_expires_at": lease_expires_at.isoformat(),
                     "started_at": started_at.isoformat(),
+                    "resume_after_committed_action_boundary": committed_resume,
                 },
             )
             self.store.save_event(event)
@@ -269,6 +285,86 @@ class DomainEffectRunActivation:
         for key, expected_value in expected.items():
             if metadata.get(key) != expected_value:
                 raise ValueError(f"domain effect Run provenance rebound at {key}")
+
+    def _has_committed_action_boundary(
+        self,
+        run: Run,
+        request_event: Event,
+        *,
+        authorization_ref: str,
+        authorization_uses: list[AuthorizationUse],
+    ) -> bool:
+        if not authorization_uses:
+            return False
+        if len(authorization_uses) != 1:
+            raise ValueError("domain effect authorization has multiple canonical uses")
+        if run.status != "running" or run.started_at is None:
+            return False
+
+        request_payload = request_event.payload if isinstance(request_event.payload, dict) else {}
+        raw_request = request_payload.get("request")
+        if not isinstance(raw_request, dict):
+            raise ValueError("domain effect prepared request lacks canonical request identity")
+        request_ref = raw_request.get("id")
+        if not isinstance(request_ref, str) or not request_ref:
+            raise ValueError("domain effect prepared request lacks canonical request ref")
+
+        activation_events = [
+            event
+            for event in self.store.list_events(run.id)
+            if event.type == DOMAIN_EFFECT_ACTIVATION_EVENT
+        ]
+        if not activation_events:
+            return False
+        if not any(
+            isinstance(event.payload, dict)
+            and event.payload.get("schema") == DOMAIN_EFFECT_ACTIVATION_SCHEMA
+            and event.payload.get("work_ref") == run.work_id
+            and event.payload.get("request_event_ref") == request_event.id
+            and event.payload.get("authority_bearing") is False
+            for event in activation_events
+        ):
+            raise ValueError("domain effect historical activation lineage rebound")
+
+        dispatches = [
+            event
+            for event in self.store.list_events(request_ref)
+            if event.type == DISPATCH_COMMIT_EVENT
+        ]
+        if not dispatches:
+            return False
+        if len(dispatches) != 1:
+            raise ValueError("domain effect request has multiple dispatch commitments")
+        dispatch = dispatches[0]
+        payload = dispatch.payload if isinstance(dispatch.payload, dict) else {}
+        if payload.get("request_id") != request_ref:
+            raise ValueError("domain effect dispatch request identity rebound")
+
+        use = authorization_uses[0]
+        authorization_use_ref = payload.get("authorization_use_ref")
+        if authorization_use_ref != use.id or use.authorization_ref != authorization_ref:
+            raise ValueError("domain effect dispatch AuthorizationUse rebound")
+        persisted_use = self.store.get_authorization_use(use.id)
+        if not isinstance(persisted_use, AuthorizationUse) or persisted_use != use:
+            raise ValueError("domain effect dispatch AuthorizationUse is unavailable")
+
+        attempt_ref = payload.get("attempt_ref")
+        if not isinstance(attempt_ref, str) or not attempt_ref:
+            raise ValueError("domain effect dispatch lacks durable Attempt ref")
+        attempt = self.store.get_attempt(attempt_ref)
+        if not isinstance(attempt, StepAttempt):
+            raise ValueError("domain effect dispatch Attempt is unavailable")
+        if attempt.request_ref != request_ref:
+            raise ValueError("domain effect dispatch Attempt request rebound")
+        step = self.store.get_step(attempt.step_id)
+        if step is None or step.run_id != run.id:
+            raise ValueError("domain effect dispatch Attempt Run rebound")
+        attempt_metadata = attempt.metadata if isinstance(attempt.metadata, dict) else {}
+        if attempt_metadata.get("dispatch_commit_ref") != dispatch.id:
+            raise ValueError("domain effect dispatch Attempt commitment rebound")
+        if attempt_metadata.get("authorization_use_ref") != use.id:
+            raise ValueError("domain effect dispatch Attempt AuthorizationUse rebound")
+        return True
 
     @staticmethod
     def _lease_is_current(run: Run, owner: str) -> bool:

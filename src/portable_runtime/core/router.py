@@ -169,7 +169,7 @@ class CapabilityService:
         if boundary is not None:
             self.boundary = boundary
             self.registry = boundary.registry
-            self.routing = boundary.routing
+            self.routing = routing or boundary.routing
             self.store = boundary.store
             self.runtime_id = boundary.runtime_id
             if hasattr(self.routing, "registry"):
