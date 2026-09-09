@@ -84,7 +84,7 @@ class BoundedDomainEffectExecutionV1(BaseModel):
     )
 
     schema_: Literal["bounded-domain-effect-execution-v1"] = Field(
-        BOUNDED_DOMAIN_EFFECT_EXECUTION_SCHEMA,
+        "bounded-domain-effect-execution-v1",
         alias="schema",
     )
     work_ref: str = Field(min_length=1)
@@ -110,7 +110,7 @@ class BoundedDomainEffectExecutionReceiptV1(BaseModel):
     )
 
     schema_: Literal["bounded-domain-effect-execution-receipt-v1"] = Field(
-        BOUNDED_DOMAIN_EFFECT_EXECUTION_RECEIPT_SCHEMA,
+        "bounded-domain-effect-execution-receipt-v1",
         alias="schema",
     )
     execution_ref: str
@@ -210,6 +210,7 @@ class BoundedDomainEffectExecutionService:
         if authorization.status != "authorized" or authorization.authorization_ref is None:
             return self._record(
                 BoundedDomainEffectExecutionReceiptV1(
+                    schema="bounded-domain-effect-execution-receipt-v1",
                     execution_ref=execution_ref,
                     status="authorization-rejected",
                     work_ref=command.work_ref,
@@ -291,14 +292,15 @@ class BoundedDomainEffectExecutionService:
             DomainEffectActionAuthorityResolver(
                 self.runtime.store,
                 self.runtime.registry,
-                contract_registry=self.runtime.contract_registry,
             ),
         ).execute(request)
         attempt = self._attempt_for_request(run_result.run_ref, request.id)
         if attempt is None:
             raise ValueError("bounded domain-effect execution returned without durable Attempt")
         if result.status != "succeeded":
-            status = "execution-failed" if result.status == "failed" else "execution-unknown"
+            result_status: Literal["execution-failed", "execution-unknown"] = (
+                "execution-failed" if result.status == "failed" else "execution-unknown"
+            )
             return self._record(
                 self._runtime_receipt(
                     command,
@@ -308,7 +310,7 @@ class BoundedDomainEffectExecutionService:
                     authorization.authorization_ref,
                     profile,
                     attempt,
-                    status=status,
+                    status=result_status,
                     processed_at=at,
                 )
             )
@@ -395,7 +397,9 @@ class BoundedDomainEffectExecutionService:
                 attempt,
                 at,
             )
-        status = "execution-failed" if attempt.status == "failed" else "execution-unknown"
+        attempt_status: Literal["execution-failed", "execution-unknown"] = (
+            "execution-failed" if attempt.status == "failed" else "execution-unknown"
+        )
         return self._record(
             self._runtime_receipt(
                 command,
@@ -405,7 +409,7 @@ class BoundedDomainEffectExecutionService:
                 authorization_ref,
                 profile,
                 attempt,
-                status=status,
+                status=attempt_status,
                 processed_at=at,
             )
         )
@@ -429,6 +433,7 @@ class BoundedDomainEffectExecutionService:
         if verified.objective_result != "pass":
             return self._record(
                 BoundedDomainEffectExecutionReceiptV1(
+                    schema="bounded-domain-effect-execution-receipt-v1",
                     execution_ref=execution_ref,
                     status="verified-fail",
                     work_ref=command.work_ref,
@@ -447,6 +452,7 @@ class BoundedDomainEffectExecutionService:
         )
         return self._record(
             BoundedDomainEffectExecutionReceiptV1(
+                schema="bounded-domain-effect-execution-receipt-v1",
                 execution_ref=execution_ref,
                 status="completed",
                 work_ref=completed.work_ref,
@@ -482,6 +488,7 @@ class BoundedDomainEffectExecutionService:
         processed_at: datetime,
     ) -> BoundedDomainEffectExecutionReceiptV1:
         return BoundedDomainEffectExecutionReceiptV1(
+            schema="bounded-domain-effect-execution-receipt-v1",
             execution_ref=execution_ref,
             status=status,
             work_ref=command.work_ref,
@@ -509,7 +516,7 @@ class BoundedDomainEffectExecutionService:
             subject_ref=receipt.work_ref,
             payload=receipt.model_dump(mode="json", by_alias=True),
         )
-        self.runtime.store.save_event(event)
+        self.runtime.store.append_event(event)
         persisted = self.inspect(receipt.execution_ref)
         if persisted != receipt:
             raise ValueError("bounded domain-effect execution receipt persistence mismatch")
