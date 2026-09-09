@@ -49,6 +49,16 @@ public_command = "bounded-domain-effect-execution-v1"
 public_read = true
 authority_bearing = false
 
+[contracts.bounded_domain_effect_recovery]
+current = "bounded-domain-effect-recovery-v1"
+schema_path = "contracts/schemas/responsibility/bounded-domain-effect-recovery-v1.schema.json"
+resolution = "bounded-domain-effect-resolution-v1"
+resolution_schema_path = "contracts/schemas/responsibility/bounded-domain-effect-resolution-v1.schema.json"
+semantic_path = "contracts/semantics/core/bounded-domain-effect-recovery-v1.md"
+public_command = "bounded-domain-effect-recovery-v1"
+public_read = true
+authority_bearing = false
+
 [contracts.cognitive_control]
 current = "cognitive-control-v2"
 semantic_path = "contracts/semantics/core/cognitive-control-v2.md"

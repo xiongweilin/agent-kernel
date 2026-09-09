@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "portable-runtime://contracts/responsibility/bounded-domain-effect-recovery-v1",
+  "title": "BoundedDomainEffectRecoveryV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "execution_ref"],
+  "properties": {
+    "schema": {"const": "bounded-domain-effect-recovery-v1"},
+    "execution_ref": {"type": "string", "minLength": 1}
+  }
+}
