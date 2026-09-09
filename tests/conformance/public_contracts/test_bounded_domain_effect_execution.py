@@ -5,6 +5,7 @@ from datetime import timedelta
 import pytest
 from fastapi.testclient import TestClient
 
+from portable_runtime.core.models import utcnow
 from portable_runtime.core.registry import ProviderRegistry
 from portable_runtime.core.runtime import Runtime
 from portable_runtime.public_contracts.domain_effect import (
@@ -93,7 +94,10 @@ def _fixture():
 @pytest.mark.asyncio
 async def test_high_level_execution_uses_one_reality_exit_and_is_receipt_idempotent() -> None:
     runtime, service, command, effect_provider, verifier = _fixture()
-    at = NOW + timedelta(minutes=10)
+    # Physical execution fencing is evaluated against live runtime time. The
+    # command's domain evidence may be historical, but the execution itself is
+    # not a time-travel API.
+    at = utcnow()
 
     first = await service.execute(command, processed_at=at)
     second = await service.execute(command, processed_at=at + timedelta(minutes=1))
