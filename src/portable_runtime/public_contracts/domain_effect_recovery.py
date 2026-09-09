@@ -13,7 +13,9 @@ its exact A/B/C reconciliation boundary.
 from __future__ import annotations
 
 import hashlib
-from typing import Any, Literal
+import json
+from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -77,6 +79,21 @@ def _stable_id(prefix: str, *parts: object) -> str:
     return f"{prefix}_{hashlib.sha256(payload).hexdigest()[:32]}"
 
 
+def _resolution_semantics(value: BoundedDomainEffectResolutionV1) -> dict[str, object]:
+    payload = value.model_dump(mode="json", by_alias=True)
+    payload.pop("processed_at", None)
+    return payload
+
+
+def _resolution_semantic_key(value: BoundedDomainEffectResolutionV1) -> str:
+    return json.dumps(
+        _resolution_semantics(value),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
 class BoundedDomainEffectRecoveryV1(BaseModel):
     """Request recovery of one exact historical bounded execution identity."""
 
@@ -111,7 +128,7 @@ class BoundedDomainEffectResolutionV1(BaseModel):
     evidence_ref: str | None = None
     responsibility_ref: str | None = None
     reason: str = ""
-    processed_at: Any = Field(default_factory=utcnow)
+    processed_at: datetime = Field(default_factory=utcnow)
     authority_bearing: Literal[False] = False
 
 
@@ -154,8 +171,8 @@ class BoundedDomainEffectRecoveryService:
             return self._from_receipt(receipt)
         views = [self._view_from_event(event) for event in events]
         terminal = [view for view in views if view.current_status in _TERMINAL_RECOVERY_STATUSES]
-        terminal_statuses = {view.current_status for view in terminal}
-        if len(terminal_statuses) > 1:
+        terminal_semantics = {_resolution_semantic_key(view) for view in terminal}
+        if len(terminal_semantics) > 1:
             raise ValueError("bounded domain-effect recovery terminal resolution conflicted")
         candidates = terminal or views
         candidates.sort(key=lambda value: (value.processed_at, value.current_status))
@@ -266,7 +283,7 @@ class BoundedDomainEffectRecoveryService:
                 )
             )
 
-        projected_status = (
+        projected_status: Literal["succeeded", "failed"] = (
             "succeeded" if reconciled.reported_status == "reported-succeeded" else "failed"
         )
         projection = commit_execution_projection(
@@ -420,6 +437,7 @@ class BoundedDomainEffectRecoveryService:
             view.recovery_observation_ref or "",
             view.outcome_ref or "",
             view.evidence_ref or "",
+            view.reason,
         )
         event = Event(
             id=event_id,
@@ -430,7 +448,7 @@ class BoundedDomainEffectRecoveryService:
         existing = self.runtime.store.get_event(event_id)
         if existing is not None:
             durable = self._view_from_event(existing)
-            if durable.model_dump(mode="json") != view.model_dump(mode="json"):
+            if _resolution_semantics(durable) != _resolution_semantics(view):
                 raise ValueError("bounded domain-effect resolution identity rebound")
             return durable
         self.runtime.store.append_event(event)
