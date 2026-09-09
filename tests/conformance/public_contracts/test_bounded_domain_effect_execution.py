@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import sys
 from datetime import timedelta
+from types import ModuleType
 
 import pytest
 from fastapi.testclient import TestClient
@@ -13,7 +15,11 @@ from portable_runtime.public_contracts.domain_effect import (
     BoundedDomainEffectExecutionService,
     BoundedDomainEffectExecutionV1,
 )
-from portable_runtime.public_contracts.http import create_public_app
+from portable_runtime.public_contracts.http import (
+    BOUNDED_DOMAIN_EFFECT_FACTORY_ENV,
+    create_configured_public_app,
+    create_public_app,
+)
 from portable_runtime.responsibility.domain_effect_authorization import (
     ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE,
 )
@@ -164,3 +170,49 @@ def test_public_http_executes_and_inspects_durable_receipt() -> None:
     assert inspected.json() == receipt
     assert effect_provider.invocations == 1
     assert verifier.invocations == 1
+
+
+def test_configured_asgi_factory_loads_deployment_owned_execution_stack(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runtime, service, command, effect_provider, verifier = _fixture()
+    module = ModuleType("test_kernel_execution_stack")
+    module.build = lambda: (runtime, service)  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, module.__name__, module)
+    monkeypatch.setenv(BOUNDED_DOMAIN_EFFECT_FACTORY_ENV, f"{module.__name__}:build")
+
+    client = TestClient(create_configured_public_app())
+    response = client.post(
+        "/v1/domain-effects/executions",
+        json=command.model_dump(mode="json", by_alias=True),
+    )
+
+    assert response.status_code == 200
+    receipt = response.json()
+    assert receipt["status"] == "completed"
+    assert effect_provider.invocations == 1
+    assert verifier.invocations == 1
+    assert runtime.get_work(command.work_ref).status == "completed"
+
+
+def test_configured_asgi_factory_rejects_invalid_factory_spec(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv(BOUNDED_DOMAIN_EFFECT_FACTORY_ENV, "missing-separator")
+
+    with pytest.raises(ValueError, match="module:function"):
+        create_configured_public_app()
+
+
+def test_configured_asgi_factory_rejects_service_bound_to_different_runtime(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _runtime, service, _command, _effect_provider, _verifier = _fixture()
+    different_runtime = Runtime()
+    module = ModuleType("test_kernel_mismatched_execution_stack")
+    module.build = lambda: (different_runtime, service)  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, module.__name__, module)
+    monkeypatch.setenv(BOUNDED_DOMAIN_EFFECT_FACTORY_ENV, f"{module.__name__}:build")
+
+    with pytest.raises(ValueError, match="share the configured Runtime"):
+        create_configured_public_app()
