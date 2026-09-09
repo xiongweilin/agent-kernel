@@ -27,9 +27,9 @@ from portable_runtime.responsibility.domain_effect_completion_contract import (
     require_domain_effect_completion_contract,
 )
 
-DOMAIN_EFFECT_VERIFICATION_CAPABILITY = (
-    f"verify.{ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE}"
-)
+# Retained as a compatibility verifier capability name. The effect capability
+# being verified is carried in the frozen verification scope and may differ.
+DOMAIN_EFFECT_VERIFICATION_CAPABILITY = f"verify.{ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE}"
 DOMAIN_EFFECT_VERIFICATION_EVIDENCE_SCHEMA = "domain-effect-objective-verification-evidence-v1"
 
 
@@ -184,8 +184,6 @@ class DomainEffectVerifiedOutcomeVerification:
         self,
         request: CapabilityRequest,
     ) -> _EffectExecutionGraph:
-        if request.capability != ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE:
-            raise ValueError("capability is outside the bounded verified-outcome slice")
         if not request.work_id or not request.run_id:
             raise ValueError("domain effect verification requires Work/Run-bound request")
         work = self.store.get_work(request.work_id)
@@ -253,7 +251,10 @@ class DomainEffectVerifiedOutcomeVerification:
             authorization_ref
         )
         authorization_use = self.store.get_authorization_use(payload["authorization_use_ref"])
-        if authorization_use is None or getattr(authorization_use, "authorization_ref", None) != authorization.grant.id:
+        if (
+            authorization_use is None
+            or getattr(authorization_use, "authorization_ref", None) != authorization.grant.id
+        ):
             raise ValueError("domain effect dispatch AuthorizationUse is unavailable or rebound")
         self._validate_effect_request(request, authorization)
         return _EffectExecutionGraph(
