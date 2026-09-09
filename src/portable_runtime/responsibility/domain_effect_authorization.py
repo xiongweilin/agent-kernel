@@ -25,7 +25,8 @@ from portable_runtime.responsibility.service import ResponsibilityKernel
 
 ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE = "administrative.hris.employee.create.v1"
 DOMAIN_EFFECT_INTENT_EVIDENCE_SCHEMA = "domain-effect-intent-evidence-v1"
-REFERENCE_AUTHORIZATION_POLICY_REF = "kernel-administrative-runtime-authorization-v1"
+LEGACY_REFERENCE_AUTHORIZATION_POLICY_REF = "kernel-administrative-runtime-authorization-v1"
+REFERENCE_AUTHORIZATION_POLICY_REF = "kernel-administrative-runtime-authorization-v2"
 RUNTIME_ADMINISTRATIVE_ACTOR = "runtime:administrative-effect-executor"
 
 
@@ -593,6 +594,7 @@ __all__ = [
     "DomainEffectAuthorizationPolicy",
     "DomainEffectAuthorizationResult",
     "DomainEffectIntentEvidenceInput",
+    "LEGACY_REFERENCE_AUTHORIZATION_POLICY_REF",
     "REFERENCE_AUTHORIZATION_POLICY_REF",
     "RUNTIME_ADMINISTRATIVE_ACTOR",
     "ReferenceAdministrativeEffectAuthorizationPolicy",
