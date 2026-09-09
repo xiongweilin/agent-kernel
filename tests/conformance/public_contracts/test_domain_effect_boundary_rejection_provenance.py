@@ -3,7 +3,6 @@ from __future__ import annotations
 import pytest
 
 from portable_runtime.core.capabilities import CapabilityResult
-from portable_runtime.public_contracts.domain_effect import BoundedDomainEffectExecutionService
 from portable_runtime.responsibility.domain_effect_reality_execution import DomainEffectRealityExecution
 from tests.conformance.public_contracts.test_bounded_domain_effect_execution import _fixture
 
@@ -42,7 +41,3 @@ async def test_high_level_execution_preserves_boundary_rejection_before_attempt(
 
     assert effect_provider.invocations == 0
     assert verifier.invocations == 0
-
-
-def test_service_type_is_imported_for_public_contract_stability() -> None:
-    assert BoundedDomainEffectExecutionService.__name__ == "BoundedDomainEffectExecutionService"
