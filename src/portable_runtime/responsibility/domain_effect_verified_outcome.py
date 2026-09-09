@@ -22,11 +22,14 @@ from portable_runtime.responsibility.domain_effect_authorization_use import (
     DomainEffectAuthorizationUseConsumption,
     DomainEffectAuthorizationUseContext,
 )
+from portable_runtime.responsibility.domain_effect_completion_contract import (
+    DOMAIN_EFFECT_VERIFICATION_SCOPE_SCHEMA,
+    require_domain_effect_completion_contract,
+)
 
 DOMAIN_EFFECT_VERIFICATION_CAPABILITY = (
     f"verify.{ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE}"
 )
-DOMAIN_EFFECT_VERIFICATION_SCOPE_SCHEMA = "domain-effect-objective-verification-scope-v1"
 DOMAIN_EFFECT_VERIFICATION_EVIDENCE_SCHEMA = "domain-effect-objective-verification-evidence-v1"
 
 
@@ -90,6 +93,11 @@ class DomainEffectVerifiedOutcomeVerification:
     verifier execution and observed postcondition to the exact effect
     Action/Attempt and persists a canonical EvidenceArtifact. Only the existing
     VerifiedOutcomeAuthority may then materialize a confirmed Outcome.
+
+    The verifier is additionally bound to the Work completion contract frozen
+    before the domain-effect Run existed. Verification cannot redefine scope,
+    acceptance criteria, Work version, subject versions, or obligation coverage
+    after observing reality.
     """
 
     def __init__(
@@ -114,7 +122,8 @@ class DomainEffectVerifiedOutcomeVerification:
         effect_request: CapabilityRequest,
     ) -> DomainEffectVerifiedOutcomeResult:
         graph = self._resolve_effect_execution(effect_request)
-        verification_scope = self._verification_scope(effect_request, graph.authorization)
+        completion_contract, completion_contract_digest = self._completion_contract(graph)
+        verification_scope = dict(completion_contract["verification_scope"])
         verifier_binding = self.registry.execution_binding(self.verifier_provider_id)
         verification_request = self._verification_request(
             effect_request,
@@ -146,6 +155,8 @@ class DomainEffectVerifiedOutcomeVerification:
             verification_request,
             verification_attempt,
             verification_scope,
+            completion_contract,
+            completion_contract_digest,
             verifier_binding.id,
             result,
         )
@@ -158,7 +169,7 @@ class DomainEffectVerifiedOutcomeVerification:
             expected_request_id=effect_request.id,
             expected_attempt_ref=graph.attempt.id,
             verification_scope=verification_scope,
-            subject_version_refs=list(effect_request.subject_version_refs),
+            subject_version_refs=list(completion_contract["subject_version_refs"]),
         )
         return self._result(
             graph,
@@ -255,6 +266,19 @@ class DomainEffectVerifiedOutcomeVerification:
             authorization=authorization,
         )
 
+    def _completion_contract(
+        self,
+        graph: _EffectExecutionGraph,
+    ) -> tuple[dict[str, Any], str]:
+        contract, digest = require_domain_effect_completion_contract(
+            graph.work,
+            graph.authorization,
+        )
+        run_metadata = graph.run.metadata if isinstance(graph.run.metadata, dict) else {}
+        if run_metadata.get("domain_effect_completion_contract_digest") != digest:
+            raise ValueError("domain effect Run completion contract binding drifted")
+        return contract, digest
+
     def _attempts_for_request(self, run_id: str, request_id: str) -> list[StepAttempt]:
         attempts: list[StepAttempt] = []
         for step in self.store.list_steps(run_id):
@@ -292,19 +316,6 @@ class DomainEffectVerifiedOutcomeVerification:
             raise ValueError("domain effect verification subject versions rebound")
         if authorization.intent.parameters != request.parameters:
             raise ValueError("domain effect verification effect parameters rebound")
-
-    @staticmethod
-    def _verification_scope(
-        request: CapabilityRequest,
-        authorization: DomainEffectAuthorizationUseContext,
-    ) -> dict[str, Any]:
-        return {
-            "schema": DOMAIN_EFFECT_VERIFICATION_SCOPE_SCHEMA,
-            "effect_capability": request.capability,
-            "resource_ref": request.resource_ref,
-            "subject_ref": authorization.intent.subject_ref,
-            "expected_postcondition": dict(authorization.intent.expected_postcondition),
-        }
 
     def _verification_request(
         self,
@@ -357,14 +368,6 @@ class DomainEffectVerifiedOutcomeVerification:
         if closed.result == "fail" and matches:
             raise ValueError("domain effect verifier fail contradicts its observed postcondition")
 
-    @staticmethod
-    def _obligation_refs(graph: _EffectExecutionGraph) -> list[str]:
-        metadata = graph.work.metadata if isinstance(graph.work.metadata, dict) else {}
-        responsibility_ref = metadata.get("standing_responsibility_ref")
-        if isinstance(responsibility_ref, str) and responsibility_ref:
-            return [f"responsibility:{responsibility_ref}"]
-        return [f"work:{graph.work.id}"]
-
     def _verification_evidence(
         self,
         graph: _EffectExecutionGraph,
@@ -372,6 +375,8 @@ class DomainEffectVerifiedOutcomeVerification:
         verification_request: CapabilityRequest,
         verification_attempt: StepAttempt,
         verification_scope: dict[str, Any],
+        completion_contract: dict[str, Any],
+        completion_contract_digest: str,
         verifier_binding_ref: str,
         result: CapabilityResult,
     ) -> EvidenceArtifact:
@@ -401,8 +406,11 @@ class DomainEffectVerifiedOutcomeVerification:
                 "work_id": graph.work.id,
                 "run_id": graph.run.id,
                 "verification_scope": dict(verification_scope),
-                "subject_version_refs": list(effect_request.subject_version_refs),
-                "obligation_refs": self._obligation_refs(graph),
+                "work_version": completion_contract["work_version"],
+                "acceptance_criteria": list(completion_contract["acceptance_criteria"]),
+                "subject_version_refs": list(completion_contract["subject_version_refs"]),
+                "obligation_refs": list(completion_contract["required_obligations"]),
+                "domain_effect_completion_contract_digest": completion_contract_digest,
                 "artifact_refs": list(closed.artifact_refs),
                 "observed_postcondition": dict(result.metadata["observed_postcondition"]),
                 "effect_dispatch_ref": graph.dispatch.id,
