@@ -128,6 +128,13 @@ authority_bearing = false
 current = "confirmed-outcome-view-v1"
 authority_bearing = false
 
+[views.domain_effect_verification_evidence]
+current = "domain-effect-verification-evidence-view-v1"
+schema_path = "contracts/schemas/responsibility/domain-effect-verification-evidence-view-v1.schema.json"
+semantic_path = "contracts/semantics/core/domain-effect-verification-evidence-view-v1.md"
+public_read = true
+authority_bearing = false
+
 [views.recovery]
 current = "recovery-view-v1"
 authority_bearing = false
