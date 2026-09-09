@@ -16,6 +16,7 @@ from portable_runtime.responsibility.domain_effect_verified_outcome import (
 )
 from portable_runtime.responsibility.models import ResponsibilityStatus
 from portable_runtime.responsibility.service import ResponsibilityKernel
+from tests.conformance.test_domain_effect_reality_cutover import _live_cutover_fixture
 from tests.conformance.test_domain_effect_verified_outcome import (
     _ReadbackVerifier,
     _authorization_context,
@@ -31,6 +32,34 @@ def _completion_contract(store, request):
     contract = work.metadata.get("domain_effect_completion_contract")
     assert isinstance(contract, dict)
     return work, run, contract
+
+
+def test_completion_contract_is_frozen_before_first_reality_exit() -> None:
+    (
+        store,
+        qualification,
+        _registry,
+        provider,
+        _configured_binding,
+        _provider_binding,
+        _specification,
+    ) = _live_cutover_fixture()
+
+    work, run, contract = _completion_contract(store, qualification.request)
+
+    assert provider.invocations == 0
+    assert store.list_authorization_uses() == []
+    assert store.list_attempts() == []
+    assert contract["schema"] == DOMAIN_EFFECT_COMPLETION_CONTRACT_SCHEMA
+    assert contract["verification_scope"]["schema"] == DOMAIN_EFFECT_VERIFICATION_SCOPE_SCHEMA
+    assert contract["verification_scope"]["effect_capability"] == qualification.request.capability
+    assert contract["verification_scope"]["resource_ref"] == qualification.request.resource_ref
+    assert contract["subject_version_refs"] == list(qualification.request.subject_version_refs)
+    assert contract["acceptance_criteria"] == list(work.acceptance_criteria)
+    assert contract["required_obligations"] == list(work.acceptance_criteria)
+    assert run.metadata["domain_effect_completion_contract_digest"] == work.metadata[
+        "domain_effect_completion_contract_digest"
+    ]
 
 
 @pytest.mark.asyncio
@@ -88,7 +117,7 @@ async def test_pass_outcome_terminalizes_work_and_run_but_not_responsibility() -
     kernel = ResponsibilityKernel(store)
     responsibility_ref = current_work.metadata["standing_responsibility_ref"]
     assert completed.responsibility_ref == responsibility_ref
-    assert completed.responsibility_status == ResponsibilityStatus.ACTIVE.value
+    assert completed.responsibility_status is ResponsibilityStatus.ACTIVE
     assert kernel.current_status(responsibility_ref) is ResponsibilityStatus.ACTIVE
     assert kernel.journal.list("ResponsibilityLifecycleTransition", responsibility_ref) == []
 
