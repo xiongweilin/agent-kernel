@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
+from fastapi.testclient import TestClient
 
 from portable_runtime.core.capabilities import (
     CapabilityRequest,
@@ -26,6 +27,7 @@ from portable_runtime.public_contracts.domain_effect_recovery import (
     BoundedDomainEffectRecoveryService,
     BoundedDomainEffectRecoveryV1,
 )
+from portable_runtime.public_contracts.http import create_public_app
 from portable_runtime.stores.bounded_domain_effect_recovery import (
     BoundedDomainEffectRecoveryInMemoryStateStore,
 )
@@ -263,5 +265,32 @@ async def test_provider_success_before_result_projection_recovers_without_redisp
         )
     )
     assert recovered_replay == current
+    assert effect_provider.invocations == 1
+    assert effect_provider.reconciliations == 1
+
+    # The public API preserves immutable history and exposes recovery only via
+    # the explicit current-resolution projection.
+    client = TestClient(
+        create_public_app(runtime, bounded_domain_effect_execution=execution)
+    )
+    historical = client.get(f"/v1/domain-effects/executions/{unknown.execution_ref}")
+    assert historical.status_code == 200
+    assert historical.json()["status"] == "execution-unknown"
+
+    resolution = client.get(
+        f"/v1/domain-effects/executions/{unknown.execution_ref}/resolution"
+    )
+    assert resolution.status_code == 200
+    assert resolution.json()["current_status"] == "recovered-completed"
+
+    replay_via_http = client.post(
+        "/v1/domain-effects/recoveries",
+        json={
+            "schema": "bounded-domain-effect-recovery-v1",
+            "execution_ref": unknown.execution_ref,
+        },
+    )
+    assert replay_via_http.status_code == 200
+    assert replay_via_http.json()["current_status"] == "recovered-completed"
     assert effect_provider.invocations == 1
     assert effect_provider.reconciliations == 1
