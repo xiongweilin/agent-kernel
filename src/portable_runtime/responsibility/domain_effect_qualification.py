@@ -264,9 +264,6 @@ class DomainEffectQualificationAssessment:
         historical_generation = dispatch_payload.get("lease_generation")
         if not isinstance(historical_generation, int) or historical_generation < 1:
             raise ValueError("domain effect recovery dispatch lacks fencing generation")
-        qualification_digest = dispatch_payload.get("qualification_digest")
-        if not isinstance(qualification_digest, str) or not qualification_digest:
-            raise ValueError("domain effect recovery dispatch lacks qualification digest")
 
         historical_event_id = _stable_id(
             "event_domain_effect_qualification",
@@ -290,8 +287,6 @@ class DomainEffectQualificationAssessment:
             }
         )
         result = self._validate_event(historical, historical_run, request_event)
-        if result.qualification_digest != qualification_digest:
-            raise ValueError("domain effect dispatch qualification digest rebound")
         if result.request.id != prepared_request.id:
             raise ValueError("domain effect historical qualification request identity rebound")
         return result
