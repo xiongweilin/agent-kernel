@@ -10,6 +10,11 @@ from portable_runtime.core.capabilities import CapabilityRequest
 from portable_runtime.core.capability_contract import CapabilityContractRegistry
 from portable_runtime.core.models import Event, Run, utcnow
 from portable_runtime.core.qualification import AssessmentContext, QualificationRef
+from portable_runtime.governance.dispatch import DISPATCH_COMMIT_EVENT
+from portable_runtime.responsibility.domain_effect_activation import (
+    DOMAIN_EFFECT_ACTIVATION_EVENT,
+    DOMAIN_EFFECT_ACTIVATION_SCHEMA,
+)
 from portable_runtime.responsibility.domain_effect_authorization_use import (
     DomainEffectAuthorizationUseConsumption,
 )
@@ -63,6 +68,11 @@ class DomainEffectQualificationAssessment:
     proof material. This stage adds only authoritative reference transport to a
     fenced request projection, then delegates proof resolution and snapshot
     digesting to the existing AssessmentContext mechanism.
+
+    Qualification is a pre-action closure. After a committed action boundary,
+    a fresh process may acquire a new Run fencing generation, but it must replay
+    the exact historical qualification bound into that dispatch instead of
+    minting a second qualification from already-consumed authority.
     """
 
     def __init__(
@@ -102,10 +112,21 @@ class DomainEffectQualificationAssessment:
         decision_ref = self._required_ref(metadata, "domain_effect_authorization_decision_ref")
         context = self.authorization._resolve_context(authorization_ref)
         self._validate_run_context(run, metadata, context)
-        if any(
-            getattr(use, "authorization_ref", None) == context.grant.id
+        authorization_uses = [
+            use
             for use in self.store.list_authorization_uses()
-        ):
+            if getattr(use, "authorization_ref", None) == context.grant.id
+        ]
+        if authorization_uses:
+            replay = self._replay_after_committed_action_boundary(
+                run,
+                request_event,
+                prepared_request,
+                authorization_ref=context.grant.id,
+                authorization_uses=authorization_uses,
+            )
+            if replay is not None:
+                return replay
             raise ValueError(
                 "domain effect authorization was consumed before qualification closure"
             )
@@ -177,6 +198,103 @@ class DomainEffectQualificationAssessment:
         if not isinstance(current_run, Run):
             raise ValueError("domain effect Run disappeared after qualification")
         return self._validate_event(persisted, current_run, request_event)
+
+    def _replay_after_committed_action_boundary(
+        self,
+        run: Run,
+        request_event: Event,
+        prepared_request: CapabilityRequest,
+        *,
+        authorization_ref: str,
+        authorization_uses: list[Any],
+    ) -> DomainEffectQualificationResult | None:
+        """Replay the qualification already committed into the physical dispatch.
+
+        The current activation must itself prove it is a post-action refencing
+        generation. DomainEffectRunActivation only sets that marker after it has
+        validated the exact historical activation, dispatch, AuthorizationUse,
+        Attempt, and Run lineage. Qualification therefore reuses the historical
+        closure bound to that dispatch; it does not re-resolve consumed authority.
+        """
+
+        activation_event_id = _stable_id(
+            "event_domain_effect_activation",
+            run.id,
+            run.lease_generation,
+        )
+        activation = self.store.get_event(activation_event_id)
+        if not isinstance(activation, Event):
+            return None
+        activation_payload = activation.payload if isinstance(activation.payload, dict) else {}
+        if (
+            activation.type != DOMAIN_EFFECT_ACTIVATION_EVENT
+            or activation.subject_ref != run.id
+            or activation_payload.get("schema") != DOMAIN_EFFECT_ACTIVATION_SCHEMA
+            or activation_payload.get("authority_bearing") is not False
+            or activation_payload.get("work_ref") != run.work_id
+            or activation_payload.get("request_event_ref") != request_event.id
+            or activation_payload.get("lease_owner") != run.lease_owner
+            or activation_payload.get("lease_generation") != run.lease_generation
+        ):
+            raise ValueError("domain effect recovery activation lineage rebound")
+        if activation_payload.get("resume_after_committed_action_boundary") is not True:
+            return None
+
+        if len(authorization_uses) != 1:
+            raise ValueError("domain effect authorization has multiple canonical uses")
+        use = authorization_uses[0]
+        if getattr(use, "authorization_ref", None) != authorization_ref:
+            raise ValueError("domain effect recovery AuthorizationUse rebound")
+
+        dispatches = [
+            event
+            for event in self.store.list_events(prepared_request.id)
+            if event.type == DISPATCH_COMMIT_EVENT
+        ]
+        if len(dispatches) != 1:
+            raise ValueError(
+                "domain effect committed recovery requires exactly one dispatch commitment"
+            )
+        dispatch = dispatches[0]
+        dispatch_payload = dispatch.payload if isinstance(dispatch.payload, dict) else {}
+        if dispatch_payload.get("request_id") != prepared_request.id:
+            raise ValueError("domain effect recovery dispatch request identity rebound")
+        if dispatch_payload.get("authorization_use_ref") != getattr(use, "id", None):
+            raise ValueError("domain effect recovery dispatch AuthorizationUse rebound")
+        historical_generation = dispatch_payload.get("lease_generation")
+        if not isinstance(historical_generation, int) or historical_generation < 1:
+            raise ValueError("domain effect recovery dispatch lacks fencing generation")
+        qualification_digest = dispatch_payload.get("qualification_digest")
+        if not isinstance(qualification_digest, str) or not qualification_digest:
+            raise ValueError("domain effect recovery dispatch lacks qualification digest")
+
+        historical_event_id = _stable_id(
+            "event_domain_effect_qualification",
+            run.id,
+            historical_generation,
+            request_event.id,
+        )
+        historical = self.store.get_event(historical_event_id)
+        if not isinstance(historical, Event):
+            raise ValueError(
+                "domain effect committed action boundary lacks historical qualification closure"
+            )
+        historical_payload = historical.payload if isinstance(historical.payload, dict) else {}
+        historical_owner = historical_payload.get("lease_owner")
+        if not isinstance(historical_owner, str) or not historical_owner:
+            raise ValueError("domain effect historical qualification lacks lease owner")
+        historical_run = run.model_copy(
+            update={
+                "lease_owner": historical_owner,
+                "lease_generation": historical_generation,
+            }
+        )
+        result = self._validate_event(historical, historical_run, request_event)
+        if result.qualification_digest != qualification_digest:
+            raise ValueError("domain effect dispatch qualification digest rebound")
+        if result.request.id != prepared_request.id:
+            raise ValueError("domain effect historical qualification request identity rebound")
+        return result
 
     def _require_active_run(self, run_ref: str) -> Run:
         run = self.store.get_run(run_ref)
