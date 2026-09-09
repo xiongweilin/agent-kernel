@@ -14,6 +14,10 @@ from portable_runtime.public_contracts.domain_effect import (
     BoundedDomainEffectExecutionService,
     BoundedDomainEffectExecutionV1,
 )
+from portable_runtime.public_contracts.domain_effect_evidence import (
+    DomainEffectVerificationEvidenceViewV1,
+    project_domain_effect_verification_evidence,
+)
 from portable_runtime.public_contracts.experience import (
     commit_historical_experience_use_contract,
     evaluate_experience_use_contract,
@@ -312,6 +316,30 @@ def contract_router(
                 ),
             )
         return receipt
+
+    @router.get(
+        "/v1/domain-effects/evidence/{evidence_ref}",
+        response_model=DomainEffectVerificationEvidenceViewV1,
+    )
+    def bounded_domain_effect_evidence(
+        evidence_ref: str,
+    ) -> DomainEffectVerificationEvidenceViewV1:
+        try:
+            view = project_domain_effect_verification_evidence(runtime, evidence_ref)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail=_problem("DomainEffectEvidenceRejected", str(exc)),
+            ) from exc
+        if view is None:
+            raise HTTPException(
+                status_code=404,
+                detail=_problem(
+                    "DomainEffectEvidenceNotFound",
+                    "domain-effect verification evidence not found",
+                ),
+            )
+        return view
 
     return router
 
