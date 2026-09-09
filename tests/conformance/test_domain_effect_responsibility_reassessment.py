@@ -6,8 +6,8 @@ import pytest
 
 from portable_runtime.core.models import Work
 from portable_runtime.responsibility.domain_effect_responsibility_reassessment import (
-    DOMAIN_EFFECT_DISCHARGE_BLOCKED,
-    DOMAIN_EFFECT_DISCHARGE_READY,
+    DOMAIN_EFFECT_RESPONSIBILITY_BLOCKED,
+    DOMAIN_EFFECT_RESPONSIBILITY_CLEAR,
     DomainEffectResponsibilityReassessment,
     DomainEffectResponsibilityReassessmentInput,
 )
@@ -55,7 +55,7 @@ async def _completed_effect():
 
 
 @pytest.mark.asyncio
-async def test_verified_terminal_effect_records_ready_reassessment_without_discharge() -> None:
+async def test_verified_terminal_effect_records_clear_reassessment_without_discharge() -> None:
     store, _qualification, verified, completed = await _completed_effect()
     kernel = ResponsibilityKernel(store)
     assessed_at = _now()
@@ -67,12 +67,13 @@ async def test_verified_terminal_effect_records_ready_reassessment_without_disch
 
     assessment = kernel.journal.get(result.assessment_ref)
     assert assessment is not None
+    current_version, _statement, _scope = kernel.current_definition(completed.responsibility_ref)
     assert assessment.object_type == "ResponsibilityAssessment"
-    assert assessment.assessment_kind == DOMAIN_EFFECT_DISCHARGE_READY
+    assert assessment.assessment_kind == DOMAIN_EFFECT_RESPONSIBILITY_CLEAR
     assert assessment.responsibility_ref == completed.responsibility_ref
-    assert assessment.responsibility_version == completed.responsibility_status.__class__.ACTIVE.value or assessment.responsibility_version == 1
+    assert assessment.responsibility_version == current_version
     assert assessment.fresh_until == assessed_at + timedelta(seconds=300)
-    assert result.discharge_ready is True
+    assert result.blockers_clear is True
     assert result.blocker_refs == []
     assert kernel.current_status(completed.responsibility_ref) is ResponsibilityStatus.ACTIVE
     assert kernel.journal.list("ResponsibilityDischargeDecision", completed.responsibility_ref) == []
@@ -80,7 +81,7 @@ async def test_verified_terminal_effect_records_ready_reassessment_without_disch
 
 
 @pytest.mark.asyncio
-async def test_open_current_work_blocks_discharge_readiness() -> None:
+async def test_open_current_work_is_reported_as_current_blocker() -> None:
     store, _qualification, verified, completed = await _completed_effect()
     completed_work = store.get_work(completed.work_ref)
     assert completed_work is not None
@@ -104,14 +105,14 @@ async def test_open_current_work_blocks_discharge_readiness() -> None:
 
     assessment = ResponsibilityKernel(store).journal.get(result.assessment_ref)
     assert assessment is not None
-    assert assessment.assessment_kind == DOMAIN_EFFECT_DISCHARGE_BLOCKED
-    assert result.discharge_ready is False
+    assert assessment.assessment_kind == DOMAIN_EFFECT_RESPONSIBILITY_BLOCKED
+    assert result.blockers_clear is False
     assert result.blocker_refs == [blocker.id]
     assert ResponsibilityKernel(store).current_status(completed.responsibility_ref) is ResponsibilityStatus.ACTIVE
 
 
 @pytest.mark.asyncio
-async def test_failed_or_cancelled_current_work_is_still_a_responsibility_blocker() -> None:
+async def test_failed_or_cancelled_work_is_reported_without_domain_judgment() -> None:
     store, _qualification, verified, completed = await _completed_effect()
     completed_work = store.get_work(completed.work_ref)
     assert completed_work is not None
@@ -136,12 +137,12 @@ async def test_failed_or_cancelled_current_work_is_still_a_responsibility_blocke
         assessed_at=_now(),
     )
 
-    assert result.discharge_ready is False
+    assert result.blockers_clear is False
     assert result.blocker_refs == sorted(blockers)
 
 
 @pytest.mark.asyncio
-async def test_open_current_expectation_blocks_discharge_readiness() -> None:
+async def test_open_current_expectation_is_reported_as_current_blocker() -> None:
     store, _qualification, verified, completed = await _completed_effect()
     kernel = ResponsibilityKernel(store)
     version, _statement, _scope = kernel.current_definition(completed.responsibility_ref)
@@ -160,11 +161,11 @@ async def test_open_current_expectation_blocks_discharge_readiness() -> None:
         assessed_at=_now(),
     )
 
-    assert result.discharge_ready is False
+    assert result.blockers_clear is False
     assert result.blocker_refs == [expectation.id]
     assessment = kernel.journal.get(result.assessment_ref)
     assert assessment is not None
-    assert assessment.assessment_kind == DOMAIN_EFFECT_DISCHARGE_BLOCKED
+    assert assessment.assessment_kind == DOMAIN_EFFECT_RESPONSIBILITY_BLOCKED
 
 
 @pytest.mark.asyncio
@@ -191,7 +192,8 @@ async def test_responsibility_revision_makes_completed_work_stale_for_reassessme
             assessed_at=_now(),
         )
 
-    assert kernel.journal.list("ResponsibilityAssessment", completed.responsibility_ref)[-1].assessment_kind != DOMAIN_EFFECT_DISCHARGE_READY
+    assessments = kernel.journal.list("ResponsibilityAssessment", completed.responsibility_ref)
+    assert all(item.assessment_kind != DOMAIN_EFFECT_RESPONSIBILITY_CLEAR for item in assessments)
 
 
 @pytest.mark.asyncio

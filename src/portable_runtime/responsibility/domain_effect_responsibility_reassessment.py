@@ -28,8 +28,8 @@ from portable_runtime.responsibility.models import (
 )
 from portable_runtime.responsibility.service import ResponsibilityKernel
 
-DOMAIN_EFFECT_DISCHARGE_READY = "administrative-obligation-discharge-ready"
-DOMAIN_EFFECT_DISCHARGE_BLOCKED = "administrative-obligation-discharge-blocked"
+DOMAIN_EFFECT_RESPONSIBILITY_CLEAR = "domain-effect-responsibility-current-clear"
+DOMAIN_EFFECT_RESPONSIBILITY_BLOCKED = "domain-effect-responsibility-current-blocked"
 
 
 def _stable_id(prefix: str, *parts: object) -> str:
@@ -53,28 +53,30 @@ class DomainEffectResponsibilityReassessmentResult(BaseModel):
     assessment_ref: str
     responsibility_ref: str
     responsibility_version: int
-    discharge_ready: bool
+    blockers_clear: bool
     blocker_refs: list[str]
     authority_bearing: bool = False
 
 
 class DomainEffectResponsibilityReassessment:
-    """Reassess persistent responsibility after verified terminal Work.
+    """Record current responsibility blockers after verified terminal Work.
 
-    This adapter owns no discharge decision and no lifecycle mutation. It turns
-    a bounded set of current administrative facts into one fresh
-    ``ResponsibilityAssessment`` through the existing domain-assessment gate.
+    This adapter owns no domain discharge policy, discharge decision, or
+    lifecycle mutation. It converts a bounded set of current runtime facts into
+    one fresh ``ResponsibilityAssessment`` through the existing domain-assessment
+    gate.
 
-    Readiness is intentionally conservative for this bounded slice:
-    - the exact verified effect Work/Run must already be terminally successful;
-    - the Work must still bind the current responsibility version;
-    - every Work materialized for that same current responsibility version must
-      be ``completed``;
-    - no current-version responsibility expectation may remain open.
+    For this bounded reference slice it establishes only these generic facts:
+    - the exact verified effect Work/Run is terminally successful;
+    - the Work still binds the current responsibility version;
+    - every Work materialized for that same current responsibility version is
+      ``completed``;
+    - no current-version ResponsibilityExpectation remains open.
 
-    A blocked reassessment is still a valid current fact. It is not a failure
-    and cannot itself authorize more Work, a discharge decision, or lifecycle
-    mutation.
+    ``blockers_clear`` is deliberately not a discharge judgment. A downstream
+    domain policy may treat failed/cancelled Work, optional expectations, or
+    other business facts differently when deciding whether responsibility may
+    be discharged.
     """
 
     def __init__(self, store: Any) -> None:
@@ -100,7 +102,7 @@ class DomainEffectResponsibilityReassessment:
         if not isinstance(action, Action):
             raise ValueError("domain effect responsibility reassessment requires durable effect Action")
         if action.capability != ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE:
-            raise ValueError("Outcome Action is outside the bounded administrative reassessment slice")
+            raise ValueError("Outcome Action is outside the bounded reassessment slice")
         work = self.store.get_work(action.work_id)
         run = self.store.get_run(action.run_id)
         if not isinstance(work, Work) or not isinstance(run, Run):
@@ -152,21 +154,18 @@ class DomainEffectResponsibilityReassessment:
         if outcome.metadata.get("subject_version_refs") != contract["subject_version_refs"]:
             raise ValueError("responsibility reassessment Outcome subject versions drifted")
 
-        blocker_refs = self._blockers(
-            responsibility_ref,
-            current_version,
-        )
-        discharge_ready = not blocker_refs
+        blocker_refs = self._blockers(responsibility_ref, current_version)
+        blockers_clear = not blocker_refs
         assessment_kind = (
-            DOMAIN_EFFECT_DISCHARGE_READY
-            if discharge_ready
-            else DOMAIN_EFFECT_DISCHARGE_BLOCKED
+            DOMAIN_EFFECT_RESPONSIBILITY_CLEAR
+            if blockers_clear
+            else DOMAIN_EFFECT_RESPONSIBILITY_BLOCKED
         )
         subject_ref = scope.get("obligation_id") or responsibility_ref
         basis_refs = [outcome.id, proof.id, action.id, work.id, run.id, *blocker_refs]
         assessment = ResponsibilityAssessment(
             id=_stable_id(
-                "assessment_domain_effect_discharge",
+                "assessment_domain_effect_responsibility",
                 responsibility_ref,
                 current_version,
                 outcome.id,
@@ -182,30 +181,21 @@ class DomainEffectResponsibilityReassessment:
             assessed_at=assessed_at,
             fresh_until=assessed_at + timedelta(seconds=value.freshness_seconds),
             rationale=(
-                "verified terminal administrative obligation has no current Work or expectation blockers"
-                if discharge_ready
-                else "persistent responsibility remains open because current blockers still exist: "
-                + ", ".join(blocker_refs)
+                "verified terminal effect has no current Work or expectation blockers"
+                if blockers_clear
+                else "current responsibility blockers remain: " + ", ".join(blocker_refs)
             ),
         )
-        recorded = record_domain_assessment(
-            self.kernel,
-            assessment,
-            now=assessed_at,
-        )
+        recorded = record_domain_assessment(self.kernel, assessment, now=assessed_at)
         return DomainEffectResponsibilityReassessmentResult(
             assessment_ref=recorded.id,
             responsibility_ref=responsibility_ref,
             responsibility_version=current_version,
-            discharge_ready=discharge_ready,
+            blockers_clear=blockers_clear,
             blocker_refs=blocker_refs,
         )
 
-    def _blockers(
-        self,
-        responsibility_ref: str,
-        responsibility_version: int,
-    ) -> list[str]:
+    def _blockers(self, responsibility_ref: str, responsibility_version: int) -> list[str]:
         blockers: set[str] = set()
         for candidate in self.store.list_work():
             metadata = candidate.metadata if isinstance(candidate.metadata, dict) else {}
@@ -227,8 +217,8 @@ class DomainEffectResponsibilityReassessment:
 
 
 __all__ = [
-    "DOMAIN_EFFECT_DISCHARGE_BLOCKED",
-    "DOMAIN_EFFECT_DISCHARGE_READY",
+    "DOMAIN_EFFECT_RESPONSIBILITY_BLOCKED",
+    "DOMAIN_EFFECT_RESPONSIBILITY_CLEAR",
     "DomainEffectResponsibilityReassessment",
     "DomainEffectResponsibilityReassessmentInput",
     "DomainEffectResponsibilityReassessmentResult",
