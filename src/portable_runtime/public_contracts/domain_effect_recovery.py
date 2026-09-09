@@ -268,7 +268,16 @@ class BoundedDomainEffectRecoveryService:
                 )
             )
 
-        reconciled = self.runtime.store.get_recovery_application_observation(application.id)
+        get_completion = getattr(
+            self.runtime.store,
+            "get_recovery_application_observation",
+            None,
+        )
+        if not callable(get_completion):
+            raise ValueError(
+                "bounded domain-effect recovery store lacks application observation authority"
+            )
+        reconciled = get_completion(application.id)
         if reconciled is None or reconciled.id != result.recovery_observation_ref:
             raise ValueError("reconciliation completion observation is unavailable or rebound")
         if reconciled.reported_status == "reported-unknown":
@@ -283,6 +292,9 @@ class BoundedDomainEffectRecoveryService:
                 )
             )
 
+        provider_id = receipt.provider_id or attempt.provider_id
+        if not isinstance(provider_id, str) or not provider_id.strip():
+            raise ValueError("bounded recovery historical provider identity is unavailable")
         projected_status: Literal["succeeded", "failed"] = (
             "succeeded" if reconciled.reported_status == "reported-succeeded" else "failed"
         )
@@ -291,11 +303,11 @@ class BoundedDomainEffectRecoveryService:
             request,
             CapabilityResult(
                 request_id=request.id,
-                provider_id=receipt.provider_id or attempt.provider_id,
+                provider_id=provider_id,
                 status=projected_status,
                 reconciled=True,
             ),
-            provider_id=receipt.provider_id or attempt.provider_id,
+            provider_id=provider_id,
             records=self._records(attempt),
         )
         if projection.error is not None:
