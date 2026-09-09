@@ -228,12 +228,24 @@ class BoundedDomainEffectExecutionService:
             ),
             prepared_at=at,
         )
-        request = self._prepared_request(run_result.run_ref)
-        if request is None:
-            request = DomainEffectExecutionRequestPreparation(self.runtime.store).prepare(
+        prepared_request = self._prepared_request(run_result.run_ref)
+        if prepared_request is None:
+            prepared_request = DomainEffectExecutionRequestPreparation(self.runtime.store).prepare(
                 DomainEffectExecutionRequestPreparationInput(run_ref=run_result.run_ref),
                 prepared_at=at,
             ).request
+
+        activation = DomainEffectRunActivation(self.runtime.store).activate(
+            DomainEffectRunActivationInput(run_ref=run_result.run_ref),
+            owner=profile.lease_owner,
+            ttl_seconds=profile.lease_ttl_seconds,
+            activated_at=at,
+        )
+        qualification = DomainEffectQualificationAssessment(self.runtime.store).assess(
+            DomainEffectQualificationInput(run_ref=activation.run_ref),
+            assessed_at=at,
+        )
+        request = qualification.request
 
         existing_attempt = self._attempt_for_request(run_result.run_ref, request.id)
         if existing_attempt is not None:
@@ -248,16 +260,6 @@ class BoundedDomainEffectExecutionService:
                 at,
             )
 
-        activation = DomainEffectRunActivation(self.runtime.store).activate(
-            DomainEffectRunActivationInput(run_ref=run_result.run_ref),
-            owner=profile.lease_owner,
-            ttl_seconds=profile.lease_ttl_seconds,
-            activated_at=at,
-        )
-        DomainEffectQualificationAssessment(self.runtime.store).assess(
-            DomainEffectQualificationInput(run_ref=activation.run_ref),
-            assessed_at=at,
-        )
         DomainEffectProcedureReadinessAssessment(
             self.runtime.store,
             contract_registry=self.runtime.contract_registry,
