@@ -15,6 +15,9 @@ from portable_runtime.responsibility import (
     ResourceReservation,
     ResourceVector,
     ResponsibilityAdmission,
+    ResponsibilityDischargeDecision,
+    ResponsibilityDischargeDecisionAuthority,
+    ResponsibilityDischargeDisposition,
     ResponsibilityExpectation,
     ResponsibilityHandoff,
     ResponsibilityKernel,
@@ -377,12 +380,13 @@ def test_model_handoff_preserves_identity_but_requires_authority_revalidation() 
     assert kernel.get_responsibility("sr_listing").id == "sr_listing"
 
 
-def test_discharge_requires_explicit_decision_and_work_does_not_discharge() -> None:
+def test_discharge_requires_typed_decision_and_work_does_not_discharge() -> None:
     store = InMemoryStateStore()
     kernel = ResponsibilityKernel(store)
     _register(kernel)
     _proposal, commitment = _proposal_chain(kernel)
     kernel.materialize_work(commitment.id)
+    assessment = kernel.journal.list("ResponsibilityAssessment", "sr_listing")[0]
 
     assert kernel.current_status("sr_listing") is ResponsibilityStatus.ACTIVE
 
@@ -396,14 +400,61 @@ def test_discharge_requires_explicit_decision_and_work_does_not_discharge() -> N
             reason="work finished",
         )
 
+    forged = ResponsibilityLifecycleTransition(
+        id="forged_discharge",
+        responsibility_ref="sr_listing",
+        responsibility_version=1,
+        from_status=ResponsibilityStatus.ACTIVE,
+        to_status=ResponsibilityStatus.DISCHARGED,
+        decision_ref="decision:anything",
+        basis_refs=["verification:scope-complete"],
+    )
+    with pytest.raises(ValueError, match="typed durable discharge decision"):
+        kernel.transition(forged)
+
+    authority = ResponsibilityDischargeDecisionAuthority(store)
+    retain = ResponsibilityDischargeDecision(
+        id="decision_retain_listing",
+        responsibility_ref="sr_listing",
+        responsibility_version=1,
+        status_at_decision=ResponsibilityStatus.ACTIVE,
+        assessment_ref=assessment.id,
+        disposition=ResponsibilityDischargeDisposition.RETAIN,
+        basis_refs=[assessment.id, "verification:scope-complete"],
+        policy_ref="responsibility-discharge-policy:v1",
+        decided_at=_now() + timedelta(seconds=1),
+        rationale="retain responsibility despite completed Work",
+    )
+    authority.record(retain)
+    retain_transition = forged.model_copy(
+        update={"id": "retain_cannot_discharge", "decision_ref": retain.id}
+    )
+    with pytest.raises(ValueError, match="does not authorize discharge"):
+        kernel.transition(retain_transition)
+
+    decision = ResponsibilityDischargeDecision(
+        id="decision_discharge_listing",
+        responsibility_ref="sr_listing",
+        responsibility_version=1,
+        status_at_decision=ResponsibilityStatus.ACTIVE,
+        assessment_ref=assessment.id,
+        disposition=ResponsibilityDischargeDisposition.DISCHARGE,
+        basis_refs=[assessment.id, "verification:scope-complete"],
+        policy_ref="responsibility-discharge-policy:v1",
+        decided_at=_now() + timedelta(seconds=2),
+        rationale="current reassessment supports discharge",
+    )
+    authority.record(decision)
+
+    assert kernel.current_status("sr_listing") is ResponsibilityStatus.ACTIVE
     transition = ResponsibilityLifecycleTransition(
         id="discharge",
         responsibility_ref="sr_listing",
         responsibility_version=1,
         from_status=ResponsibilityStatus.ACTIVE,
         to_status=ResponsibilityStatus.DISCHARGED,
-        decision_ref="decision:explicit-discharge",
-        basis_refs=["verification:scope-complete"],
+        decision_ref=decision.id,
+        basis_refs=[decision.id, "verification:scope-complete"],
     )
     kernel.transition(transition)
     assert kernel.current_status("sr_listing") is ResponsibilityStatus.DISCHARGED

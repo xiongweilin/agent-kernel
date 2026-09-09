@@ -32,6 +32,11 @@ class ExpectationResolutionKind(StrEnum):
     CANCELLED = "cancelled"
 
 
+class ResponsibilityDischargeDisposition(StrEnum):
+    DISCHARGE = "discharge"
+    RETAIN = "retain"
+
+
 class ResponsibilityObject(BaseModel):
     """Base class for durable persistent-responsibility state.
 
@@ -164,6 +169,35 @@ class ResponsibilityAssessment(ResponsibilityObject):
     assessed_at: datetime = Field(default_factory=utcnow)
     fresh_until: datetime | None = None
     rationale: str = ""
+
+
+class ResponsibilityDischargeDecision(ResponsibilityObject):
+    """Explicit discharge judgment; this object does not mutate lifecycle."""
+
+    object_type: Literal["ResponsibilityDischargeDecision"] = "ResponsibilityDischargeDecision"
+    responsibility_ref: str
+    responsibility_version: int
+    status_at_decision: ResponsibilityStatus
+    assessment_ref: str
+    disposition: ResponsibilityDischargeDisposition
+    basis_refs: list[str] = Field(default_factory=list)
+    policy_ref: str
+    decided_at: datetime = Field(default_factory=utcnow)
+    rationale: str = ""
+
+    @model_validator(mode="after")
+    def _explicit_basis(self) -> ResponsibilityDischargeDecision:
+        if not self.assessment_ref.strip():
+            raise ValueError("responsibility discharge decision requires assessment_ref")
+        if not self.policy_ref.strip():
+            raise ValueError("responsibility discharge decision requires explicit policy_ref")
+        if not self.basis_refs:
+            raise ValueError("responsibility discharge decision requires basis_refs")
+        if self.assessment_ref not in self.basis_refs:
+            raise ValueError("responsibility discharge decision basis must include assessment_ref")
+        if self.status_at_decision is ResponsibilityStatus.DISCHARGED:
+            raise ValueError("already discharged responsibility cannot receive a discharge decision")
+        return self
 
 
 class ResourceVector(BaseModel):
@@ -390,6 +424,7 @@ type ResponsibilityValue = Annotated[
     | ResponsibilityExpectation
     | ResponsibilityExpectationResolution
     | ResponsibilityAssessment
+    | ResponsibilityDischargeDecision
     | WorkProposal
     | PriorityJudgment
     | ResourcePool
@@ -414,6 +449,7 @@ _RESPONSIBILITY_MODELS: dict[str, type[ResponsibilityObject]] = {
         ResponsibilityExpectation,
         ResponsibilityExpectationResolution,
         ResponsibilityAssessment,
+        ResponsibilityDischargeDecision,
         WorkProposal,
         PriorityJudgment,
         ResourcePool,
@@ -458,6 +494,8 @@ __all__ = [
     "ResponsibilityAdmission",
     "ResponsibilityAssessment",
     "ResponsibilityContextSnapshot",
+    "ResponsibilityDischargeDecision",
+    "ResponsibilityDischargeDisposition",
     "ResponsibilityExpectation",
     "ResponsibilityExpectationResolution",
     "ResponsibilityHandoff",

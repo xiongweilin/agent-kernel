@@ -1,3 +1,4 @@
+from portable_runtime.responsibility.discharge import ResponsibilityDischargeDecisionAuthority
 from portable_runtime.responsibility.domain import due_expectations, record_domain_assessment
 from portable_runtime.responsibility.inspection import ResponsibilityInspection, inspect_responsibility
 from portable_runtime.responsibility.models import (
@@ -17,6 +18,8 @@ from portable_runtime.responsibility.models import (
     ResponsibilityAdmission,
     ResponsibilityAssessment,
     ResponsibilityContextSnapshot,
+    ResponsibilityDischargeDecision,
+    ResponsibilityDischargeDisposition,
     ResponsibilityExpectation,
     ResponsibilityExpectationResolution,
     ResponsibilityHandoff,
@@ -58,6 +61,9 @@ __all__ = [
     "ResponsibilityAdmission",
     "ResponsibilityAssessment",
     "ResponsibilityContextSnapshot",
+    "ResponsibilityDischargeDecision",
+    "ResponsibilityDischargeDecisionAuthority",
+    "ResponsibilityDischargeDisposition",
     "ResponsibilityExpectation",
     "ResponsibilityExpectationResolution",
     "ResponsibilityHandoff",
