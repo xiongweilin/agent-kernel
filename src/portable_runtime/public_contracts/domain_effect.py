@@ -309,6 +309,18 @@ class BoundedDomainEffectExecutionService:
         ).execute(request)
         attempt = self._attempt_for_request(run_result.run_ref, request.id)
         if attempt is None:
+            error = result.error if isinstance(result.error, dict) else {}
+            code = error.get("code")
+            reason = error.get("reason") or result.message
+            if isinstance(code, str) and code:
+                detail = f": {reason}" if isinstance(reason, str) and reason else ""
+                raise ValueError(
+                    f"bounded domain-effect execution blocked before durable Attempt: {code}{detail}"
+                )
+            if isinstance(reason, str) and reason:
+                raise ValueError(
+                    "bounded domain-effect execution blocked before durable Attempt: " + reason
+                )
             raise ValueError("bounded domain-effect execution returned without durable Attempt")
         if result.status != "succeeded":
             result_status: Literal["execution-failed", "execution-unknown"] = (
