@@ -39,6 +39,16 @@ semantic_path = "contracts/semantics/core/responsibility-work-admission-v1.md"
 public_command = "responsibility-work-admission-v1"
 authority_bearing = false
 
+[contracts.bounded_domain_effect_execution]
+current = "bounded-domain-effect-execution-v1"
+schema_path = "contracts/schemas/responsibility/bounded-domain-effect-execution-v1.schema.json"
+receipt = "bounded-domain-effect-execution-receipt-v1"
+receipt_schema_path = "contracts/schemas/responsibility/bounded-domain-effect-execution-receipt-v1.schema.json"
+semantic_path = "contracts/semantics/core/bounded-domain-effect-execution-v1.md"
+public_command = "bounded-domain-effect-execution-v1"
+public_read = true
+authority_bearing = false
+
 [contracts.cognitive_control]
 current = "cognitive-control-v2"
 semantic_path = "contracts/semantics/core/cognitive-control-v2.md"

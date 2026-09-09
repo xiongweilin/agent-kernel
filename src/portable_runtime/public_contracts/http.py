@@ -8,6 +8,11 @@ from fastapi import APIRouter, FastAPI, HTTPException, Request
 from portable_runtime.api.http import create_app
 from portable_runtime.core.runtime import Runtime
 from portable_runtime.public_contracts.catalog import contract_catalog
+from portable_runtime.public_contracts.domain_effect import (
+    BoundedDomainEffectExecutionReceiptV1,
+    BoundedDomainEffectExecutionService,
+    BoundedDomainEffectExecutionV1,
+)
 from portable_runtime.public_contracts.experience import (
     commit_historical_experience_use_contract,
     evaluate_experience_use_contract,
@@ -89,6 +94,7 @@ def contract_router(
     *,
     responsibility_admission_policy: ResponsibilityAdmissionPolicy | None = None,
     responsibility_admission_profile: str | None = None,
+    bounded_domain_effect_execution: BoundedDomainEffectExecutionService | None = None,
 ) -> APIRouter:
     router = APIRouter()
     admission_policy = _select_responsibility_admission_policy(
@@ -201,6 +207,68 @@ def contract_router(
                 code = "ResponsibilityAdmissionIdentityRebound"
             raise HTTPException(status_code=409, detail=_problem(code, message)) from exc
 
+    @router.post(
+        "/v1/domain-effects/executions",
+        response_model=BoundedDomainEffectExecutionReceiptV1,
+    )
+    async def bounded_domain_effect_execute(
+        value: BoundedDomainEffectExecutionV1,
+        request: Request,
+    ) -> BoundedDomainEffectExecutionReceiptV1:
+        _require_local_mutation(request)
+        if bounded_domain_effect_execution is None:
+            raise HTTPException(
+                status_code=503,
+                detail=_problem(
+                    "DomainEffectExecutionUnavailable",
+                    "bounded domain-effect execution is not configured server-side",
+                ),
+            )
+        try:
+            return await bounded_domain_effect_execution.execute(value)
+        except ValueError as exc:
+            message = str(exc)
+            code = "BoundedDomainEffectExecutionRejected"
+            if "stale" in message or "fresh" in message:
+                code = "BoundedDomainEffectExecutionStale"
+            elif "not configured" in message:
+                code = "BoundedDomainEffectCapabilityUnavailable"
+            elif "rebound" in message or "mismatch" in message:
+                code = "BoundedDomainEffectIdentityMismatch"
+            raise HTTPException(status_code=409, detail=_problem(code, message)) from exc
+
+    @router.get(
+        "/v1/domain-effects/executions/{execution_ref}",
+        response_model=BoundedDomainEffectExecutionReceiptV1,
+    )
+    def bounded_domain_effect_inspect(
+        execution_ref: str,
+    ) -> BoundedDomainEffectExecutionReceiptV1:
+        if bounded_domain_effect_execution is None:
+            raise HTTPException(
+                status_code=503,
+                detail=_problem(
+                    "DomainEffectExecutionUnavailable",
+                    "bounded domain-effect execution is not configured server-side",
+                ),
+            )
+        try:
+            receipt = bounded_domain_effect_execution.inspect(execution_ref)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail=_problem("BoundedDomainEffectInspectionRejected", str(exc)),
+            ) from exc
+        if receipt is None:
+            raise HTTPException(
+                status_code=404,
+                detail=_problem(
+                    "BoundedDomainEffectExecutionNotFound",
+                    "bounded domain-effect execution receipt not found",
+                ),
+            )
+        return receipt
+
     return router
 
 
@@ -209,8 +277,9 @@ def create_public_app(
     *,
     responsibility_admission_policy: ResponsibilityAdmissionPolicy | None = None,
     responsibility_admission_profile: str | None = None,
+    bounded_domain_effect_execution: BoundedDomainEffectExecutionService | None = None,
 ) -> FastAPI:
-    """Return the control-plane app with an explicitly selected admission policy."""
+    """Return the control-plane app with explicitly selected server-side policies."""
 
     runtime = runtime or Runtime()
     app = create_app(runtime)
@@ -219,6 +288,7 @@ def create_public_app(
             runtime,
             responsibility_admission_policy=responsibility_admission_policy,
             responsibility_admission_profile=responsibility_admission_profile,
+            bounded_domain_effect_execution=bounded_domain_effect_execution,
         )
     )
     return app
