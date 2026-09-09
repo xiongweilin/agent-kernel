@@ -94,7 +94,7 @@ class DomainEffectAuthorizationPolicy(Protocol):
 
 
 class ReferenceAdministrativeEffectAuthorizationPolicy:
-    """Kernel-owned bounded policy for the first administrative cutover slice."""
+    """Kernel-owned structural policy for bounded administrative effects."""
 
     policy_ref = REFERENCE_AUTHORIZATION_POLICY_REF
 
@@ -103,11 +103,6 @@ class ReferenceAdministrativeEffectAuthorizationPolicy:
         context: DomainEffectAuthorizationContext,
     ) -> DomainEffectAuthorizationJudgment:
         contract = context.contract
-        if context.intent.capability != ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE:
-            return DomainEffectAuthorizationJudgment(
-                False,
-                "capability is outside the bounded administrative authorization slice",
-            )
         if context.work.kind != "administrative-effect":
             return DomainEffectAuthorizationJudgment(
                 False,
