@@ -11,9 +11,9 @@ from portable_runtime.responsibility.domain_effect_verified_outcome import (
     DOMAIN_EFFECT_VERIFICATION_EVIDENCE_SCHEMA,
 )
 
-DOMAIN_EFFECT_VERIFICATION_EVIDENCE_VIEW_SCHEMA = (
+DOMAIN_EFFECT_VERIFICATION_EVIDENCE_VIEW_SCHEMA: Literal[
     "domain-effect-verification-evidence-view-v1"
-)
+] = "domain-effect-verification-evidence-view-v1"
 
 
 class DomainEffectVerificationEvidenceViewV1(BaseModel):
