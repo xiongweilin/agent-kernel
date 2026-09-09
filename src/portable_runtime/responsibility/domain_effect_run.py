@@ -137,7 +137,10 @@ class DomainEffectRunPreparation:
                     "domain effect authorization was consumed before canonical Run preparation"
                 )
 
-            frozen_work = freeze_domain_effect_completion_contract(context.work, context)
+            current_work = self.store.get_work(context.intent.work_ref)
+            if current_work is None:
+                raise ValueError("domain effect completion contract requires durable Work")
+            frozen_work = freeze_domain_effect_completion_contract(current_work, context)
             _contract, completion_digest = require_domain_effect_completion_contract(
                 frozen_work,
                 context,
