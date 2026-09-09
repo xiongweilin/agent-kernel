@@ -90,6 +90,7 @@ class DomainEffectAuthorizationUseConsumption:
         contract_registry: CapabilityContractRegistry | None = None,
     ) -> None:
         self.store = store
+        self._contract_registry_supplied = contract_registry is not None
         self.contract_registry = contract_registry or CapabilityContractRegistry()
 
     def consume(
@@ -191,9 +192,10 @@ class DomainEffectAuthorizationUseConsumption:
         if grant.metadata.get("work_ref") != intent.work_ref:
             raise ValueError("runtime AuthorizationGrant is bound to a different Work")
 
+        replay_registry, contract = self._contract_for_replay(grant, intent)
         admission = DomainEffectAuthorizationAdmission(
             self.store,
-            contract_registry=self.contract_registry,
+            contract_registry=replay_registry,
         ).admit(intent)
         if admission.status != "authorized":
             raise ValueError(
@@ -211,7 +213,6 @@ class DomainEffectAuthorizationUseConsumption:
                 "current domain effect lineage does not match stored authorization provenance"
             )
 
-        contract = self.contract_registry.resolve(intent.capability)
         self._validate_exact_grant(
             grant,
             evidence,
@@ -236,6 +237,31 @@ class DomainEffectAuthorizationUseConsumption:
             contract=contract,
             request=request,
         )
+
+    def _contract_for_replay(
+        self,
+        grant: AuthorizationGrant,
+        intent: DomainEffectIntentEvidenceInput,
+    ) -> tuple[CapabilityContractRegistry, CapabilityContract]:
+        raw = grant.metadata.get("capability_contract")
+        if not isinstance(raw, dict):
+            # Compatibility path for grants minted before contract snapshots
+            # were added. These remain resolvable only when the consumer's
+            # registry already knows the exact capability.
+            contract = self.contract_registry.resolve(intent.capability)
+            return self.contract_registry, contract
+
+        snapshot = CapabilityContract.model_validate(raw)
+        if snapshot.capability != intent.capability:
+            raise ValueError("runtime grant capability contract snapshot rebound")
+        if self._contract_registry_supplied:
+            current = self.contract_registry.resolve(intent.capability)
+            if current.model_dump(mode="json") != snapshot.model_dump(mode="json"):
+                raise ValueError("current capability contract drifted from authorization snapshot")
+            return self.contract_registry, current
+
+        replay_registry = CapabilityContractRegistry(contracts=[snapshot])
+        return replay_registry, replay_registry.resolve(intent.capability)
 
     @staticmethod
     def _intent_from_evidence(evidence: Evidence) -> DomainEffectIntentEvidenceInput:
