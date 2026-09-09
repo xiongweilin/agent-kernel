@@ -4,7 +4,14 @@ import hashlib
 from typing import Any
 
 from portable_runtime.core.models import Event
-from portable_runtime.responsibility.models import ResponsibilityObject, parse_responsibility_object
+from portable_runtime.responsibility.models import (
+    ResponsibilityDischargeDecision,
+    ResponsibilityDischargeDisposition,
+    ResponsibilityLifecycleTransition,
+    ResponsibilityObject,
+    ResponsibilityStatus,
+    parse_responsibility_object,
+)
 
 RESPONSIBILITY_EVENT_TYPE = "persistent-responsibility.object-recorded"
 RESPONSIBILITY_EVENT_SCHEMA = "persistent-responsibility-event-v1"
@@ -55,12 +62,42 @@ class ResponsibilityJournal:
     Reusing the existing Event namespace gives responsibility objects the same
     Memory/SQLite/export/import/bundle durability as other runtime history
     without creating a second store or workflow engine.
+
+    Discharge lifecycle application has an additional durable gate: a non-empty
+    ``decision_ref`` string is not sufficient. The journal re-reads the exact
+    typed ``ResponsibilityDischargeDecision`` before accepting a transition to
+    ``discharged``. Decision creation and lifecycle application therefore remain
+    separate persisted facts while arbitrary strings cannot substitute for the
+    decision object required by persistent-responsibility-v1 PR-019.
     """
 
     def __init__(self, store: Any) -> None:
         self.store = store
 
+    def _validate_discharge_transition(
+        self,
+        transition: ResponsibilityLifecycleTransition,
+    ) -> None:
+        if transition.to_status is not ResponsibilityStatus.DISCHARGED:
+            return
+        decision_ref = transition.decision_ref
+        if not isinstance(decision_ref, str) or not decision_ref.strip():
+            raise ValueError("responsibility discharge transition requires decision_ref")
+        decision = self.get(decision_ref)
+        if not isinstance(decision, ResponsibilityDischargeDecision):
+            raise ValueError("responsibility discharge transition requires typed durable discharge decision")
+        if decision.disposition is not ResponsibilityDischargeDisposition.DISCHARGE:
+            raise ValueError("responsibility discharge transition decision does not authorize discharge")
+        if decision.responsibility_ref != transition.responsibility_ref:
+            raise ValueError("responsibility discharge decision belongs to another responsibility")
+        if decision.responsibility_version != transition.responsibility_version:
+            raise ValueError("responsibility discharge decision version mismatch")
+        if decision.status_at_decision is not transition.from_status:
+            raise ValueError("responsibility discharge decision lifecycle status is stale")
+
     def save(self, value: ResponsibilityObject) -> ResponsibilityObject:
+        if isinstance(value, ResponsibilityLifecycleTransition):
+            self._validate_discharge_transition(value)
         event = responsibility_event(value)
         existing = self.store.get_event(event.id)
         if existing is not None:
