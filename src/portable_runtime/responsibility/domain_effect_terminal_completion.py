@@ -4,6 +4,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from portable_runtime.core.capability_contract import CapabilityContractRegistry
 from portable_runtime.core.models import Action, Run, Work
 from portable_runtime.records.models import EvidenceArtifact, OutcomeRecord
 from portable_runtime.responsibility.domain_effect_authorization_use import (
@@ -51,11 +52,20 @@ class DomainEffectTerminalCompletion:
     No ResponsibilityLifecycleTransition is created here.
     """
 
-    def __init__(self, store: Any) -> None:
+    def __init__(
+        self,
+        store: Any,
+        *,
+        contract_registry: CapabilityContractRegistry | None = None,
+    ) -> None:
         self.store = store
         self.kernel = ResponsibilityKernel(store)
         self.completion = CompletionAuthority(store)
-        self.authorization = DomainEffectAuthorizationUseConsumption(store)
+        self.contract_registry = contract_registry or CapabilityContractRegistry()
+        self.authorization = DomainEffectAuthorizationUseConsumption(
+            store,
+            contract_registry=self.contract_registry,
+        )
 
     def complete(
         self,

@@ -123,6 +123,10 @@ class DomainEffectVerifiedOutcomeVerification:
         self.boundary = boundary
         self.store = boundary.store
         self.registry = boundary.registry
+        self.authorization = DomainEffectAuthorizationUseConsumption(
+            self.store,
+            contract_registry=boundary.contract_registry,
+        )
         self.verifier_provider_id = verifier_provider_id
 
     async def verify_and_confirm(
@@ -255,9 +259,7 @@ class DomainEffectVerifiedOutcomeVerification:
         authorization_ref = run_metadata.get("domain_effect_authorization_ref")
         if not isinstance(authorization_ref, str) or not authorization_ref:
             raise ValueError("domain effect Run lacks runtime authorization ref")
-        authorization = DomainEffectAuthorizationUseConsumption(self.store)._resolve_context(
-            authorization_ref
-        )
+        authorization = self.authorization._resolve_context(authorization_ref)
         authorization_use = self.store.get_authorization_use(payload["authorization_use_ref"])
         if authorization_use is None or getattr(authorization_use, "authorization_ref", None) != authorization.grant.id:
             raise ValueError("domain effect dispatch AuthorizationUse is unavailable or rebound")
