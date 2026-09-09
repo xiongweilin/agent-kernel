@@ -27,6 +27,7 @@ from portable_runtime.responsibility.domain_effect_completion_contract import (
     require_domain_effect_completion_contract,
 )
 
+
 def domain_effect_verification_capability(effect_capability: str) -> str:
     value = effect_capability.strip()
     if not value:
