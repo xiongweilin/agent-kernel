@@ -231,7 +231,10 @@ class BoundedDomainEffectExecutionService:
         )
         prepared_request = self._prepared_request(run_result.run_ref)
         if prepared_request is None:
-            prepared_request = DomainEffectExecutionRequestPreparation(self.runtime.store).prepare(
+            prepared_request = DomainEffectExecutionRequestPreparation(
+                self.runtime.store,
+                contract_registry=self.runtime.contract_registry,
+            ).prepare(
                 DomainEffectExecutionRequestPreparationInput(run_ref=run_result.run_ref),
                 prepared_at=at,
             ).request
