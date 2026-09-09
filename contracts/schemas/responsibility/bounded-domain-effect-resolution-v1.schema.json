@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "portable-runtime://contracts/responsibility/bounded-domain-effect-resolution-v1",
+  "title": "BoundedDomainEffectResolutionV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "execution_ref",
+    "original_status",
+    "current_status",
+    "work_ref",
+    "reason",
+    "processed_at",
+    "authority_bearing"
+  ],
+  "properties": {
+    "schema": {"const": "bounded-domain-effect-resolution-v1"},
+    "execution_ref": {"type": "string", "minLength": 1},
+    "original_status": {"type": "string", "minLength": 1},
+    "current_status": {
+      "enum": [
+        "authorization-rejected",
+        "execution-failed",
+        "execution-unknown",
+        "verified-fail",
+        "completed",
+        "recovery-pending",
+        "recovery-unavailable",
+        "manual-resolution-required",
+        "recovered-failed",
+        "recovered-verified-fail",
+        "recovered-completed"
+      ]
+    },
+    "work_ref": {"type": "string", "minLength": 1},
+    "run_ref": {"type": ["string", "null"]},
+    "request_ref": {"type": ["string", "null"]},
+    "recovery_observation_ref": {"type": ["string", "null"]},
+    "recovery_disposition_ref": {"type": ["string", "null"]},
+    "recovery_application_ref": {"type": ["string", "null"]},
+    "outcome_ref": {"type": ["string", "null"]},
+    "evidence_ref": {"type": ["string", "null"]},
+    "responsibility_ref": {"type": ["string", "null"]},
+    "reason": {"type": "string"},
+    "processed_at": {"type": "string", "format": "date-time"},
+    "authority_bearing": {"const": false}
+  }
+}

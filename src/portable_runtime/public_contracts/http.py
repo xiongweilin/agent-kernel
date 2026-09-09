@@ -18,6 +18,11 @@ from portable_runtime.public_contracts.domain_effect_evidence import (
     DomainEffectVerificationEvidenceViewV1,
     project_domain_effect_verification_evidence,
 )
+from portable_runtime.public_contracts.domain_effect_recovery import (
+    BoundedDomainEffectRecoveryService,
+    BoundedDomainEffectRecoveryV1,
+    BoundedDomainEffectResolutionV1,
+)
 from portable_runtime.public_contracts.experience import (
     commit_historical_experience_use_contract,
     evaluate_experience_use_contract,
@@ -148,6 +153,11 @@ def contract_router(
     admission_policy = _select_responsibility_admission_policy(
         policy=responsibility_admission_policy,
         profile=responsibility_admission_profile,
+    )
+    bounded_domain_effect_recovery = (
+        BoundedDomainEffectRecoveryService(bounded_domain_effect_execution)
+        if bounded_domain_effect_execution is not None
+        else None
     )
 
     @router.get("/v1/contracts")
@@ -316,6 +326,68 @@ def contract_router(
                 ),
             )
         return receipt
+
+    @router.post(
+        "/v1/domain-effects/recoveries",
+        response_model=BoundedDomainEffectResolutionV1,
+    )
+    async def bounded_domain_effect_recover(
+        value: BoundedDomainEffectRecoveryV1,
+        request: Request,
+    ) -> BoundedDomainEffectResolutionV1:
+        _require_local_mutation(request)
+        if bounded_domain_effect_recovery is None:
+            raise HTTPException(
+                status_code=503,
+                detail=_problem(
+                    "DomainEffectRecoveryUnavailable",
+                    "bounded domain-effect recovery is not configured server-side",
+                ),
+            )
+        try:
+            return await bounded_domain_effect_recovery.recover(value)
+        except LookupError as exc:
+            raise HTTPException(
+                status_code=404,
+                detail=_problem("BoundedDomainEffectExecutionNotFound", str(exc)),
+            ) from exc
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail=_problem("BoundedDomainEffectRecoveryRejected", str(exc)),
+            ) from exc
+
+    @router.get(
+        "/v1/domain-effects/executions/{execution_ref}/resolution",
+        response_model=BoundedDomainEffectResolutionV1,
+    )
+    def bounded_domain_effect_resolution(
+        execution_ref: str,
+    ) -> BoundedDomainEffectResolutionV1:
+        if bounded_domain_effect_recovery is None:
+            raise HTTPException(
+                status_code=503,
+                detail=_problem(
+                    "DomainEffectRecoveryUnavailable",
+                    "bounded domain-effect recovery is not configured server-side",
+                ),
+            )
+        try:
+            view = bounded_domain_effect_recovery.inspect(execution_ref)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail=_problem("BoundedDomainEffectResolutionRejected", str(exc)),
+            ) from exc
+        if view is None:
+            raise HTTPException(
+                status_code=404,
+                detail=_problem(
+                    "BoundedDomainEffectExecutionNotFound",
+                    "bounded domain-effect execution receipt not found",
+                ),
+            )
+        return view
 
     @router.get(
         "/v1/domain-effects/evidence/{evidence_ref}",
