@@ -27,8 +27,16 @@ from portable_runtime.responsibility.domain_effect_completion_contract import (
     require_domain_effect_completion_contract,
 )
 
-DOMAIN_EFFECT_VERIFICATION_CAPABILITY = (
-    f"verify.{ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE}"
+
+def domain_effect_verification_capability(effect_capability: str) -> str:
+    value = effect_capability.strip()
+    if not value:
+        raise ValueError("domain effect verification requires a capability")
+    return f"verify.{value}"
+
+
+DOMAIN_EFFECT_VERIFICATION_CAPABILITY = domain_effect_verification_capability(
+    ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE
 )
 DOMAIN_EFFECT_VERIFICATION_EVIDENCE_SCHEMA = "domain-effect-objective-verification-evidence-v1"
 
@@ -115,6 +123,10 @@ class DomainEffectVerifiedOutcomeVerification:
         self.boundary = boundary
         self.store = boundary.store
         self.registry = boundary.registry
+        self.authorization = DomainEffectAuthorizationUseConsumption(
+            self.store,
+            contract_registry=boundary.contract_registry,
+        )
         self.verifier_provider_id = verifier_provider_id
 
     async def verify_and_confirm(
@@ -184,8 +196,6 @@ class DomainEffectVerifiedOutcomeVerification:
         self,
         request: CapabilityRequest,
     ) -> _EffectExecutionGraph:
-        if request.capability != ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE:
-            raise ValueError("capability is outside the bounded verified-outcome slice")
         if not request.work_id or not request.run_id:
             raise ValueError("domain effect verification requires Work/Run-bound request")
         work = self.store.get_work(request.work_id)
@@ -249,9 +259,7 @@ class DomainEffectVerifiedOutcomeVerification:
         authorization_ref = run_metadata.get("domain_effect_authorization_ref")
         if not isinstance(authorization_ref, str) or not authorization_ref:
             raise ValueError("domain effect Run lacks runtime authorization ref")
-        authorization = DomainEffectAuthorizationUseConsumption(self.store)._resolve_context(
-            authorization_ref
-        )
+        authorization = self.authorization._resolve_context(authorization_ref)
         authorization_use = self.store.get_authorization_use(payload["authorization_use_ref"])
         if authorization_use is None or getattr(authorization_use, "authorization_ref", None) != authorization.grant.id:
             raise ValueError("domain effect dispatch AuthorizationUse is unavailable or rebound")
@@ -334,7 +342,7 @@ class DomainEffectVerifiedOutcomeVerification:
             store=self.store,
             contract_registry=self.boundary.contract_registry,
         ).build(
-            DOMAIN_EFFECT_VERIFICATION_CAPABILITY,
+            domain_effect_verification_capability(effect_request.capability),
             work_id=graph.work.id,
             run_id=graph.run.id,
             parameters={"verification_scope": verification_scope},
@@ -464,6 +472,7 @@ class DomainEffectVerifiedOutcomeVerification:
 __all__ = [
     "DOMAIN_EFFECT_VERIFICATION_CAPABILITY",
     "DOMAIN_EFFECT_VERIFICATION_EVIDENCE_SCHEMA",
+    "domain_effect_verification_capability",
     "DOMAIN_EFFECT_VERIFICATION_SCOPE_SCHEMA",
     "DomainEffectVerifiedOutcomeResult",
     "DomainEffectVerifiedOutcomeVerification",

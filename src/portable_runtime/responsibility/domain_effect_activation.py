@@ -6,6 +6,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from portable_runtime.core.capability_contract import CapabilityContractRegistry
 from portable_runtime.core.models import Event, Run, utcnow
 from portable_runtime.records.authorization import is_grant_valid
 from portable_runtime.responsibility.domain_effect_authorization_use import (
@@ -61,9 +62,18 @@ class DomainEffectRunActivation:
     select a provider, issue InvocationPermit, or create an Action/Attempt.
     """
 
-    def __init__(self, store: Any) -> None:
+    def __init__(
+        self,
+        store: Any,
+        *,
+        contract_registry: CapabilityContractRegistry | None = None,
+    ) -> None:
         self.store = store
-        self.authorization = DomainEffectAuthorizationUseConsumption(store)
+        self.contract_registry = contract_registry or CapabilityContractRegistry()
+        self.authorization = DomainEffectAuthorizationUseConsumption(
+            store,
+            contract_registry=self.contract_registry,
+        )
 
     def activate(
         self,
