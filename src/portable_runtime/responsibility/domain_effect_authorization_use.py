@@ -20,7 +20,6 @@ from portable_runtime.records.authorization import (
     create_authorization_use,
 )
 from portable_runtime.responsibility.domain_effect_authorization import (
-    ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE,
     DOMAIN_EFFECT_INTENT_EVIDENCE_SCHEMA,
     REFERENCE_AUTHORIZATION_POLICY_REF,
     DomainEffectAuthorizationAdmission,
@@ -287,8 +286,6 @@ class DomainEffectAuthorizationUseConsumption:
         admission: DomainEffectAuthorizationResult,
         contract: CapabilityContract,
     ) -> None:
-        if intent.capability != ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE:
-            raise ValueError("capability is outside the bounded authorization-use slice")
         if (
             contract.minimum_impact_class != "write-remote"
             or contract.effect_semantics != "reconcilable"
