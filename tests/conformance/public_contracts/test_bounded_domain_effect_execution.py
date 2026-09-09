@@ -12,6 +12,7 @@ from portable_runtime.core.registry import ProviderRegistry
 from portable_runtime.core.runtime import Runtime
 from portable_runtime.public_contracts.domain_effect import (
     BoundedDomainEffectExecutionProfile,
+    BoundedDomainEffectExecutionReceiptV1,
     BoundedDomainEffectExecutionService,
     BoundedDomainEffectExecutionV1,
 )
@@ -97,6 +98,27 @@ def _fixture():
     return runtime, service, command, effect_provider, verifier
 
 
+class _LoseCompletedReceiptService(BoundedDomainEffectExecutionService):
+    """Inject one crash after terminal completion but before receipt append."""
+
+    def __init__(
+        self,
+        runtime: Runtime,
+        profiles: list[BoundedDomainEffectExecutionProfile],
+    ) -> None:
+        super().__init__(runtime, profiles)
+        self.lose_completed_receipt_once = True
+
+    def _record(
+        self,
+        receipt: BoundedDomainEffectExecutionReceiptV1,
+    ) -> BoundedDomainEffectExecutionReceiptV1:
+        if receipt.status == "completed" and self.lose_completed_receipt_once:
+            self.lose_completed_receipt_once = False
+            raise RuntimeError("simulated crash after terminal completion before receipt append")
+        return super()._record(receipt)
+
+
 @pytest.mark.asyncio
 async def test_high_level_execution_uses_one_reality_exit_and_is_receipt_idempotent() -> None:
     runtime, service, command, effect_provider, verifier = _fixture()
@@ -123,6 +145,43 @@ async def test_high_level_execution_uses_one_reality_exit_and_is_receipt_idempot
     assert verifier.invocations == 1
     assert runtime.get_work(command.work_ref).status == "completed"
     assert service.inspect(first.execution_ref) == first
+
+
+@pytest.mark.asyncio
+async def test_terminal_graph_rebuilds_missing_receipt_without_reinvocation() -> None:
+    runtime, service, command, effect_provider, verifier = _fixture()
+    profiles = list(service.profiles.values())
+    faulting = _LoseCompletedReceiptService(runtime, profiles)
+    at = utcnow()
+
+    with pytest.raises(RuntimeError, match="after terminal completion before receipt append"):
+        await faulting.execute(command, processed_at=at)
+
+    execution_ref = faulting.execution_ref(command)
+    assert faulting.inspect(execution_ref) is None
+    assert runtime.get_work(command.work_ref).status == "completed"
+    runs = runtime.store.list_runs(command.work_ref)
+    assert len(runs) == 1
+    assert runs[0].status == "succeeded"
+    assert effect_provider.invocations == 1
+    assert verifier.invocations == 1
+
+    restarted = BoundedDomainEffectExecutionService(runtime, profiles)
+    recovered = await restarted.execute(
+        command,
+        processed_at=at + timedelta(minutes=1),
+    )
+
+    assert recovered.status == "completed"
+    assert recovered.execution_ref == execution_ref
+    assert recovered.run_ref == runs[0].id
+    assert recovered.evidence_ref
+    assert recovered.outcome_ref
+    assert recovered.action_ref
+    assert recovered.responsibility_ref
+    assert restarted.inspect(execution_ref) == recovered
+    assert effect_provider.invocations == 1
+    assert verifier.invocations == 1
 
 
 @pytest.mark.asyncio
