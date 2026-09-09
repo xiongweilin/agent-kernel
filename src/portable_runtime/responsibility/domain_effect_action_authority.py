@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Any
 
 from portable_runtime.core.capabilities import CapabilityRequest
+from portable_runtime.core.capability_contract import CapabilityContractRegistry
 from portable_runtime.core.models import Event, Run, utcnow
 from portable_runtime.core.qualification import InvocationPermit
 from portable_runtime.core.registry import ProviderRegistry
@@ -59,10 +60,16 @@ class DomainEffectActionAuthorityResolver:
         store: Any,
         provider_registry: ProviderRegistry,
         *,
+        contract_registry: CapabilityContractRegistry | None = None,
         now: Callable[[], datetime] = utcnow,
     ) -> None:
         self.store = store
         self.provider_registry = provider_registry
+        self.contract_registry = contract_registry or CapabilityContractRegistry()
+        self.authorization = DomainEffectAuthorizationUseConsumption(
+            store,
+            contract_registry=self.contract_registry,
+        )
         self.now = now
 
     def resolve(self, request: CapabilityRequest) -> DomainEffectActionAuthorityBinding:
@@ -178,9 +185,7 @@ class DomainEffectActionAuthorityResolver:
         authorization_ref: str,
         request: CapabilityRequest,
     ) -> None:
-        context = DomainEffectAuthorizationUseConsumption(self.store)._resolve_context(
-            authorization_ref
-        )
+        context = self.authorization._resolve_context(authorization_ref)
         expected = context.request
         if expected.capability != request.capability:
             raise ValueError("domain effect action capability rebound")
@@ -211,8 +216,7 @@ class DomainEffectActionAuthorityResolver:
                 raise ValueError("domain effect action provider binding changed at dispatch")
             if specification != expected_specification:
                 raise ValueError("domain effect action InvocationSpecification changed at dispatch")
-            consumer = DomainEffectAuthorizationUseConsumption(self.store)
-            context = consumer._resolve_context(authorization_ref)
+            context = self.authorization._resolve_context(authorization_ref)
             self._validate_live_authorization_request(authorization_ref, request)
             foreign = [
                 use
