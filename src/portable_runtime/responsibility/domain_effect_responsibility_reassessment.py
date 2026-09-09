@@ -173,6 +173,7 @@ class DomainEffectResponsibilityReassessment:
                 *blocker_refs,
                 assessed_at.isoformat(),
             ),
+            created_at=assessed_at,
             responsibility_ref=responsibility_ref,
             responsibility_version=current_version,
             subject_ref=subject_ref,
