@@ -11,6 +11,7 @@ from portable_runtime.core.capabilities import CapabilityRequest
 from portable_runtime.core.models import Event, StepAttempt, utcnow
 from portable_runtime.core.provider_semantics import ProviderSemanticContract
 from portable_runtime.core.runtime import Runtime
+from portable_runtime.governance.dispatch import DISPATCH_COMMIT_EVENT
 from portable_runtime.responsibility.domain_effect_action_authority import (
     DomainEffectActionAuthorityResolver,
 )
@@ -366,6 +367,30 @@ class BoundedDomainEffectExecutionService:
         return CapabilityRequest.model_validate(raw)
 
     def _attempt_for_request(self, run_ref: str, request_ref: str) -> StepAttempt | None:
+        dispatches = [
+            event
+            for event in self.runtime.store.list_events(request_ref)
+            if event.type == DISPATCH_COMMIT_EVENT
+        ]
+        if len(dispatches) > 1:
+            raise ValueError("bounded domain-effect execution has multiple dispatch commitments")
+        if dispatches:
+            payload = dispatches[0].payload if isinstance(dispatches[0].payload, dict) else {}
+            if payload.get("request_id") != request_ref:
+                raise ValueError("bounded domain-effect dispatch request identity rebound")
+            attempt_ref = payload.get("attempt_ref")
+            if not isinstance(attempt_ref, str) or not attempt_ref:
+                raise ValueError("bounded domain-effect dispatch lacks durable Attempt ref")
+            attempt = self.runtime.store.get_attempt(attempt_ref)
+            if not isinstance(attempt, StepAttempt):
+                raise ValueError("bounded domain-effect dispatch Attempt is unavailable")
+            if attempt.request_ref != request_ref:
+                raise ValueError("bounded domain-effect dispatch Attempt request rebound")
+            step = self.runtime.store.get_step(attempt.step_id)
+            if step is None or step.run_id != run_ref:
+                raise ValueError("bounded domain-effect dispatch Attempt Run rebound")
+            return attempt
+
         attempts: list[StepAttempt] = []
         for step in self.runtime.store.list_steps(run_ref):
             attempts.extend(
