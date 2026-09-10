@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "portable-runtime://contracts/responsibility/responsibility-status-view-v1",
+  "title": "ResponsibilityStatusViewV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "responsibility_ref", "responsibility_version", "current_status", "observed_at", "authority_bearing"],
+  "properties": {
+    "schema": {"const": "responsibility-status-view-v1"},
+    "responsibility_ref": {"type": "string", "minLength": 1},
+    "responsibility_version": {"type": "integer", "minimum": 1},
+    "current_status": {"enum": ["active", "suspended", "discharged"]},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "authority_bearing": {"const": false}
+  }
+}

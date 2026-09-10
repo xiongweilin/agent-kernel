@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "portable-runtime://contracts/responsibility/responsibility-discharge-decision-receipt-v1",
+  "title": "ResponsibilityDischargeDecisionReceiptV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "decision", "status_after_decision", "recorded_at", "authority_bearing"],
+  "properties": {
+    "schema": {"const": "responsibility-discharge-decision-receipt-v1"},
+    "decision": {"$ref": "persistent-responsibility-v1.schema.json"},
+    "status_after_decision": {"enum": ["active", "suspended", "discharged"]},
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "authority_bearing": {"const": false}
+  }
+}

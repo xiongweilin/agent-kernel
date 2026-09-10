@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "portable-runtime://contracts/responsibility/responsibility-assessment-receipt-v1",
+  "title": "ResponsibilityAssessmentReceiptV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "assessment", "recorded_at", "authority_bearing"],
+  "properties": {
+    "schema": {"const": "responsibility-assessment-receipt-v1"},
+    "assessment": {"$ref": "persistent-responsibility-v1.schema.json"},
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "authority_bearing": {"const": false}
+  }
+}

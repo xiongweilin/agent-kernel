@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "portable-runtime://contracts/responsibility/responsibility-lifecycle-transition-receipt-v1",
+  "title": "ResponsibilityLifecycleTransitionReceiptV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "transition", "current_status", "recorded_at", "authority_bearing"],
+  "properties": {
+    "schema": {"const": "responsibility-lifecycle-transition-receipt-v1"},
+    "transition": {"$ref": "persistent-responsibility-v1.schema.json"},
+    "current_status": {"enum": ["active", "suspended", "discharged"]},
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "authority_bearing": {"const": false}
+  }
+}
