@@ -21,7 +21,7 @@ from portable_runtime.responsibility.models import (
     WorkProposal,
 )
 
-NOW = datetime(2026, 9, 9, 3, 30, tzinfo=UTC)
+NOW = datetime.now(UTC).replace(microsecond=0)
 
 
 def _iam_domain_payload() -> dict[str, object]:

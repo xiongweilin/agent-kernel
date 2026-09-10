@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "portable-runtime://contracts/responsibility/responsibility-assessment-record-v1",
+  "title": "ResponsibilityAssessmentRecordV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "assessment"],
+  "properties": {
+    "schema": {"const": "responsibility-assessment-record-v1"},
+    "assessment": {"$ref": "persistent-responsibility-v1.schema.json"}
+  }
+}
