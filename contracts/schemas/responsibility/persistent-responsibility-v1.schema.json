@@ -16,6 +16,7 @@
         "ResponsibilityExpectation",
         "ResponsibilityExpectationResolution",
         "ResponsibilityAssessment",
+        "ResponsibilityDischargeDecision",
         "WorkProposal",
         "PriorityJudgment",
         "ResourcePool",

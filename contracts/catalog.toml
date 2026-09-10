@@ -39,6 +39,40 @@ semantic_path = "contracts/semantics/core/responsibility-work-admission-v1.md"
 public_command = "responsibility-work-admission-v1"
 authority_bearing = false
 
+[contracts.responsibility_assessment_record]
+current = "responsibility-assessment-record-v1"
+schema_path = "contracts/schemas/responsibility/responsibility-assessment-record-v1.schema.json"
+receipt = "responsibility-assessment-receipt-v1"
+receipt_schema_path = "contracts/schemas/responsibility/responsibility-assessment-receipt-v1.schema.json"
+semantic_path = "contracts/semantics/core/responsibility-discharge-lifecycle-v1.md"
+public_command = "responsibility-assessment-record-v1"
+authority_bearing = false
+
+[contracts.responsibility_discharge_decision_record]
+current = "responsibility-discharge-decision-record-v1"
+schema_path = "contracts/schemas/responsibility/responsibility-discharge-decision-record-v1.schema.json"
+receipt = "responsibility-discharge-decision-receipt-v1"
+receipt_schema_path = "contracts/schemas/responsibility/responsibility-discharge-decision-receipt-v1.schema.json"
+semantic_path = "contracts/semantics/core/responsibility-discharge-lifecycle-v1.md"
+public_command = "responsibility-discharge-decision-record-v1"
+authority_bearing = false
+
+[contracts.responsibility_lifecycle_transition_apply]
+current = "responsibility-lifecycle-transition-apply-v1"
+schema_path = "contracts/schemas/responsibility/responsibility-lifecycle-transition-apply-v1.schema.json"
+receipt = "responsibility-lifecycle-transition-receipt-v1"
+receipt_schema_path = "contracts/schemas/responsibility/responsibility-lifecycle-transition-receipt-v1.schema.json"
+semantic_path = "contracts/semantics/core/responsibility-discharge-lifecycle-v1.md"
+public_command = "responsibility-lifecycle-transition-apply-v1"
+authority_bearing = false
+
+[contracts.responsibility_status]
+current = "responsibility-status-view-v1"
+schema_path = "contracts/schemas/responsibility/responsibility-status-view-v1.schema.json"
+semantic_path = "contracts/semantics/core/responsibility-discharge-lifecycle-v1.md"
+public_read = true
+authority_bearing = false
+
 [contracts.bounded_domain_effect_execution]
 current = "bounded-domain-effect-execution-v1"
 schema_path = "contracts/schemas/responsibility/bounded-domain-effect-execution-v1.schema.json"

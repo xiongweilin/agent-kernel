@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "portable-runtime://contracts/responsibility/responsibility-discharge-decision-record-v1",
+  "title": "ResponsibilityDischargeDecisionRecordV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "decision"],
+  "properties": {
+    "schema": {"const": "responsibility-discharge-decision-record-v1"},
+    "decision": {"$ref": "persistent-responsibility-v1.schema.json"}
+  }
+}

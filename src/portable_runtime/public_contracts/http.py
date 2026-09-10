@@ -38,10 +38,21 @@ from portable_runtime.public_contracts.models import (
 from portable_runtime.public_contracts.responsibility import (
     DomainResponsibilityProposalReceiptV1,
     DomainResponsibilityProposalV1,
+    ResponsibilityAssessmentReceiptV1,
+    ResponsibilityAssessmentRecordV1,
+    ResponsibilityDischargeDecisionReceiptV1,
+    ResponsibilityDischargeDecisionRecordV1,
+    ResponsibilityLifecycleTransitionApplyV1,
+    ResponsibilityLifecycleTransitionReceiptV1,
+    ResponsibilityStatusViewV1,
     ResponsibilityWorkAdmissionReceiptV1,
     ResponsibilityWorkAdmissionV1,
     admit_responsibility_work,
+    apply_responsibility_lifecycle_transition,
+    inspect_responsibility_status,
     record_domain_responsibility_proposal,
+    record_responsibility_assessment,
+    record_responsibility_discharge_decision,
 )
 from portable_runtime.responsibility.admission import ResponsibilityAdmissionPolicy
 from portable_runtime.responsibility.admission_profiles import (
@@ -264,6 +275,70 @@ def contract_router(
             elif "rebound" in message:
                 code = "ResponsibilityAdmissionIdentityRebound"
             raise HTTPException(status_code=409, detail=_problem(code, message)) from exc
+
+    @router.post(
+        "/v1/responsibilities/assessments",
+        response_model=ResponsibilityAssessmentReceiptV1,
+    )
+    def responsibility_assessment_record(
+        value: ResponsibilityAssessmentRecordV1,
+        request: Request,
+    ) -> ResponsibilityAssessmentReceiptV1:
+        _require_local_mutation(request)
+        try:
+            return record_responsibility_assessment(runtime, value)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail=_problem("ResponsibilityAssessmentRejected", str(exc)),
+            ) from exc
+
+    @router.post(
+        "/v1/responsibilities/discharge-decisions",
+        response_model=ResponsibilityDischargeDecisionReceiptV1,
+    )
+    def responsibility_discharge_decision_record(
+        value: ResponsibilityDischargeDecisionRecordV1,
+        request: Request,
+    ) -> ResponsibilityDischargeDecisionReceiptV1:
+        _require_local_mutation(request)
+        try:
+            return record_responsibility_discharge_decision(runtime, value)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail=_problem("ResponsibilityDischargeDecisionRejected", str(exc)),
+            ) from exc
+
+    @router.post(
+        "/v1/responsibilities/lifecycle-transitions",
+        response_model=ResponsibilityLifecycleTransitionReceiptV1,
+    )
+    def responsibility_lifecycle_transition_apply(
+        value: ResponsibilityLifecycleTransitionApplyV1,
+        request: Request,
+    ) -> ResponsibilityLifecycleTransitionReceiptV1:
+        _require_local_mutation(request)
+        try:
+            return apply_responsibility_lifecycle_transition(runtime, value)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail=_problem("ResponsibilityLifecycleTransitionRejected", str(exc)),
+            ) from exc
+
+    @router.get(
+        "/v1/responsibilities/{responsibility_ref}/status",
+        response_model=ResponsibilityStatusViewV1,
+    )
+    def responsibility_status(responsibility_ref: str) -> ResponsibilityStatusViewV1:
+        try:
+            return inspect_responsibility_status(runtime, responsibility_ref)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=404,
+                detail=_problem("ResponsibilityNotFound", str(exc)),
+            ) from exc
 
     @router.post(
         "/v1/domain-effects/executions",
