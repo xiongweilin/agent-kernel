@@ -27,6 +27,7 @@ ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE = "administrative.hris.employee.create.v1"
 DOMAIN_EFFECT_INTENT_EVIDENCE_SCHEMA = "domain-effect-intent-evidence-v1"
 REFERENCE_AUTHORIZATION_POLICY_REF = "kernel-administrative-runtime-authorization-v1"
 RUNTIME_ADMINISTRATIVE_ACTOR = "runtime:administrative-effect-executor"
+RECONCILABLE_REVERSIBILITIES = frozenset({"compensatable", "irreversible"})
 
 
 def _stable_id(prefix: str, *parts: object) -> str:
@@ -124,11 +125,11 @@ class ReferenceAdministrativeEffectAuthorizationPolicy:
             )
         if (
             contract.effect_semantics != "reconcilable"
-            or contract.reversibility != "compensatable"
+            or contract.reversibility not in RECONCILABLE_REVERSIBILITIES
         ):
             return DomainEffectAuthorizationJudgment(
                 False,
-                "capability lacks required reconciliation/compensation semantics",
+                "capability lacks required reconcilable recovery semantics",
             )
         if contract.authorization_requirement != "required":
             return DomainEffectAuthorizationJudgment(
@@ -598,6 +599,7 @@ __all__ = [
     "DomainEffectAuthorizationResult",
     "DomainEffectIntentEvidenceInput",
     "REFERENCE_AUTHORIZATION_POLICY_REF",
+    "RECONCILABLE_REVERSIBILITIES",
     "RUNTIME_ADMINISTRATIVE_ACTOR",
     "ReferenceAdministrativeEffectAuthorizationPolicy",
 ]
