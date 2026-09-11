@@ -715,12 +715,16 @@ class SQLiteStateStore:
         @contextmanager
         def _tx():
             with self._lock:
-                self._connection.execute("BEGIN")
+                owns_transaction = not self._connection.in_transaction
+                if owns_transaction:
+                    self._connection.execute("BEGIN")
                 try:
                     yield self
-                    self._connection.execute("COMMIT")
+                    if owns_transaction:
+                        self._connection.execute("COMMIT")
                 except Exception:
-                    self._connection.execute("ROLLBACK")
+                    if owns_transaction:
+                        self._connection.execute("ROLLBACK")
                     raise
         return _tx()
     def _insert_lease(
