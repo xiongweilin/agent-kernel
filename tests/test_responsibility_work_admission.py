@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 
 from portable_runtime.responsibility.admission import (
@@ -160,6 +161,32 @@ def test_kernel_admission_replay_returns_same_work_without_duplicate_chain() -> 
     assert len(reservations) == 1
     assert len(commitments) == 1
     assert kernel.store.list_authorizations() == []
+
+
+def test_concurrent_work_admission_serializes_capacity_and_returns_rejection() -> None:
+    kernel, template = _kernel_with_external_proposal()
+    proposals = [template]
+    proposals.extend(
+        template.model_copy(update={"id": f"proposal_admin_hris_{index}"})
+        for index in range(1, 5)
+    )
+    for proposal in proposals[1:]:
+        kernel.propose(proposal, now=NOW)
+
+    def admit(proposal: WorkProposal):
+        return admit_responsibility_proposal(
+            kernel,
+            proposal.id,
+            policy=_policy(),
+            now=NOW,
+        )
+
+    with ThreadPoolExecutor(max_workers=len(proposals)) as executor:
+        results = list(executor.map(admit, proposals))
+
+    assert [result.status for result in results].count("work-materialized") == 4
+    assert [result.status for result in results].count("portfolio-rejected") == 1
+    assert len(kernel.store.list_work()) == 4
 
 
 def test_kernel_admission_rejection_stops_before_resource_and_work_objects() -> None:

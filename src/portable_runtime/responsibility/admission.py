@@ -170,6 +170,24 @@ def admit_responsibility_proposal(
     policy: ResponsibilityAdmissionPolicy,
     now: datetime,
 ) -> ResponsibilityWorkAdmissionResult:
+    """Atomically admit one proposal and its complete bounded Work chain."""
+
+    with kernel.store.transaction():
+        return _admit_responsibility_proposal(
+            kernel,
+            proposal_ref,
+            policy=policy,
+            now=now,
+        )
+
+
+def _admit_responsibility_proposal(
+    kernel: ResponsibilityKernel,
+    proposal_ref: str,
+    *,
+    policy: ResponsibilityAdmissionPolicy,
+    now: datetime,
+) -> ResponsibilityWorkAdmissionResult:
     proposal_value = kernel.journal.get(proposal_ref)
     if not isinstance(proposal_value, WorkProposal):
         raise ValueError(f"unknown WorkProposal: {proposal_ref}")
