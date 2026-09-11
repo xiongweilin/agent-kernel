@@ -21,6 +21,7 @@ from portable_runtime.records.authorization import (
 )
 from portable_runtime.responsibility.domain_effect_authorization import (
     DOMAIN_EFFECT_INTENT_EVIDENCE_SCHEMA,
+    RECONCILABLE_REVERSIBILITIES,
     REFERENCE_AUTHORIZATION_POLICY_REF,
     DomainEffectAuthorizationAdmission,
     DomainEffectAuthorizationResult,
@@ -289,7 +290,7 @@ class DomainEffectAuthorizationUseConsumption:
         if (
             contract.minimum_impact_class != "write-remote"
             or contract.effect_semantics != "reconcilable"
-            or contract.reversibility != "compensatable"
+            or contract.reversibility not in RECONCILABLE_REVERSIBILITIES
             or contract.authorization_requirement != "required"
             or not contract.resource_required
             or not contract.subject_version_required

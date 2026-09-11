@@ -6,7 +6,10 @@ import pytest
 
 from portable_runtime.core.boundary import RealityBoundary
 from portable_runtime.core.capabilities import CapabilityRequest
-from portable_runtime.core.capability_contract import CapabilityContractRegistry
+from portable_runtime.core.capability_contract import (
+    CapabilityContract,
+    CapabilityContractRegistry,
+)
 from portable_runtime.responsibility.admission import (
     BoundedLocalResponsibilityAdmissionPolicy,
     admit_responsibility_proposal,
@@ -186,6 +189,36 @@ def test_administrative_employee_create_has_strict_effect_contract() -> None:
     assert contract.subject_version_required is True
     assert contract.blast_radius == 1
     assert contract.exposure == 1
+
+
+def test_reconcilable_irreversible_contract_is_admitted() -> None:
+    store = InMemoryStateStore()
+    work = _admitted_work(store)
+    registry = CapabilityContractRegistry(
+        contracts=[
+            CapabilityContract(
+                capability=ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE,
+                minimum_impact_class="write-remote",
+                effect_semantics="reconcilable",
+                reversibility="irreversible",
+                authorization_requirement="required",
+                minimum_procedure_profile="standard",
+                resource_required=True,
+                subject_version_required=True,
+                default_independence_requirements=[],
+                blast_radius=1,
+                exposure=1,
+            )
+        ]
+    )
+
+    result = DomainEffectAuthorizationAdmission(
+        store,
+        contract_registry=registry,
+    ).admit(_intent(work.id), now=NOW + timedelta(minutes=1))
+
+    assert result.status == "authorized"
+    assert result.authorization_ref is not None
 
 
 def test_domain_evidence_mints_only_kernel_derived_runtime_grant() -> None:
