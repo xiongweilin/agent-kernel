@@ -42,6 +42,7 @@ def _runtime() -> tuple[Runtime, TestClient]:
 
 
 def _assessment() -> dict[str, object]:
+    assessed_at = datetime.now(UTC)
     return {
         "id": "assessment_public_discharge",
         "object_type": "ResponsibilityAssessment",
@@ -50,14 +51,15 @@ def _assessment() -> dict[str, object]:
         "subject_ref": "obligation:1",
         "assessment_kind": "responsibility-discharge-reassessment",
         "basis_refs": ["completion:1", "outcome:1"],
-        "assessed_at": NOW.isoformat(),
-        "fresh_until": (NOW + timedelta(minutes=10)).isoformat(),
+        "assessed_at": assessed_at.isoformat(),
+        "fresh_until": (assessed_at + timedelta(minutes=10)).isoformat(),
         "rationale": "the generic obligation is currently satisfied",
         "created_at": NOW.isoformat(),
     }
 
 
 def _decision(*, assessment_ref: str = "assessment_public_discharge") -> dict[str, object]:
+    decided_at = datetime.now(UTC)
     return {
         "id": "decision_public_discharge",
         "object_type": "ResponsibilityDischargeDecision",
@@ -68,9 +70,9 @@ def _decision(*, assessment_ref: str = "assessment_public_discharge") -> dict[st
         "disposition": "discharge",
         "basis_refs": [assessment_ref, "completion:1"],
         "policy_ref": "domain:responsibility-discharge@1",
-        "decided_at": (NOW + timedelta(seconds=1)).isoformat(),
+        "decided_at": decided_at.isoformat(),
         "rationale": "fresh assessment authorizes discharge judgment",
-        "created_at": (NOW + timedelta(seconds=1)).isoformat(),
+        "created_at": decided_at.isoformat(),
     }
 
 

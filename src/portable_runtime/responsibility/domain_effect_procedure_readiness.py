@@ -193,7 +193,7 @@ class DomainEffectProcedureReadinessAssessment:
                 "source_qualification_ref": qualification_event.id,
                 "logical_effect_ref": self._required_ref(metadata, "logical_effect_ref"),
                 "required_effect_semantics": "reconcilable",
-                "required_reversibility": "compensatable",
+                "required_reversibility": context.contract.reversibility,
             },
         )
         readiness_refs = (

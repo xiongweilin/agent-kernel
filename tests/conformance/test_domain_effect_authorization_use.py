@@ -5,6 +5,10 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from pydantic import ValidationError
 
+from portable_runtime.core.capability_contract import (
+    CapabilityContract,
+    CapabilityContractRegistry,
+)
 from portable_runtime.records.authorization import (
     AuthorizationGrant,
     CanonicalAuthorizationRequest,
@@ -160,15 +164,43 @@ def _intent(work_ref: str) -> DomainEffectIntentEvidenceInput:
     )
 
 
-def _authorized(store: InMemoryStateStore):
+def _authorized(
+    store: InMemoryStateStore,
+    *,
+    contract_registry: CapabilityContractRegistry | None = None,
+):
     work = _admitted_work(store)
-    result = DomainEffectAuthorizationAdmission(store).admit(
+    registry = contract_registry or CapabilityContractRegistry()
+    result = DomainEffectAuthorizationAdmission(
+        store,
+        contract_registry=registry,
+    ).admit(
         _intent(work.id),
         now=NOW + timedelta(minutes=1),
     )
     assert result.status == "authorized"
     assert result.authorization_ref is not None
     return work, result
+
+
+def _irreversible_reconcilable_registry() -> CapabilityContractRegistry:
+    return CapabilityContractRegistry(
+        contracts=[
+            CapabilityContract(
+                capability=ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE,
+                minimum_impact_class="write-remote",
+                effect_semantics="reconcilable",
+                reversibility="irreversible",
+                authorization_requirement="required",
+                minimum_procedure_profile="standard",
+                resource_required=True,
+                subject_version_required=True,
+                default_independence_requirements=[],
+                blast_radius=1,
+                exposure=1,
+            )
+        ]
+    )
 
 
 def test_use_input_exposes_only_runtime_authorization_identity() -> None:
@@ -216,6 +248,35 @@ def test_runtime_grant_consumption_materializes_one_kernel_derived_use() -> None
     assert use.effect_class == "write-remote"
     assert use.subject_version_refs == [authorization.subject_version_ref]
     assert store.list_runs() == []
+
+
+def test_reconcilable_irreversible_grant_survives_action_time_use() -> None:
+    store = InMemoryStateStore()
+    registry = _irreversible_reconcilable_registry()
+    work = _admitted_work(store)
+    authorization = DomainEffectAuthorizationAdmission(
+        store,
+        contract_registry=registry,
+    ).admit(
+        _intent(work.id),
+        now=NOW + timedelta(minutes=1),
+    )
+    assert authorization.status == "authorized"
+    assert authorization.authorization_ref is not None
+
+    result = DomainEffectAuthorizationUseConsumption(
+        store,
+        contract_registry=registry,
+    ).consume(
+        DomainEffectAuthorizationUseInput(
+            authorization_ref=authorization.authorization_ref,
+        ),
+        authorized_at=NOW + timedelta(minutes=2),
+    )
+
+    assert result.status == "consumed"
+    assert result.work_ref == work.id
+    assert result.capability == ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE
 
 
 def test_use_replay_preserves_historical_time_after_grant_expiry() -> None:
