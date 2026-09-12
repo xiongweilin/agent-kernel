@@ -416,6 +416,7 @@ def commit_execution_projection(
                 "status": projected_status,
                 "ended_at": utcnow(),
                 "result_ref": result.request_id,
+                "external_operation_ref": result.external_operation_ref,
                 "error": result.error,
             }
         )
