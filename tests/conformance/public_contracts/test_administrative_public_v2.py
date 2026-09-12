@@ -177,7 +177,11 @@ def test_m8_erp_capabilities_have_explicit_kernel_effect_contracts() -> None:
         contract = registry.resolve(capability)
         assert contract.minimum_impact_class == "write-remote"
         assert contract.effect_semantics == "reconcilable"
-        assert contract.reversibility == "compensatable"
+        assert contract.reversibility == (
+            "irreversible"
+            if capability == "administrative.erp.purchase-order.confirm.v1"
+            else "compensatable"
+        )
         assert contract.authorization_requirement == "required"
         assert contract.minimum_procedure_profile == "standard"
         assert contract.resource_required is True
