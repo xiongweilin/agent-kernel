@@ -2,14 +2,18 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
 
+from portable_runtime.core.capability_contract import CapabilityContractRegistry
 from portable_runtime.core.runtime import Runtime
 from portable_runtime.public_contracts.http import create_public_app
 from portable_runtime.responsibility.admission_profiles import (
     ADMINISTRATIVE_PUBLIC_POLICY_REF,
     ADMINISTRATIVE_PUBLIC_V2_POLICY_REF,
     ADMINISTRATIVE_PUBLIC_V2_PROFILE,
+    ADMINISTRATIVE_PUBLIC_V3_POLICY_REF,
+    ADMINISTRATIVE_PUBLIC_V3_PROFILE,
     administrative_public_responsibility_admission_policy,
     administrative_public_v2_responsibility_admission_policy,
+    administrative_public_v3_responsibility_admission_policy,
     responsibility_admission_policy_for_profile,
 )
 from portable_runtime.responsibility.models import (
@@ -139,6 +143,91 @@ def test_administrative_public_v2_materializes_iam_work_through_public_http() ->
     receipt = response.json()
     assert receipt["status"] == "work-materialized"
     assert receipt["policy_ref"] == ADMINISTRATIVE_PUBLIC_V2_POLICY_REF
+    assert receipt["work_ref"]
+    assert len(runtime.list_work()) == 1
+    assert runtime.store.list_authorizations() == []
+
+
+def test_administrative_public_v3_adds_explicit_erp_capacity() -> None:
+    v3 = administrative_public_v3_responsibility_admission_policy()
+
+    assert v3.policy_ref == ADMINISTRATIVE_PUBLIC_V3_POLICY_REF
+    assert v3.max_request.domain_quota == {
+        "administrative:hris": 1,
+        "administrative:iam": 1,
+        "administrative:erp": 1,
+    }
+    assert v3.pool_capacity.domain_quota == {
+        "administrative:hris": 4,
+        "administrative:iam": 4,
+        "administrative:erp": 4,
+    }
+    assert responsibility_admission_policy_for_profile(ADMINISTRATIVE_PUBLIC_V3_PROFILE) == v3
+    assert responsibility_admission_policy_for_profile(ADMINISTRATIVE_PUBLIC_V3_POLICY_REF) == v3
+
+
+def test_m8_erp_capabilities_have_explicit_kernel_effect_contracts() -> None:
+    registry = CapabilityContractRegistry()
+    for capability in (
+        "administrative.erp.purchase-order.create-draft.v1",
+        "administrative.erp.purchase-order.confirm.v1",
+        "administrative.erp.vendor-bill.create-draft.v1",
+        "administrative.erp.expense-report.create.v1",
+    ):
+        contract = registry.resolve(capability)
+        assert contract.minimum_impact_class == "write-remote"
+        assert contract.effect_semantics == "reconcilable"
+        assert contract.reversibility == (
+            "irreversible"
+            if capability == "administrative.erp.purchase-order.confirm.v1"
+            else "compensatable"
+        )
+        assert contract.authorization_requirement == "required"
+        assert contract.minimum_procedure_profile == "standard"
+        assert contract.resource_required is True
+        assert contract.subject_version_required is True
+
+
+def test_administrative_public_v3_materializes_erp_work_through_public_http() -> None:
+    runtime = Runtime()
+    client = TestClient(
+        create_public_app(
+            runtime,
+            responsibility_admission_profile=ADMINISTRATIVE_PUBLIC_V3_PROFILE,
+        )
+    )
+
+    payload = _iam_domain_payload()
+    proposal = payload["proposal"]
+    assert isinstance(proposal, dict)
+    proposal["requested_resources"] = {
+        "compute_units": 0,
+        "api_calls": 1,
+        "money_minor": 0,
+        "human_attention_units": 0,
+        "concurrency_slots": 1,
+        "domain_quota": {"administrative:erp": 1},
+    }
+    proposal["requested_capabilities"] = [
+        "administrative.erp.purchase-order.create-draft.v1"
+    ]
+
+    recorded = client.post("/v1/responsibilities/domain-proposals", json=payload)
+    assert recorded.status_code == 200
+
+    response = client.post(
+        "/v1/responsibilities/work-admissions",
+        json={
+            "schema": "responsibility-work-admission-v1",
+            "proposal_ref": "proposal_public_iam_v2",
+            "expected_policy_ref": ADMINISTRATIVE_PUBLIC_V3_POLICY_REF,
+        },
+    )
+
+    assert response.status_code == 200
+    receipt = response.json()
+    assert receipt["status"] == "work-materialized"
+    assert receipt["policy_ref"] == ADMINISTRATIVE_PUBLIC_V3_POLICY_REF
     assert receipt["work_ref"]
     assert len(runtime.list_work()) == 1
     assert runtime.store.list_authorizations() == []

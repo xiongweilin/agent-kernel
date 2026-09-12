@@ -22,6 +22,15 @@ def test_contract_catalog_http_has_only_local_contract_identity() -> None:
     assert "source_repository" not in rendered.lower()
 
 
+def test_contract_catalog_http_exposes_optional_generic_build_revision(monkeypatch) -> None:
+    monkeypatch.setenv("PORTABLE_RUNTIME_BUILD_REVISION", "kernel-revision-a")
+    client = TestClient(create_public_app(Runtime()))
+    assert client.get("/v1/contracts").json()["build_revision"] == "kernel-revision-a"
+
+    monkeypatch.delenv("PORTABLE_RUNTIME_BUILD_REVISION")
+    assert "build_revision" not in client.get("/v1/contracts").json()
+
+
 def test_experience_evaluate_is_read_only() -> None:
     runtime = Runtime()
     client = TestClient(create_public_app(runtime))

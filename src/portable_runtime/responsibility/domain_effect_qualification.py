@@ -149,11 +149,26 @@ class DomainEffectQualificationAssessment:
             }
         )
         at = assessed_at or utcnow()
+
+        # Qualification owns only the canonical authority closure above.  The
+        # Run is subsequently enriched by procedure-readiness with failure
+        # stop, recovery, evidence, and relation refs.  Reusing that enriched
+        # metadata as an input here would make a later reactivation treat
+        # downstream procedure proofs as part of the qualification authority
+        # graph, so a valid recovery can fail with a graph-mismatch error.
+        # Keep the stage boundary explicit: resolve only the refs carried by
+        # ``current_request`` and leave downstream proof transport to the
+        # procedure-readiness stage.
+        authoritative_work = self.store.get_work(run.work_id)
+        if authoritative_work is None:
+            raise ValueError("domain effect qualification requires the canonical Work")
+        qualification_work = authoritative_work.model_copy(update={"metadata": {}})
+        qualification_run = run.model_copy(update={"metadata": {}})
         assessment = AssessmentContext.resolve(
             self.store,
             current_request,
-            work=self.store.get_work(run.work_id),
-            run=run,
+            work=qualification_work,
+            run=qualification_run,
             now=at,
         )
         expected_refs = {
