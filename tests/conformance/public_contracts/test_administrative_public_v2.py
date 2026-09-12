@@ -2,6 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
 
+from portable_runtime.core.capability_contract import CapabilityContractRegistry
 from portable_runtime.core.runtime import Runtime
 from portable_runtime.public_contracts.http import create_public_app
 from portable_runtime.responsibility.admission_profiles import (
@@ -163,6 +164,24 @@ def test_administrative_public_v3_adds_explicit_erp_capacity() -> None:
     }
     assert responsibility_admission_policy_for_profile(ADMINISTRATIVE_PUBLIC_V3_PROFILE) == v3
     assert responsibility_admission_policy_for_profile(ADMINISTRATIVE_PUBLIC_V3_POLICY_REF) == v3
+
+
+def test_m8_erp_capabilities_have_explicit_kernel_effect_contracts() -> None:
+    registry = CapabilityContractRegistry()
+    for capability in (
+        "administrative.erp.purchase-order.create-draft.v1",
+        "administrative.erp.purchase-order.confirm.v1",
+        "administrative.erp.vendor-bill.create-draft.v1",
+        "administrative.erp.expense-report.create.v1",
+    ):
+        contract = registry.resolve(capability)
+        assert contract.minimum_impact_class == "write-remote"
+        assert contract.effect_semantics == "reconcilable"
+        assert contract.reversibility == "compensatable"
+        assert contract.authorization_requirement == "required"
+        assert contract.minimum_procedure_profile == "standard"
+        assert contract.resource_required is True
+        assert contract.subject_version_required is True
 
 
 def test_administrative_public_v3_materializes_erp_work_through_public_http() -> None:
