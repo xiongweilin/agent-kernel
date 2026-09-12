@@ -173,7 +173,13 @@ def contract_router(
 
     @router.get("/v1/contracts")
     def get_contracts() -> dict[str, Any]:
-        return contract_catalog()
+        payload = dict(contract_catalog())
+        build_revision = os.getenv("PORTABLE_RUNTIME_BUILD_REVISION", "").strip()
+        if build_revision:
+            # Generic runtime metadata only. The canonical contract catalog
+            # remains the sole semantic owner for public contract identity.
+            payload["build_revision"] = build_revision
+        return payload
 
     @router.post("/v1/experience/use/evaluate", response_model=ExperienceUseAdmissionV1)
     def evaluate_experience(

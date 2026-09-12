@@ -126,6 +126,22 @@ async def test_high_level_execution_uses_one_reality_exit_and_is_receipt_idempot
 
 
 @pytest.mark.asyncio
+async def test_execution_receipt_preserves_provider_external_operation_ref() -> None:
+    _runtime, service, command, effect_provider, _verifier = _fixture()
+    original_invoke = effect_provider.invoke
+
+    async def invoke_with_external_ref(request, context):
+        result = await original_invoke(request, context)
+        return result.model_copy(update={"external_operation_ref": "odoo:purchase.order:42"})
+
+    effect_provider.invoke = invoke_with_external_ref  # type: ignore[method-assign]
+    receipt = await service.execute(command, processed_at=utcnow())
+
+    assert receipt.status == "completed"
+    assert receipt.external_operation_ref == "odoo:purchase.order:42"
+
+
+@pytest.mark.asyncio
 async def test_domain_cannot_select_an_unconfigured_physical_capability() -> None:
     _runtime, service, command, effect_provider, verifier = _fixture()
     unsupported = command.model_copy(update={"capability": "administrative.iam.identity.create.v1"})

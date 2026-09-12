@@ -127,6 +127,7 @@ class BoundedDomainEffectExecutionReceiptV1(BaseModel):
     request_ref: str | None = None
     authorization_ref: str | None = None
     provider_id: str | None = None
+    external_operation_ref: str | None = None
     action_ref: str | None = None
     outcome_ref: str | None = None
     evidence_ref: str | None = None
@@ -490,6 +491,7 @@ class BoundedDomainEffectExecutionService:
                     request_ref=request.id,
                     authorization_ref=authorization_ref,
                     provider_id=profile.provider_id,
+                    external_operation_ref=self._external_operation_ref(attempt),
                     action_ref=action_ref,
                     outcome_ref=verified.outcome_ref,
                     evidence_ref=verified.evidence_ref,
@@ -512,6 +514,7 @@ class BoundedDomainEffectExecutionService:
                 request_ref=request.id,
                 authorization_ref=authorization_ref,
                 provider_id=profile.provider_id,
+                external_operation_ref=self._external_operation_ref(attempt),
                 action_ref=completed.action_ref,
                 outcome_ref=completed.outcome_ref,
                 evidence_ref=verified.evidence_ref,
@@ -524,6 +527,11 @@ class BoundedDomainEffectExecutionService:
     def _action_ref(attempt: StepAttempt) -> str | None:
         metadata = attempt.metadata if isinstance(attempt.metadata, dict) else {}
         value = metadata.get("action_ref")
+        return value if isinstance(value, str) and value else None
+
+    @staticmethod
+    def _external_operation_ref(attempt: StepAttempt) -> str | None:
+        value = attempt.external_operation_ref
         return value if isinstance(value, str) and value else None
 
     def _runtime_receipt(
@@ -548,6 +556,7 @@ class BoundedDomainEffectExecutionService:
             request_ref=request.id,
             authorization_ref=authorization_ref,
             provider_id=profile.provider_id,
+            external_operation_ref=self._external_operation_ref(attempt),
             action_ref=self._action_ref(attempt),
             processed_at=processed_at,
         )

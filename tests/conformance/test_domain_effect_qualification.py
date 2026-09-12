@@ -245,6 +245,11 @@ def test_qualification_resolves_authoritative_refs_into_immutable_digest() -> No
     assert (authorization.evidence_ref, "evidence") in resolved
     assert (authorization.decision_ref, "decision") in resolved
     assert len(resolved) == 3
+    assert [ref.kind for ref in result.qualification_refs] == [
+        "authorization",
+        "evidence",
+        "decision",
+    ]
     assert len(result.qualification_digest) == 64
     assert event.type == DOMAIN_EFFECT_QUALIFICATION_EVENT
     assert event.created_at == qualification_at

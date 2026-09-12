@@ -1528,6 +1528,7 @@ class RealityBoundary:
                             last.status = result.status if result.status in ("succeeded", "failed", "cancelled", "unknown") else "failed"
                             last.ended_at = utcnow()
                             last.result_ref = result.request_id
+                            last.external_operation_ref = result.external_operation_ref
                             if result.error:
                                 last.error = result.error
                             store.save_attempt(last)
@@ -1554,6 +1555,7 @@ class RealityBoundary:
                         last.status = result.status if result.status in ("succeeded", "failed", "cancelled", "unknown") else "failed"
                         last.ended_at = utcnow()
                         last.result_ref = result.request_id
+                        last.external_operation_ref = result.external_operation_ref
                         if result.error:
                             last.error = result.error
                         store.save_attempt(last)

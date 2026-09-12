@@ -266,6 +266,7 @@ _REF_KEYS: dict[str, str] = {
     "procedure_proof_refs": "procedure_proofs",
     "qualification_refs": "procedure_proofs",
 }
+_PROOF_BUCKET_ORDER: tuple[str, ...] = tuple(dict.fromkeys(_REF_KEYS.values()))
 
 _KIND_TO_PROOF: dict[str, str] = {
     "authorization": "grants",
@@ -691,7 +692,13 @@ class AssessmentContext:
                     )
                 merged[key] = value
 
-        refs_by_bucket: dict[str, list[QualificationRef]] = {bucket: [] for bucket in set(_REF_KEYS.values())}
+        # Digest-bearing qualification refs must be serialized in one stable
+        # order across processes and restarts.  A set here made the same
+        # authority graph produce different digests under different Python
+        # hash seeds, causing a committed readiness snapshot to look stale.
+        refs_by_bucket: dict[str, list[QualificationRef]] = {
+            bucket: [] for bucket in _PROOF_BUCKET_ORDER
+        }
         for key, bucket in _REF_KEYS.items():
             value = merged.get(key)
             if value is None:
