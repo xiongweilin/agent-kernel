@@ -299,9 +299,12 @@ class DomainEffectVerifiedOutcomeVerification:
 
     def _require_single_attempt(self, run_id: str, request_id: str) -> StepAttempt:
         attempts = self._attempts_for_request(run_id, request_id)
-        if len(attempts) != 1:
-            raise ValueError("domain effect verification execution requires exactly one Attempt")
-        attempt = attempts[0]
+        successful = [attempt for attempt in attempts if attempt.status == "succeeded"]
+        if len(successful) != 1:
+            raise ValueError(
+                "domain effect verification execution requires exactly one successful Attempt"
+            )
+        attempt = successful[0]
         if attempt.status != "succeeded":
             raise ValueError("domain effect verification provider execution did not succeed")
         return attempt

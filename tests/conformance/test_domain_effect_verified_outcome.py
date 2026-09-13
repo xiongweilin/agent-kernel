@@ -38,9 +38,11 @@ class _ReadbackVerifier:
         reality: dict[str, dict[str, Any]],
         *,
         forced_result: Literal["pass", "fail"] | None = None,
+        fail_first: bool = False,
     ) -> None:
         self.reality = reality
         self.forced_result = forced_result
+        self.fail_first = fail_first
         self.invocations = 0
         self._descriptor = ProviderDescriptor(
             id=provider_id,
@@ -73,6 +75,13 @@ class _ReadbackVerifier:
     ) -> CapabilityResult:
         del context
         self.invocations += 1
+        if self.fail_first and self.invocations == 1:
+            return CapabilityResult(
+                request_id=request.id,
+                provider_id=self.descriptor.id,
+                status="failed",
+                error={"type": "temporary", "message": "readback unavailable"},
+            )
         scope = request.parameters.get("verification_scope")
         if not isinstance(scope, dict):
             raise ValueError("verification_scope required")
@@ -255,3 +264,34 @@ async def test_effect_success_alone_never_materializes_confirmed_outcome() -> No
     assert effect_provider.invocations == 1
     assert _domain_verification_evidence(store) == []
     assert _confirmed_outcomes(store) == []
+
+
+@pytest.mark.asyncio
+async def test_verifier_retry_uses_one_successful_attempt_after_prior_failure() -> None:
+    store, qualification, registry, _effect_provider, boundary = await _executed_effect()
+    context = _authorization_context(store, qualification.request)
+    reality = {
+        context.intent.subject_ref: dict(context.intent.expected_postcondition),
+    }
+    verifier = _ReadbackVerifier(
+        "provider:hris:retry-readback",
+        reality,
+        fail_first=True,
+    )
+    _register_verifier(registry, verifier)
+
+    with pytest.raises(ValueError, match="verifier execution did not succeed"):
+        await DomainEffectVerifiedOutcomeVerification(
+            boundary,
+            verifier_provider_id=verifier.descriptor.id,
+        ).verify_and_confirm(qualification.request)
+
+    result = await DomainEffectVerifiedOutcomeVerification(
+        boundary,
+        verifier_provider_id=verifier.descriptor.id,
+    ).verify_and_confirm(qualification.request)
+
+    assert result.objective_result == "pass"
+    assert verifier.invocations == 2
+    assert len(_domain_verification_evidence(store)) == 1
+    assert len(_confirmed_outcomes(store)) == 1
