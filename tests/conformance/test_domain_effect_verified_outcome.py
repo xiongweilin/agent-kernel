@@ -198,6 +198,36 @@ async def test_independent_readback_pass_confirms_outcome_without_terminalizing_
 
 
 @pytest.mark.asyncio
+async def test_verifier_pass_allows_evidence_only_observed_fields() -> None:
+    store, qualification, registry, _effect_provider, boundary = await _executed_effect()
+    context = _authorization_context(store, qualification.request)
+    verifier_id = "provider:hris:readback-with-provider-ref"
+    observed = {
+        **context.intent.expected_postcondition,
+        "provider_message_ref": "provider-message-ref",
+    }
+    result = CapabilityResult(
+        request_id="request-verification",
+        provider_id=verifier_id,
+        status="succeeded",
+        metadata={"observed_postcondition": observed},
+        verification_result=ClosedVerificationResult(
+            result="pass",
+            message="independent readback with evidence metadata",
+        ),
+    )
+
+    verification = DomainEffectVerifiedOutcomeVerification(
+        boundary,
+        verifier_provider_id=verifier_id,
+    )
+    verification._validate_verifier_result(
+        result,
+        {"expected_postcondition": dict(context.intent.expected_postcondition)},
+    )
+
+
+@pytest.mark.asyncio
 async def test_independent_readback_fail_confirms_explicit_not_satisfied_outcome() -> None:
     store, qualification, registry, effect_provider, boundary = await _executed_effect()
     context = _authorization_context(store, qualification.request)
