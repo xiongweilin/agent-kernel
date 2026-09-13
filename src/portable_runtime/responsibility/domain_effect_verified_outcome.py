@@ -397,7 +397,10 @@ class DomainEffectVerifiedOutcomeVerification:
         if not isinstance(observed, dict):
             raise ValueError("domain effect verifier omitted observed postcondition")
         expected = verification_scope["expected_postcondition"]
-        matches = observed == expected
+        # Verifiers may attach evidence-only fields (for example an external
+        # provider reference).  Only the frozen expected keys determine the
+        # objective result; missing or mismatched expected keys still fail.
+        matches = all(observed.get(key) == value for key, value in expected.items())
         if closed.result == "pass" and not matches:
             raise ValueError("domain effect verifier pass contradicts its observed postcondition")
         if closed.result == "fail" and matches:
