@@ -2,11 +2,36 @@
 
 [![CI](https://github.com/xiongweilin/agent-kernel/actions/workflows/ci.yml/badge.svg)](https://github.com/xiongweilin/agent-kernel/actions/workflows/ci.yml) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=portable-runtime&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=portable-runtime) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=portable-runtime&metric=coverage)](https://sonarcloud.io/summary/new_code?id=portable-runtime) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](pyproject.toml)
 
-Provider-neutral kernel for durable cognitive control, persistent responsibility, and governed Work/Run execution.
+A provider-neutral runtime kernel for agents that must perform durable, recoverable real-world work without collapsing model output, execution success, verification, retry permission, or responsibility into the same state.
 
-> Agent Kernel does not guarantee correctness. It preserves the boundaries between open cognition, temporary closure, Work admission, authorization, execution, verification, revision, reopen, and durable responsibility so failures remain traceable and recoverable.
+Agent Kernel does not guarantee that an agent is correct. It makes failure states explicit enough to remain traceable, governable, and recoverable.
 
-## Product boundary
+## Why this exists
+
+A common agent loop is roughly:
+
+```text
+reason -> call tool -> receive success/failure -> decide what to do next
+```
+
+That is insufficient once actions have durable side effects.
+
+Example: an external API call times out. The effect may have happened even though the caller did not receive the acknowledgement. Treating the timeout as ordinary failure and retrying can duplicate the effect. Treating a provider success response as completion can be equally wrong when the external state still does not match the objective.
+
+Agent Kernel therefore preserves distinctions such as:
+
+```text
+reasoning result      != controller decision
+controller decision   != Work admission
+Work admission        != action authorization
+provider success      != verified outcome
+observed failure      != retry permission
+controller close      != responsibility discharge
+```
+
+These distinctions are implemented as runtime contracts, state transitions, verification/reconciliation paths, and durable records rather than left as prompt conventions.
+
+## What the kernel owns
 
 Agent Kernel has three connected surfaces:
 
@@ -30,101 +55,18 @@ Durable Runtime
     -> verification / recovery / revalidation / reconciliation
 ```
 
-Core separations:
-
-```text
-ReasonerOutput != ControllerDecision
-ReasonerOutput != CognitiveClosure
-CognitiveClosure != WorkProposal
-ControllerDecision != WorkAdmission
-ControllerDecision != ActionAuthorization
-FailureObserved != RetryPermission
-RevisionAssessment != RetryRun
-RevisionAssessment != Reopen
-ProviderSuccess != VerifiedOutcome
-ControllerClose != ResponsibilityDischarge
-TaskCompleted != ResponsibilityDischarged
-```
-
 The controller is intentionally small. It references existing records and responsibility objects rather than creating a second evidence, knowledge, outcome, provider, or model-routing system.
 
-## Canonical contracts
-
-Canonical product semantics live under [`contracts/`](contracts/README.md). `contracts/catalog.toml` is the machine-readable contract index.
-
-Current core contracts include:
-
-- `persistent-responsibility-v1`
-- `cognitive-control-v2`
-- `cognitive-closure-v1`
-- `revision-control-v1`
-- `responsibility-record-plane-1.0`
-- `distinction-governance-1.0`
-- `action-responsibility-1.0`
-
-Precedence:
-
-```text
-contract semantics / schemas / canonicalization / vectors
-> Python reference implementation
-> HTTP adapters
-> TypeScript helpers
-> inspection surfaces
-```
-
-External research/framework documents can motivate product changes but are not runtime authority unless a distinction is explicitly promoted into `contracts/`.
-
-## Compatibility axes
-
-| Axis | Current value |
-|---|---|
-| Contract catalog | `portable-runtime-contracts-v1` |
-| Python distribution | `portable-runtime` |
-| Python namespace | `portable_runtime` |
-| Runtime protocol | `2.0` |
-| External provider protocol | `1` (`stdio-jsonl`) |
-| Persistent Responsibility | `persistent-responsibility-v1` |
-| Cognitive Control | `cognitive-control-v2` |
-| Cognitive Closure | `cognitive-closure-v1` |
-| Revision Control | `revision-control-v1` |
-| Distinction Governance | `distinction-governance-1.0` |
-| Experience Use Admission | `experience-use-admission-v1` |
-| Historical Experience Use | `historical-experience-use-v1` |
-
-These axes are intentionally independent. Repository or implementation changes do not silently rewrite persisted state, contract IDs, imports, or wire meaning.
-
-## Closed cognitive loop
-
-The canonical controller implementation lives under `src/portable_runtime/controller/` and uses the existing append-only Event journal for durable state snapshots.
-
-The v2 decision vocabulary is:
-
-```text
-invoke-capability
-form-closure
-propose-work
-assess-revision
-close
-reopen
-wait
-```
-
-The intended loop is:
+## End-to-end execution model
 
 ```text
 existing context / records / responsibility state
         |
         v
 OPEN cognition
-  |  invoke-capability: observe / explore / compare
+  |  observe / explore / compare
   |
-  +-> form-closure
-        |
-        v
-CognitiveClosure
-  |  basis / selected direction / deferred issues
-  |  acceptance criteria / verification plan
-  |  stop + reopen conditions / capability + effect ceiling
+  +-> CognitiveClosure
         |
         v
 WorkProposal
@@ -145,25 +87,41 @@ Observation / Evidence -> verification -> Outcome
 RevisionAssessment
   |      |        |         |          |
  retry  revise   reopen   reconcile   close/wait
-  |               |
-  |          explicit REOPEN
-  |               |
-  +---------------+-------------------------> OPEN cognition
+                  |
+             explicit REOPEN
+                  |
+                  +---------------------> OPEN cognition
 ```
 
-### Temporary closure
+The practical rule is simple: no layer may silently promote its local result into a stronger claim owned by a later layer.
 
-`CognitiveClosure` records why exploration is temporarily paused for one bounded scope. It must include a basis, selected direction, acceptance criteria, verification plan, reopen conditions, and explicit treatment of current open issues. It is not truth, Work, admission, or authority.
+## Core separations
+
+```text
+ReasonerOutput != ControllerDecision
+ReasonerOutput != CognitiveClosure
+CognitiveClosure != WorkProposal
+ControllerDecision != WorkAdmission
+ControllerDecision != ActionAuthorization
+FailureObserved != RetryPermission
+RevisionAssessment != RetryRun
+RevisionAssessment != Reopen
+ProviderSuccess != VerifiedOutcome
+ControllerClose != ResponsibilityDischarge
+TaskCompleted != ResponsibilityDischarged
+```
+
+## Temporary closure and Work handoff
+
+`CognitiveClosure` records why exploration is temporarily paused for one bounded scope. It includes the basis, selected direction, acceptance criteria, verification plan, reopen conditions, and explicit treatment of current open issues. It is not truth, Work, admission, or authority.
 
 While a closure is active, ordinary exploration is blocked. The controller may hand the closure to `WorkProposal`, wait, or close. Renewed exploration requires explicit reopen.
-
-### Work handoff
 
 `propose-work` must reference the active closure. Requested capabilities cannot exceed the closure capability set and the effect class must match the closure. It creates only `WorkProposal`; priority judgment, portfolio admission, resource reservation, commitment, Work materialization, authorization, and execution remain downstream.
 
 After WorkProposal handoff the controller waits for downstream reality feedback rather than continuing to generate competing Work from the same closure.
 
-### Revision
+## Revision, retry, and ambiguous effects
 
 After execution and independent verification, a `RevisionAssessment` records where the current closure may have failed and recommends one bounded disposition:
 
@@ -178,11 +136,9 @@ wait
 close
 ```
 
-The assessment is not self-executing. Failure does not authorize retry. Deep scopes cannot recommend retry-run, ambiguous external effects must be reconciled through the runtime boundary, and close requires verification evidence.
+The assessment is not self-executing. Failure does not authorize retry. Deep scopes cannot recommend `retry-run`; ambiguous external effects must be reconciled through the runtime boundary; and `close` requires verification evidence.
 
-Recommendations that invalidate the current closure move the controller to `reopen-required`; only explicit `reopen` restores OPEN cognition and clears current closure eligibility while preserving closure/revision history.
-
-## Legacy reopen boundary
+Recommendations that invalidate the current closure move the controller to `reopen-required`. Only explicit `reopen` restores OPEN cognition and clears current closure eligibility while preserving closure/revision history.
 
 Historical `records.reopen` objects remain readable for compatibility and observation tooling, but the old `create_reopen_work()` shortcut is retired and fails loudly.
 
@@ -200,7 +156,7 @@ There is no `reopen -> Work` shortcut.
 
 ## Persistent responsibility
 
-The durable responsibility path remains:
+The durable responsibility path is:
 
 ```text
 StandingResponsibility
@@ -248,17 +204,50 @@ Kernel code does not need to know whether a provider is internally a model, prog
 
 Model identity is not a semantic role and grants no capability or authority. No separate agent registry, cross-agent protocol, or model catalog is part of cognitive control.
 
-## Executable status
+## Canonical contracts
 
-The exact-head executable status is defined by GitHub CI for the exact commit. Local verification:
+Canonical product semantics live under [`contracts/`](contracts/README.md). `contracts/catalog.toml` is the machine-readable contract index.
 
-```powershell
-uv sync --locked --extra dev
-uv run ruff check .
-uv run mypy src
-uv run pytest -q
-uv run python -m portable_runtime.public_contracts.vectors
+Current core contracts include:
+
+- `persistent-responsibility-v1`
+- `cognitive-control-v2`
+- `cognitive-closure-v1`
+- `revision-control-v1`
+- `responsibility-record-plane-1.0`
+- `distinction-governance-1.0`
+- `action-responsibility-1.0`
+
+Precedence:
+
+```text
+contract semantics / schemas / canonicalization / vectors
+> Python reference implementation
+> HTTP adapters
+> TypeScript helpers
+> inspection surfaces
 ```
+
+External research/framework documents can motivate product changes but are not runtime authority unless a distinction is explicitly promoted into `contracts/`.
+
+## Compatibility axes
+
+| Axis | Current value |
+|---|---|
+| Contract catalog | `portable-runtime-contracts-v1` |
+| Python distribution | `portable-runtime` |
+| Python namespace | `portable_runtime` |
+| Runtime protocol | `2.0` |
+| External provider protocol | `1` (`stdio-jsonl`) |
+| Persistent Responsibility | `persistent-responsibility-v1` |
+| Cognitive Control | `cognitive-control-v2` |
+| Cognitive Closure | `cognitive-closure-v1` |
+| Revision Control | `revision-control-v1` |
+| Distinction Governance | `distinction-governance-1.0` |
+| Experience Use Admission | `experience-use-admission-v1` |
+| Historical Experience Use | `historical-experience-use-v1` |
+
+These axes are intentionally independent. Repository or implementation changes do not silently rewrite persisted state, contract IDs, imports, or wire meaning.
 
 ## Quick start
 
@@ -284,6 +273,18 @@ State export/import:
 ```powershell
 .venv\Scripts\python.exe -m portable_runtime --state data/agent-kernel.db state export runtime-state.json
 .venv\Scripts\python.exe -m portable_runtime --state data/agent-kernel.db state import runtime-state.json
+```
+
+## Verification
+
+The exact-head executable status is defined by GitHub CI for the exact commit. Local verification:
+
+```powershell
+uv sync --locked --extra dev
+uv run ruff check .
+uv run mypy src
+uv run pytest -q
+uv run python -m portable_runtime.public_contracts.vectors
 ```
 
 ## Public surfaces
