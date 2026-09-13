@@ -6,7 +6,30 @@ A provider-neutral runtime kernel for agents that must perform durable, recovera
 
 Agent Kernel does not guarantee that an agent is correct. It makes failure states explicit enough to remain traceable, governable, and recoverable.
 
-## Why this exists
+## Concrete failure: an ambiguous side effect
+
+Suppose an agent is asked to create an employee account. The provider call times out after the request is sent.
+
+At that point, a normal tool loop cannot safely infer whether the account was created. Retrying may create a duplicate. Marking the action failed may be false. Treating a late provider success as completion may also be false if the authoritative system still does not satisfy the requested postcondition.
+
+Agent Kernel keeps that sequence explicit:
+
+```text
+intent
+  -> Work admission
+  -> execution authorization
+  -> provider attempt
+  -> timeout / ambiguous effect
+  -> no blind retry
+  -> reconcile external reality
+  -> independently verify the postcondition
+  -> record Outcome
+  -> reassess responsibility
+```
+
+The kernel exists so an agent can survive exactly this kind of failure without turning uncertainty into a stronger claim or permission.
+
+## Why a runtime kernel is needed
 
 A common agent loop is roughly:
 
@@ -16,9 +39,7 @@ reason -> call tool -> receive success/failure -> decide what to do next
 
 That is insufficient once actions have durable side effects.
 
-Example: an external API call times out. The effect may have happened even though the caller did not receive the acknowledgement. Treating the timeout as ordinary failure and retrying can duplicate the effect. Treating a provider success response as completion can be equally wrong when the external state still does not match the objective.
-
-Agent Kernel therefore preserves distinctions such as:
+The important distinctions are:
 
 ```text
 reasoning result      != controller decision
