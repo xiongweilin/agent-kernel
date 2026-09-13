@@ -295,3 +295,21 @@ async def test_verifier_retry_uses_one_successful_attempt_after_prior_failure() 
     assert verifier.invocations == 2
     assert len(_domain_verification_evidence(store)) == 1
     assert len(_confirmed_outcomes(store)) == 1
+
+    successful_attempt = store.get_attempt(result.verification_attempt_ref)
+    assert successful_attempt is not None
+    store.save_attempt(
+        successful_attempt.model_copy(update={"id": "attempt_duplicate_verifier"})
+    )
+    selected = DomainEffectVerifiedOutcomeVerification(
+        boundary,
+        verifier_provider_id=verifier.descriptor.id,
+    )._require_single_attempt(
+        qualification.request.run_id,
+        result.verification_request_ref,
+    )
+
+    assert selected.id == successful_attempt.id
+    assert verifier.invocations == 2
+    assert len(_domain_verification_evidence(store)) == 1
+    assert len(_confirmed_outcomes(store)) == 1

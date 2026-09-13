@@ -300,11 +300,35 @@ class DomainEffectVerifiedOutcomeVerification:
     def _require_single_attempt(self, run_id: str, request_id: str) -> StepAttempt:
         attempts = self._attempts_for_request(run_id, request_id)
         successful = [attempt for attempt in attempts if attempt.status == "succeeded"]
-        if len(successful) != 1:
+        logical_successes: dict[str, StepAttempt] = {}
+        for attempt in successful:
+            # A retried verifier request keeps its idempotency key.  The
+            # store may retain more than one physical Attempt for that same
+            # logical invocation, so count that key once while still rejecting
+            # different successful invocations or conflicting duplicate data.
+            key = attempt.idempotency_key or f"attempt:{attempt.id}"
+            previous = logical_successes.get(key)
+            if previous is None:
+                logical_successes[key] = attempt
+                continue
+            if any(
+                getattr(previous, field) != getattr(attempt, field)
+                for field in (
+                    "step_id",
+                    "provider_id",
+                    "request_ref",
+                    "result_ref",
+                    "external_operation_ref",
+                )
+            ):
+                raise ValueError(
+                    "domain effect verification has conflicting successful Attempts"
+                )
+        if len(logical_successes) != 1:
             raise ValueError(
                 "domain effect verification execution requires exactly one successful Attempt"
             )
-        attempt = successful[0]
+        attempt = next(iter(logical_successes.values()))
         if attempt.status != "succeeded":
             raise ValueError("domain effect verification provider execution did not succeed")
         return attempt
