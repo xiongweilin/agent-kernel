@@ -11,9 +11,12 @@ from portable_runtime.responsibility.admission_profiles import (
     ADMINISTRATIVE_PUBLIC_V2_PROFILE,
     ADMINISTRATIVE_PUBLIC_V3_POLICY_REF,
     ADMINISTRATIVE_PUBLIC_V3_PROFILE,
+    ADMINISTRATIVE_PUBLIC_V4_POLICY_REF,
+    ADMINISTRATIVE_PUBLIC_V4_PROFILE,
     administrative_public_responsibility_admission_policy,
     administrative_public_v2_responsibility_admission_policy,
     administrative_public_v3_responsibility_admission_policy,
+    administrative_public_v4_responsibility_admission_policy,
     responsibility_admission_policy_for_profile,
 )
 from portable_runtime.responsibility.models import (
@@ -166,6 +169,26 @@ def test_administrative_public_v3_adds_explicit_erp_capacity() -> None:
     assert responsibility_admission_policy_for_profile(ADMINISTRATIVE_PUBLIC_V3_POLICY_REF) == v3
 
 
+def test_administrative_public_v4_adds_explicit_communication_capacity() -> None:
+    v4 = administrative_public_v4_responsibility_admission_policy()
+
+    assert v4.policy_ref == ADMINISTRATIVE_PUBLIC_V4_POLICY_REF
+    assert v4.max_request.domain_quota == {
+        "administrative:hris": 1,
+        "administrative:iam": 1,
+        "administrative:erp": 1,
+        "administrative:communication": 1,
+    }
+    assert v4.pool_capacity.domain_quota == {
+        "administrative:hris": 4,
+        "administrative:iam": 4,
+        "administrative:erp": 4,
+        "administrative:communication": 4,
+    }
+    assert responsibility_admission_policy_for_profile(ADMINISTRATIVE_PUBLIC_V4_PROFILE) == v4
+    assert responsibility_admission_policy_for_profile(ADMINISTRATIVE_PUBLIC_V4_POLICY_REF) == v4
+
+
 def test_m8_erp_capabilities_have_explicit_kernel_effect_contracts() -> None:
     registry = CapabilityContractRegistry()
     for capability in (
@@ -186,6 +209,65 @@ def test_m8_erp_capabilities_have_explicit_kernel_effect_contracts() -> None:
         assert contract.minimum_procedure_profile == "standard"
         assert contract.resource_required is True
         assert contract.subject_version_required is True
+
+
+def test_m9_communication_capability_has_explicit_kernel_effect_contract() -> None:
+    contract = CapabilityContractRegistry().resolve(
+        "administrative.communication.message.send.v1"
+    )
+
+    assert contract.minimum_impact_class == "write-remote"
+    assert contract.effect_semantics == "reconcilable"
+    assert contract.reversibility == "irreversible"
+    assert contract.authorization_requirement == "required"
+    assert contract.minimum_procedure_profile == "standard"
+    assert contract.resource_required is True
+    assert contract.subject_version_required is True
+
+
+def test_administrative_public_v4_materializes_communication_work_through_public_http() -> None:
+    runtime = Runtime()
+    client = TestClient(
+        create_public_app(
+            runtime,
+            responsibility_admission_profile=ADMINISTRATIVE_PUBLIC_V4_PROFILE,
+        )
+    )
+
+    payload = _iam_domain_payload()
+    proposal = payload["proposal"]
+    assert isinstance(proposal, dict)
+    proposal["requested_resources"] = {
+        "compute_units": 0,
+        "api_calls": 1,
+        "money_minor": 0,
+        "human_attention_units": 0,
+        "concurrency_slots": 1,
+        "domain_quota": {"administrative:communication": 1},
+    }
+    proposal["requested_capabilities"] = [
+        "administrative.communication.message.send.v1"
+    ]
+
+    recorded = client.post("/v1/responsibilities/domain-proposals", json=payload)
+    assert recorded.status_code == 200
+
+    response = client.post(
+        "/v1/responsibilities/work-admissions",
+        json={
+            "schema": "responsibility-work-admission-v1",
+            "proposal_ref": "proposal_public_iam_v2",
+            "expected_policy_ref": ADMINISTRATIVE_PUBLIC_V4_POLICY_REF,
+        },
+    )
+
+    assert response.status_code == 200
+    receipt = response.json()
+    assert receipt["status"] == "work-materialized"
+    assert receipt["policy_ref"] == ADMINISTRATIVE_PUBLIC_V4_POLICY_REF
+    assert receipt["work_ref"]
+    assert len(runtime.list_work()) == 1
+    assert runtime.store.list_authorizations() == []
 
 
 def test_administrative_public_v3_materializes_erp_work_through_public_http() -> None:
