@@ -14,6 +14,8 @@ ADMINISTRATIVE_PUBLIC_V2_PROFILE = "administrative-public-v2"
 ADMINISTRATIVE_PUBLIC_V2_POLICY_REF = "responsibility-admission:administrative-public@2"
 ADMINISTRATIVE_PUBLIC_V3_PROFILE = "administrative-public-v3"
 ADMINISTRATIVE_PUBLIC_V3_POLICY_REF = "responsibility-admission:administrative-public@3"
+ADMINISTRATIVE_PUBLIC_V4_PROFILE = "administrative-public-v4"
+ADMINISTRATIVE_PUBLIC_V4_POLICY_REF = "responsibility-admission:administrative-public@4"
 
 
 def administrative_public_responsibility_admission_policy() -> BoundedLocalResponsibilityAdmissionPolicy:
@@ -128,6 +130,48 @@ def administrative_public_v3_responsibility_admission_policy() -> BoundedLocalRe
     )
 
 
+def administrative_public_v4_responsibility_admission_policy() -> BoundedLocalResponsibilityAdmissionPolicy:
+    """Return the bounded Administrative profile with communication capacity.
+
+    Version 4 adds the internal communication domain required by M9 while
+    preserving the explicit HRIS, IAM, and ERP ceilings from version 3.
+    Communication meaning and provider authority remain outside Kernel.
+    """
+
+    return BoundedLocalResponsibilityAdmissionPolicy(
+        profile_id=ADMINISTRATIVE_PUBLIC_PROFILE,
+        version="4",
+        max_request=ResourceVector(
+            compute_units=1,
+            api_calls=2,
+            money_minor=0,
+            human_attention_units=1,
+            concurrency_slots=1,
+            domain_quota={
+                "administrative:hris": 1,
+                "administrative:iam": 1,
+                "administrative:erp": 1,
+                "administrative:communication": 1,
+            },
+        ),
+        capacity=ResourceVector(
+            compute_units=16,
+            api_calls=32,
+            money_minor=0,
+            human_attention_units=16,
+            concurrency_slots=16,
+            domain_quota={
+                "administrative:hris": 4,
+                "administrative:iam": 4,
+                "administrative:erp": 4,
+                "administrative:communication": 4,
+            },
+        ),
+        allowed_effect_classes=(EffectClass.EXTERNAL_EFFECT,),
+        reservation_ttl_seconds=300,
+    )
+
+
 def responsibility_admission_policy_for_profile(
     profile: str,
 ) -> ResponsibilityAdmissionPolicy:
@@ -151,6 +195,11 @@ def responsibility_admission_policy_for_profile(
         ADMINISTRATIVE_PUBLIC_V3_POLICY_REF,
     }:
         return administrative_public_v3_responsibility_admission_policy()
+    if normalized in {
+        ADMINISTRATIVE_PUBLIC_V4_PROFILE,
+        ADMINISTRATIVE_PUBLIC_V4_POLICY_REF,
+    }:
+        return administrative_public_v4_responsibility_admission_policy()
     raise ValueError(f"unknown responsibility admission profile: {profile!r}")
 
 
@@ -161,10 +210,13 @@ __all__ = [
     "ADMINISTRATIVE_PUBLIC_V2_PROFILE",
     "ADMINISTRATIVE_PUBLIC_V3_POLICY_REF",
     "ADMINISTRATIVE_PUBLIC_V3_PROFILE",
+    "ADMINISTRATIVE_PUBLIC_V4_POLICY_REF",
+    "ADMINISTRATIVE_PUBLIC_V4_PROFILE",
     "BOUNDED_LOCAL_POLICY_REF",
     "BOUNDED_LOCAL_PROFILE",
     "administrative_public_responsibility_admission_policy",
     "administrative_public_v2_responsibility_admission_policy",
     "administrative_public_v3_responsibility_admission_policy",
+    "administrative_public_v4_responsibility_admission_policy",
     "responsibility_admission_policy_for_profile",
 ]
