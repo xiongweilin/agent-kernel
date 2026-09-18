@@ -1,0 +1,6 @@
+# gitleaks 误报豁免：只登记明确的非凭据命中，不加宽整体规则。
+# contracts/semantics/governance/distinction-governance-v1.md 的兼容性段落提到一个长的版本化契约 token，
+# 被 generic-api-key 规则判为密钥；该字符串是契约版本标识，不含任何凭据材料。
+6edc476c38a2e94eafa5bd3384874d8fbc74fdac:contracts/semantics/governance/distinction-governance-v1.md:generic-api-key:71
+a363f172bced212ccf35d8bbb27ec8f751d8403a:contracts/semantics/governance/distinction-governance-v1.md:generic-api-key:71
+
