@@ -4,54 +4,54 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from portable_runtime.core.boundary import RealityBoundary
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.governance.dispatch import DISPATCH_COMMIT_EVENT
-from portable_runtime.responsibility.admission import admit_responsibility_proposal
-from portable_runtime.responsibility.admission_profiles import (
+from agent_kernel.core.boundary import RealityBoundary
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.governance.dispatch import DISPATCH_COMMIT_EVENT
+from agent_kernel.responsibility.admission import admit_responsibility_proposal
+from agent_kernel.responsibility.admission_profiles import (
     administrative_public_responsibility_admission_policy,
 )
-from portable_runtime.responsibility.domain import record_domain_assessment
-from portable_runtime.responsibility.domain_effect_action_authority import (
+from agent_kernel.responsibility.domain import record_domain_assessment
+from agent_kernel.responsibility.domain_effect_action_authority import (
     DomainEffectActionAuthorityResolver,
 )
-from portable_runtime.responsibility.domain_effect_activation import (
+from agent_kernel.responsibility.domain_effect_activation import (
     DomainEffectRunActivation,
     DomainEffectRunActivationInput,
 )
-from portable_runtime.responsibility.domain_effect_authorization import (
+from agent_kernel.responsibility.domain_effect_authorization import (
     ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE,
     DomainEffectAuthorizationAdmission,
     DomainEffectIntentEvidenceInput,
 )
-from portable_runtime.responsibility.domain_effect_invocation_specification import (
+from agent_kernel.responsibility.domain_effect_invocation_specification import (
     DomainEffectInvocationSpecificationCapture,
     DomainEffectInvocationSpecificationInput,
 )
-from portable_runtime.responsibility.domain_effect_procedure_readiness import (
+from agent_kernel.responsibility.domain_effect_procedure_readiness import (
     DomainEffectProcedureReadinessAssessment,
     DomainEffectProcedureReadinessInput,
 )
-from portable_runtime.responsibility.domain_effect_provider_binding import (
+from agent_kernel.responsibility.domain_effect_provider_binding import (
     DomainEffectProviderBindingAssessment,
     DomainEffectProviderBindingInput,
 )
-from portable_runtime.responsibility.domain_effect_qualification import (
+from agent_kernel.responsibility.domain_effect_qualification import (
     DomainEffectQualificationAssessment,
     DomainEffectQualificationInput,
 )
-from portable_runtime.responsibility.domain_effect_reality_execution import (
+from agent_kernel.responsibility.domain_effect_reality_execution import (
     DomainEffectRealityExecution,
 )
-from portable_runtime.responsibility.domain_effect_request import (
+from agent_kernel.responsibility.domain_effect_request import (
     DomainEffectExecutionRequestPreparation,
     DomainEffectExecutionRequestPreparationInput,
 )
-from portable_runtime.responsibility.domain_effect_run import (
+from agent_kernel.responsibility.domain_effect_run import (
     DomainEffectRunPreparation,
     DomainEffectRunPreparationInput,
 )
-from portable_runtime.responsibility.models import (
+from agent_kernel.responsibility.models import (
     EffectClass,
     ResourceVector,
     ResponsibilityAdmission,
@@ -59,8 +59,8 @@ from portable_runtime.responsibility.models import (
     StandingResponsibility,
     WorkProposal,
 )
-from portable_runtime.responsibility.service import ResponsibilityKernel
-from portable_runtime.stores.invocation_specification import (
+from agent_kernel.responsibility.service import ResponsibilityKernel
+from agent_kernel.stores.invocation_specification import (
     InvocationSpecificationInMemoryStateStore,
 )
 from tests.conformance.test_domain_effect_provider_binding import (

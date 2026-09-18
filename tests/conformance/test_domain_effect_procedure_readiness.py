@@ -4,20 +4,20 @@ from datetime import timedelta
 
 import pytest
 
-from portable_runtime.core.qualification import AssessmentContext
-from portable_runtime.responsibility.domain_effect_procedure_readiness import (
+from agent_kernel.core.qualification import AssessmentContext
+from agent_kernel.responsibility.domain_effect_procedure_readiness import (
     DOMAIN_EFFECT_PROCEDURE_READINESS_EVENT,
     DOMAIN_EFFECT_PROCEDURE_READINESS_SCHEMA,
     DomainEffectProcedureReadinessAssessment,
     DomainEffectProcedureReadinessInput,
 )
-from portable_runtime.responsibility.domain_effect_qualification import (
+from agent_kernel.responsibility.domain_effect_qualification import (
     DomainEffectQualificationAssessment,
     DomainEffectQualificationInput,
 )
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.workflows.procedure import ProcedureProfile, check_procedure
-from portable_runtime.workflows.procedure_phase import check_pre_action_readiness
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.workflows.procedure import ProcedureProfile, check_procedure
+from agent_kernel.workflows.procedure_phase import check_pre_action_readiness
 from tests.conformance.test_domain_effect_qualification import NOW, _activated
 
 

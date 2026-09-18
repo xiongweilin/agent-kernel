@@ -1,9 +1,9 @@
 from fastapi.testclient import TestClient
 
-from portable_runtime.api.http import create_app
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.providers.fake import EchoProvider
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.api.http import create_app
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.providers.fake import EchoProvider
+from agent_kernel.stores.memory import InMemoryStateStore
 
 
 def test_http_providers_enable_disable():
@@ -59,9 +59,9 @@ def test_http_work_flow():
     assert resp4.status_code == 200
 
 def test_metrics_snapshot():
-    from portable_runtime.core.metrics import generate_metrics_content
-    from portable_runtime.core.runtime import Runtime
-    from portable_runtime.stores.memory import InMemoryStateStore
+    from agent_kernel.core.metrics import generate_metrics_content
+    from agent_kernel.core.runtime import Runtime
+    from agent_kernel.stores.memory import InMemoryStateStore
     runtime = Runtime(store=InMemoryStateStore())
     # create works to increment metrics
     runtime.create_work(title="m1", kind="generic-task")

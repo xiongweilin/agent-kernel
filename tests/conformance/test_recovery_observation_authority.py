@@ -12,12 +12,12 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.capabilities import CapabilityResult, ProviderDescriptor
-from portable_runtime.core.models import Action, Event, Run, Step, StepAttempt, Work
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.core.capabilities import CapabilityResult, ProviderDescriptor
+from agent_kernel.core.models import Action, Event, Run, Step, StepAttempt, Work
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 
 @contextmanager
@@ -146,7 +146,7 @@ def test_b4_p1_001_reported_success_becomes_durable_non_objective_observation(
     backend: str,
     tmp_path: Path,
 ) -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_observation")
+    module = importlib.import_module("agent_kernel.workflows.recovery_observation")
     with _store(backend, tmp_path, f"reported-success-{backend}") as store:
         graph = _seed_dispatch_graph(store, f"reported-success-{backend}")
         observation = store.commit_recovery_observation(
@@ -174,7 +174,7 @@ def test_b4_p1_002_same_observation_instance_replay_is_idempotent(
     backend: str,
     tmp_path: Path,
 ) -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_observation")
+    module = importlib.import_module("agent_kernel.workflows.recovery_observation")
     with _store(backend, tmp_path, f"same-instance-{backend}") as store:
         graph = _seed_dispatch_graph(store, f"same-instance-{backend}")
         request = _request(
@@ -198,7 +198,7 @@ def test_b4_p1_003_same_report_new_instance_is_new_recovery_fact(
     backend: str,
     tmp_path: Path,
 ) -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_observation")
+    module = importlib.import_module("agent_kernel.workflows.recovery_observation")
     with _store(backend, tmp_path, f"new-instance-{backend}") as store:
         graph = _seed_dispatch_graph(store, f"new-instance-{backend}")
         first = store.commit_recovery_observation(
@@ -229,7 +229,7 @@ def test_b4_p1_004_wrong_action_binding_fails_closed(
     backend: str,
     tmp_path: Path,
 ) -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_observation")
+    module = importlib.import_module("agent_kernel.workflows.recovery_observation")
     with _store(backend, tmp_path, f"wrong-action-{backend}") as store:
         graph = _seed_dispatch_graph(store, f"wrong-action-{backend}")
         attempt = store.get_attempt(graph["attempt_id"])
@@ -281,7 +281,7 @@ def test_b4_p1_006_same_instance_cannot_be_rebound_to_new_report(
     backend: str,
     tmp_path: Path,
 ) -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_observation")
+    module = importlib.import_module("agent_kernel.workflows.recovery_observation")
     with _store(backend, tmp_path, f"rebound-{backend}") as store:
         graph = _seed_dispatch_graph(store, f"rebound-{backend}")
         store.commit_recovery_observation(

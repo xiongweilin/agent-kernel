@@ -6,15 +6,15 @@ from collections.abc import Sequence
 
 import pytest
 
-from portable_runtime.core.capabilities import (
+from agent_kernel.core.capabilities import (
     CapabilityRequest,
     CapabilityResult,
     InvocationContext,
     ProviderDescriptor,
     ProviderHealth,
 )
-from portable_runtime.core.models import Evidence, KnowledgeItem, Run, Work, new_id
-from portable_runtime.core.policies import (
+from agent_kernel.core.models import Evidence, KnowledgeItem, Run, Work, new_id
+from agent_kernel.core.policies import (
     ApprovalGatePolicy,
     PolicyEngine,
     StrictVerificationPolicy,
@@ -22,21 +22,21 @@ from portable_runtime.core.policies import (
     build_incident_policy_context,
     create_default_incident_policy_engine,
 )
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.router import CapabilityService
-from portable_runtime.core.workflows import WorkflowRegistry, is_valid_workflow, validate_workflow
-from portable_runtime.records.open_validation import ClosedVerificationResult
-from portable_runtime.interfaces.store import StateStore
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.workflows.context import (
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.router import CapabilityService
+from agent_kernel.core.workflows import WorkflowRegistry, is_valid_workflow, validate_workflow
+from agent_kernel.records.open_validation import ClosedVerificationResult
+from agent_kernel.interfaces.store import StateStore
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.workflows.context import (
     WorkflowContext,
     is_terminal_run_status,
     is_valid_run_transition,
     validate_run_transition,
 )
-from portable_runtime.workflows.daily_scan.workflow import DailyScanWorkflow, KnowledgeConsolidationWorkflow
-from portable_runtime.workflows.generic_task.workflow import GenericTaskWorkflow
-from portable_runtime.workflows.incident_repair.workflow import IncidentRepairWorkflow
+from agent_kernel.workflows.daily_scan.workflow import DailyScanWorkflow, KnowledgeConsolidationWorkflow
+from agent_kernel.workflows.generic_task.workflow import GenericTaskWorkflow
+from agent_kernel.workflows.incident_repair.workflow import IncidentRepairWorkflow
 from tests._strict_fixtures import seed_action_governance
 
 
@@ -169,7 +169,7 @@ async def test_strict_verification_policy() -> None:
 
 @pytest.mark.asyncio
 async def test_policy_engine_deny_precedence() -> None:
-    from portable_runtime.core.policies import PolicyContext, SensitivePathPolicy
+    from agent_kernel.core.policies import PolicyContext, SensitivePathPolicy
 
     engine = PolicyEngine(policies=[ApprovalGatePolicy(), SensitivePathPolicy()])
     # SensitivePath deny should win

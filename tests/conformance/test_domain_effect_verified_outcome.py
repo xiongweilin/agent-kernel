@@ -4,26 +4,26 @@ from typing import Any, Literal
 
 import pytest
 
-from portable_runtime.core.boundary import RealityBoundary
-from portable_runtime.core.capabilities import (
+from agent_kernel.core.boundary import RealityBoundary
+from agent_kernel.core.capabilities import (
     CapabilityRequest,
     CapabilityResult,
     InvocationContext,
     ProviderDescriptor,
     ProviderHealth,
 )
-from portable_runtime.records.models import EvidenceArtifact, OutcomeRecord
-from portable_runtime.records.open_validation import ClosedVerificationResult
-from portable_runtime.responsibility.domain_effect_action_authority import (
+from agent_kernel.records.models import EvidenceArtifact, OutcomeRecord
+from agent_kernel.records.open_validation import ClosedVerificationResult
+from agent_kernel.responsibility.domain_effect_action_authority import (
     DomainEffectActionAuthorityResolver,
 )
-from portable_runtime.responsibility.domain_effect_authorization_use import (
+from agent_kernel.responsibility.domain_effect_authorization_use import (
     DomainEffectAuthorizationUseConsumption,
 )
-from portable_runtime.responsibility.domain_effect_reality_execution import (
+from agent_kernel.responsibility.domain_effect_reality_execution import (
     DomainEffectRealityExecution,
 )
-from portable_runtime.responsibility.domain_effect_verified_outcome import (
+from agent_kernel.responsibility.domain_effect_verified_outcome import (
     DOMAIN_EFFECT_VERIFICATION_CAPABILITY,
     DOMAIN_EFFECT_VERIFICATION_EVIDENCE_SCHEMA,
     DomainEffectVerifiedOutcomeVerification,

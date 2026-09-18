@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "portable-runtime://contracts/experience-use-requirement-v1",
+  "$id": "agent-kernel://contracts/experience-use-requirement-v1",
   "title": "ExperienceUseRequirementV1",
   "type": "object",
   "additionalProperties": false,

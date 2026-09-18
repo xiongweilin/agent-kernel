@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from portable_runtime.core.capabilities import CapabilityRequest, InvocationContext, ProviderHealth
-from portable_runtime.core.process import ProcessResult, ProcessSpec
-from portable_runtime.providers.codex.provider import (
+from agent_kernel.core.capabilities import CapabilityRequest, InvocationContext, ProviderHealth
+from agent_kernel.core.process import ProcessResult, ProcessSpec
+from agent_kernel.providers.codex.provider import (
     CODEX_SANDBOX_BY_CAPABILITY,
     CodexProvider,
     sandbox_for_capability,
@@ -27,7 +27,7 @@ class _FakeExecutor:
 class _PreparedBoundary:
     def __init__(self, cwd: Path) -> None:
         self.cwd = cwd
-        self.env = {"PORTABLE_RUNTIME_BOUNDARY": "1"}
+        self.env = {"AGENT_KERNEL_BOUNDARY": "1"}
         self.cleaned = False
 
     def cleanup(self) -> None:
@@ -112,7 +112,7 @@ async def test_codex_provider_uses_capability_mapping_and_rejects_override(tmp_p
 
 
 def test_codex_manifest_declares_provider_neutral_sandbox_contract() -> None:
-    manifest_path = Path(__file__).parents[1] / "src" / "portable_runtime" / "providers" / "codex" / "manifest.json"
+    manifest_path = Path(__file__).parents[1] / "src" / "agent_kernel" / "providers" / "codex" / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     metadata = manifest["metadata"]
     assert metadata["sandbox_by_capability"] == CODEX_SANDBOX_BY_CAPABILITY
@@ -143,7 +143,7 @@ async def test_codex_provider_accepts_injected_execution_boundary(tmp_path: Path
 
 
 def test_codex_provider_has_no_control_plane_imports() -> None:
-    provider_path = Path(__file__).parents[1] / "src" / "portable_runtime" / "providers" / "codex" / "provider.py"
+    provider_path = Path(__file__).parents[1] / "src" / "agent_kernel" / "providers" / "codex" / "provider.py"
     tree = ast.parse(provider_path.read_text(encoding="utf-8"), filename=str(provider_path))
     imported_modules = [
         node.module or ""

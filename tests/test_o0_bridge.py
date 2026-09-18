@@ -1,6 +1,6 @@
 from datetime import UTC, datetime, timedelta
 
-from portable_runtime.observation.o0 import (
+from agent_kernel.observation.o0 import (
     FormalDependencyInput,
     FormalEvidenceInput,
     FormalHistoricalTraceInput,
@@ -16,10 +16,10 @@ from portable_runtime.observation.o0 import (
     alpha_r0,
     discover_b0,
 )
-from portable_runtime.records.authorization import AuthorizationGrant
-from portable_runtime.records.models import Assertion, RevisionRecord
-from portable_runtime.records.relations import RecordRelation
-from portable_runtime.records.revalidation import (
+from agent_kernel.records.authorization import AuthorizationGrant
+from agent_kernel.records.models import Assertion, RevisionRecord
+from agent_kernel.records.relations import RecordRelation
+from agent_kernel.records.revalidation import (
     AffectedAssessment,
     DependencyImpact,
     RevalidationDisposition,

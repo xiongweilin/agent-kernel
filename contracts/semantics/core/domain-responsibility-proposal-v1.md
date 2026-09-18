@@ -1,13 +1,13 @@
 # Domain responsibility proposal — v1
 
 Status: candidate
-Owner: `portable-runtime/contracts`
+Owner: `agent-kernel/contracts`
 Command: `domain-responsibility-proposal-v1`
 Receipt: `domain-responsibility-proposal-receipt-v1`
 
 This command is the narrow public mutation boundary by which a domain control
 plane may contribute its current interpretation of bounded responsibility to
-the portable runtime without taking ownership of runtime work admission or
+the agent kernel without taking ownership of runtime work admission or
 execution authority.
 
 ## Canonical chain position
@@ -49,7 +49,7 @@ The domain remains responsible for the evidence interpretation behind its
 approval, fact provenance, or obligation semantics represented through
 `basis_refs` and responsibility scope.
 
-The portable runtime validates canonical responsibility identity, version,
+The agent kernel validates canonical responsibility identity, version,
 lifecycle activity, assessment freshness, proposal linkage, and append-only
 identity. It does not reinterpret domain business policy merely because it
 accepts the domain assessment.

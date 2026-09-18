@@ -3,21 +3,21 @@ from __future__ import annotations
 import hashlib
 from datetime import timedelta
 
-from portable_runtime.core.boundary_stages import precommit_execution_records
-from portable_runtime.core.qualification import InvocationPermit
-from portable_runtime.governance.dispatch import (
+from agent_kernel.core.boundary_stages import precommit_execution_records
+from agent_kernel.core.qualification import InvocationPermit
+from agent_kernel.governance.dispatch import (
     DISPATCH_COMMIT_EVENT,
     GovernanceDispatchCommitter,
 )
-from portable_runtime.records.authorization import create_authorization_use
-from portable_runtime.responsibility.domain_effect_authorization_use import (
+from agent_kernel.records.authorization import create_authorization_use
+from agent_kernel.responsibility.domain_effect_authorization_use import (
     DomainEffectAuthorizationUseConsumption,
 )
-from portable_runtime.responsibility.domain_effect_invocation_specification import (
+from agent_kernel.responsibility.domain_effect_invocation_specification import (
     DomainEffectInvocationSpecificationCapture,
     DomainEffectInvocationSpecificationInput,
 )
-from portable_runtime.stores.invocation_specification import (
+from agent_kernel.stores.invocation_specification import (
     InvocationSpecificationInMemoryStateStore,
 )
 from tests.conformance.test_domain_effect_invocation_specification import _bound

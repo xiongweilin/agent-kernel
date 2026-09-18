@@ -9,11 +9,11 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.models import Action, Event, Run, Step, StepAttempt, Work
-from portable_runtime.records.models import EvidenceArtifact
-from portable_runtime.records.verified_outcome_commit import VerifiedOutcomeCommitRequest
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.workflows.recovery_observation import RecoveryObservationCommitRequest
+from agent_kernel.core.models import Action, Event, Run, Step, StepAttempt, Work
+from agent_kernel.records.models import EvidenceArtifact
+from agent_kernel.records.verified_outcome_commit import VerifiedOutcomeCommitRequest
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.workflows.recovery_observation import RecoveryObservationCommitRequest
 
 _SCOPE = {"resource": "repo/app", "operation": "effect"}
 _VERSIONS = ("patch:v2",)

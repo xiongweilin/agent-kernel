@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from portable_runtime.core.models import Run, Work
-from portable_runtime.records.models import EvidenceArtifact
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
-from portable_runtime.workflows.completion import CompletionAuthority
+from agent_kernel.core.models import Run, Work
+from agent_kernel.records.models import EvidenceArtifact
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
+from agent_kernel.workflows.completion import CompletionAuthority
 
 
 def _proof(work: Work, run: Run) -> EvidenceArtifact:

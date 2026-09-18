@@ -9,14 +9,14 @@ from pathlib import Path
 
 import pytest
 
-from portable_runtime.core.boundary import RealityBoundary
-from portable_runtime.core.boundary_stages import ExecutionRecordIds, commit_execution_projection
-from portable_runtime.core.capabilities import CapabilityRequest, CapabilityResult
-from portable_runtime.core.models import Action, Run, Step, StepAttempt, Work
-from portable_runtime.records.open_validation import ClosedVerificationResult
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
-from portable_runtime.workflows.completion import CompletionAuthority
+from agent_kernel.core.boundary import RealityBoundary
+from agent_kernel.core.boundary_stages import ExecutionRecordIds, commit_execution_projection
+from agent_kernel.core.capabilities import CapabilityRequest, CapabilityResult
+from agent_kernel.core.models import Action, Run, Step, StepAttempt, Work
+from agent_kernel.records.open_validation import ClosedVerificationResult
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
+from agent_kernel.workflows.completion import CompletionAuthority
 
 
 @contextmanager

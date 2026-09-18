@@ -9,22 +9,22 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.models import Event
-from portable_runtime.stores.recovery_application_observation import (
+from agent_kernel.core.models import Event
+from agent_kernel.stores.recovery_application_observation import (
     RecoveryApplicationObservationInMemoryStateStore,
     RecoveryApplicationObservationSQLiteStateStore,
 )
-from portable_runtime.workflows.recovery_application import (
+from agent_kernel.workflows.recovery_application import (
     RecoveryApplicationCommitRequest,
 )
-from portable_runtime.workflows.recovery_application_observation import (
+from agent_kernel.workflows.recovery_application_observation import (
     RecoveryApplicationObservationCommitRequest,
     application_observation_identity,
     bound_application_ref,
     is_application_completion,
     prepare_recovery_application_observation_commit,
 )
-from portable_runtime.workflows.recovery_observation import (
+from agent_kernel.workflows.recovery_observation import (
     RECOVERY_APPLICATION_OBSERVATION_ROLE,
     RecoveryObservation,
     RecoveryObservationCommitRequest,

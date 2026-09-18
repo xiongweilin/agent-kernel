@@ -11,10 +11,10 @@ import inspect
 
 import pytest
 
-from portable_runtime.core.boundary_stages import BoundaryStagePlan
-from portable_runtime.core.capabilities import CapabilityRequest, ProviderDescriptor
-from portable_runtime.core.qualification import InvocationPermit
-from portable_runtime.governance.dispatch import GovernanceDispatchCommitter
+from agent_kernel.core.boundary_stages import BoundaryStagePlan
+from agent_kernel.core.capabilities import CapabilityRequest, ProviderDescriptor
+from agent_kernel.core.qualification import InvocationPermit
+from agent_kernel.governance.dispatch import GovernanceDispatchCommitter
 
 
 def _xfail(reason: str) -> pytest.MarkDecorator:
@@ -62,7 +62,7 @@ def test_invocation_spec_audit_existing_execution_boundary_must_be_reused() -> N
     assert plan.names.index("precommit") < plan.names.index("invocation")
 
     boundary_source = inspect.getsource(
-        importlib.import_module("portable_runtime.core.boundary").RealityBoundary.execute
+        importlib.import_module("agent_kernel.core.boundary").RealityBoundary.execute
     )
     permit = boundary_source.index("InvocationPermit.issue(")
     precommit = boundary_source.index("precommit_execution_records(")
@@ -72,7 +72,7 @@ def test_invocation_spec_audit_existing_execution_boundary_must_be_reused() -> N
 
 
 def test_invocation_spec_audit_p4a_has_no_retry_materializer() -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_application")
+    module = importlib.import_module("agent_kernel.workflows.recovery_application")
     source = inspect.getsource(module)
     assert not hasattr(module, "prepare_recovery_retry_request")
     assert "InvocationPermit.issue" not in source
@@ -89,14 +89,14 @@ def test_invocation_spec_audit_provider_has_no_explicit_idempotency_domain() -> 
 
 
 def test_invocation_spec_audit_runtime_does_not_consume_specification_authority() -> None:
-    source = inspect.getsource(importlib.import_module("portable_runtime.core.runtime"))
+    source = inspect.getsource(importlib.import_module("agent_kernel.core.runtime"))
     assert "DurableInvocationSpecification" not in source
     assert "InvocationSpecificationRecorded" not in source
     assert "invocation_spec_ref" not in source
 
 
 def test_invocation_spec_audit_qualification_metadata_contains_authority_transport() -> None:
-    qualification = importlib.import_module("portable_runtime.core.qualification")
+    qualification = importlib.import_module("agent_kernel.core.qualification")
     ref_keys = dict(qualification._REF_KEYS)
     assert {
         "authorization_refs",
@@ -110,21 +110,21 @@ def test_invocation_spec_audit_qualification_metadata_contains_authority_transpo
 
 @_xfail("B4 invocation-spec production: request_ref alone must never reconstruct operation semantics")
 def test_is_001_request_ref_is_not_invocation_specification() -> None:
-    module = importlib.import_module("portable_runtime.workflows.invocation_specification")
+    module = importlib.import_module("agent_kernel.workflows.invocation_specification")
     with pytest.raises(ValueError, match="request_ref|specification|insufficient"):
         module.reconstruct_from_request_ref_only("request:historical")
 
 
 @_xfail("B4 invocation-spec production: permit/dispatch digest is not reconstructable request authority")
 def test_is_002_digest_only_dispatch_cannot_materialize_specification() -> None:
-    module = importlib.import_module("portable_runtime.workflows.invocation_specification")
+    module = importlib.import_module("agent_kernel.workflows.invocation_specification")
     with pytest.raises(ValueError, match="digest|snapshot|specification"):
         module.materialize_from_permit_digest("permit-digest-only")
 
 
 @_xfail("B4 invocation-spec production: caller memory cannot become durable specification authority")
 def test_is_003_in_memory_capability_request_is_not_durable_authority() -> None:
-    module = importlib.import_module("portable_runtime.workflows.invocation_specification")
+    module = importlib.import_module("agent_kernel.workflows.invocation_specification")
     request = CapabilityRequest(id="request:memory", capability="example.write")
     with pytest.raises(ValueError, match="durable|store|authority"):
         module.authorize_retry_from_caller_request(request)
@@ -132,7 +132,7 @@ def test_is_003_in_memory_capability_request_is_not_durable_authority() -> None:
 
 @_xfail("B4 invocation-spec production: same content identity with changed canonical operation semantics must rebound")
 def test_is_004_specification_identity_cannot_rebind_operation_semantics() -> None:
-    module = importlib.import_module("portable_runtime.workflows.invocation_specification")
+    module = importlib.import_module("agent_kernel.workflows.invocation_specification")
     fixture = module.InvocationSpecificationAuditFixture.example()
     first = fixture.commit(parameters={"value": 1})
     with pytest.raises(ValueError, match="rebound|identity|semantics"):
@@ -141,7 +141,7 @@ def test_is_004_specification_identity_cannot_rebind_operation_semantics() -> No
 
 @_xfail("B4 invocation-spec production: durable spec cannot restore old admission/execution authority")
 def test_is_005_specification_carries_no_old_permit_lease_or_qualification_authority() -> None:
-    module = importlib.import_module("portable_runtime.workflows.invocation_specification")
+    module = importlib.import_module("agent_kernel.workflows.invocation_specification")
     spec = module.InvocationSpecificationAuditFixture.example().specification()
     forbidden = {
         "request_id",
@@ -160,7 +160,7 @@ def test_is_005_specification_carries_no_old_permit_lease_or_qualification_autho
 
 @_xfail("B4 invocation-spec production: retry must mint fresh request identity while preserving exact spec/replay identity")
 def test_is_006_retry_materialization_fresh_request_same_spec_and_idempotency() -> None:
-    module = importlib.import_module("portable_runtime.workflows.invocation_specification")
+    module = importlib.import_module("agent_kernel.workflows.invocation_specification")
     result = module.InvocationSpecificationAuditFixture.materialize_retry(
         source_request_ref="request:old",
         specification_ref="invocation_spec:exact",
@@ -174,7 +174,7 @@ def test_is_006_retry_materialization_fresh_request_same_spec_and_idempotency() 
 
 @_xfail("B4 invocation-spec production: action-critical dispatch must bind exact durable specification identity")
 def test_is_007_dispatch_requires_exact_invocation_spec_binding() -> None:
-    module = importlib.import_module("portable_runtime.workflows.invocation_specification")
+    module = importlib.import_module("agent_kernel.workflows.invocation_specification")
     result = module.InvocationSpecificationAuditFixture.dispatch_without_spec_binding()
     assert result.status in {"blocked", "unavailable"}
     assert "invocation_spec" in result.reason
@@ -182,7 +182,7 @@ def test_is_007_dispatch_requires_exact_invocation_spec_binding() -> None:
 
 @_xfail("B4 invocation-spec production: specification persistence is never provider execution authority")
 def test_is_008_specification_exists_but_provider_call_remains_unauthorized() -> None:
-    module = importlib.import_module("portable_runtime.workflows.invocation_specification")
+    module = importlib.import_module("agent_kernel.workflows.invocation_specification")
     fixture = module.InvocationSpecificationAuditFixture.example()
     spec = fixture.commit()
     assert spec is not None
@@ -193,7 +193,7 @@ def test_is_008_specification_exists_but_provider_call_remains_unauthorized() ->
 
 @_xfail("B4 invocation-spec production: provider-visible metadata must be explicitly partitioned or fail closed")
 def test_is_009_unpartitioned_metadata_cannot_become_retry_semantics() -> None:
-    module = importlib.import_module("portable_runtime.workflows.invocation_specification")
+    module = importlib.import_module("agent_kernel.workflows.invocation_specification")
     with pytest.raises(ValueError, match="metadata|partition|unknown"):
         module.InvocationSpecificationAuditFixture.commit_request(
             CapabilityRequest(
@@ -206,7 +206,7 @@ def test_is_009_unpartitioned_metadata_cannot_become_retry_semantics() -> None:
 
 @_xfail("B4 invocation-spec production: idempotency key cannot cross an unproven provider/dedup domain")
 def test_is_010_retry_idempotency_requires_exact_domain_binding() -> None:
-    module = importlib.import_module("portable_runtime.workflows.invocation_specification")
+    module = importlib.import_module("agent_kernel.workflows.invocation_specification")
     with pytest.raises(ValueError, match="idempotency|dedup|domain|provider"):
         module.InvocationSpecificationAuditFixture.materialize_cross_provider_retry(
             source_provider="provider:a",
@@ -217,7 +217,7 @@ def test_is_010_retry_idempotency_requires_exact_domain_binding() -> None:
 
 @_xfail("B4 invocation-spec production: historical dispatches without spec binding cannot be auto-backfilled")
 def test_is_011_historical_dispatch_without_spec_ref_remains_fail_closed() -> None:
-    module = importlib.import_module("portable_runtime.workflows.invocation_specification")
+    module = importlib.import_module("agent_kernel.workflows.invocation_specification")
     with pytest.raises(ValueError, match="historical|backfill|specification"):
         module.InvocationSpecificationAuditFixture.backfill_from_request_and_permit_digest(
             request_ref="request:old",
@@ -227,7 +227,7 @@ def test_is_011_historical_dispatch_without_spec_ref_remains_fail_closed() -> No
 
 @_xfail("P5: serialized invocation-specification authority remains unproven")
 def test_is_012_serialized_invocation_specification_authority_is_not_importable() -> None:
-    module = importlib.import_module("portable_runtime.workflows.invocation_specification")
+    module = importlib.import_module("agent_kernel.workflows.invocation_specification")
     store = module.InvocationSpecificationAuditFixture.example_store()
     with pytest.raises(ValueError, match="P5|import|unsupported"):
         store.import_state(

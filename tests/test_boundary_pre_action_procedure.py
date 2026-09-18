@@ -4,22 +4,22 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from portable_runtime.core.boundary import RealityBoundary
-from portable_runtime.core.capabilities import (
+from agent_kernel.core.boundary import RealityBoundary
+from agent_kernel.core.capabilities import (
     CapabilityRequest,
     CapabilityResult,
     InvocationContext,
     ProviderDescriptor,
     ProviderHealth,
 )
-from portable_runtime.core.models import Checkpoint, Run, Work
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.router import ConstraintRouter
-from portable_runtime.records.authorization import AuthorizationGrant
-from portable_runtime.records.models import BaseRecord
-from portable_runtime.records.relations import RecordRelation
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.workflows.procedure import ProcedureAssessment, ProcedureProfile, check_procedure
+from agent_kernel.core.models import Checkpoint, Run, Work
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.router import ConstraintRouter
+from agent_kernel.records.authorization import AuthorizationGrant
+from agent_kernel.records.models import BaseRecord
+from agent_kernel.records.relations import RecordRelation
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.workflows.procedure import ProcedureAssessment, ProcedureProfile, check_procedure
 
 
 class _CountingProvider:

@@ -2,20 +2,20 @@ from __future__ import annotations
 
 import pytest
 
-from portable_runtime.records.models import EvidenceArtifact, OutcomeRecord
-from portable_runtime.responsibility.domain_effect_completion_contract import (
+from agent_kernel.records.models import EvidenceArtifact, OutcomeRecord
+from agent_kernel.responsibility.domain_effect_completion_contract import (
     DOMAIN_EFFECT_COMPLETION_CONTRACT_SCHEMA,
     DOMAIN_EFFECT_VERIFICATION_SCOPE_SCHEMA,
 )
-from portable_runtime.responsibility.domain_effect_terminal_completion import (
+from agent_kernel.responsibility.domain_effect_terminal_completion import (
     DomainEffectTerminalCompletion,
     DomainEffectTerminalCompletionInput,
 )
-from portable_runtime.responsibility.domain_effect_verified_outcome import (
+from agent_kernel.responsibility.domain_effect_verified_outcome import (
     DomainEffectVerifiedOutcomeVerification,
 )
-from portable_runtime.responsibility.models import ResponsibilityStatus
-from portable_runtime.responsibility.service import ResponsibilityKernel
+from agent_kernel.responsibility.models import ResponsibilityStatus
+from agent_kernel.responsibility.service import ResponsibilityKernel
 from tests.conformance.test_domain_effect_reality_cutover import _live_cutover_fixture
 from tests.conformance.test_domain_effect_verified_outcome import (
     _ReadbackVerifier,

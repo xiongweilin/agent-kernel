@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "portable-runtime://contracts/responsibility/bounded-domain-effect-resolution-v1",
+  "$id": "agent-kernel://contracts/responsibility/bounded-domain-effect-resolution-v1",
   "title": "BoundedDomainEffectResolutionV1",
   "type": "object",
   "additionalProperties": false,

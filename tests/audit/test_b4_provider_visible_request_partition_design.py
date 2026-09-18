@@ -10,22 +10,22 @@ import inspect
 
 import pytest
 
-from portable_runtime.core.capabilities import (
+from agent_kernel.core.capabilities import (
     CapabilityRequest,
     CapabilityResult,
     InvocationContext,
     ProviderDescriptor,
     ProviderHealth,
 )
-from portable_runtime.core.provider_semantics import (
+from agent_kernel.core.provider_semantics import (
     ProviderSemanticContract,
     build_provider_replay_binding,
     project_provider_semantics,
 )
-from portable_runtime.interfaces.provider import CapabilityProvider
-from portable_runtime.protocol.messages import InvokeMessage
-from portable_runtime.providers.codex.provider import CodexProvider
-from portable_runtime.providers.stdio import StdioJsonlProvider
+from agent_kernel.interfaces.provider import CapabilityProvider
+from agent_kernel.protocol.messages import InvokeMessage
+from agent_kernel.providers.codex.provider import CodexProvider
+from agent_kernel.providers.stdio import StdioJsonlProvider
 
 
 def _contract(*, version: str = "1", **updates: object) -> ProviderSemanticContract:
@@ -225,7 +225,7 @@ def test_pvp_006_projection_binds_semantic_contract_version() -> None:
     reason="dispatch/provider integration: transport completeness remains unimplemented",
 )
 def test_pvp_007_transport_missing_declared_semantic_field_fails_closed() -> None:
-    from portable_runtime.core import provider_semantics
+    from agent_kernel.core import provider_semantics
 
     provider_semantics.assert_transport_complete(  # type: ignore[attr-defined]
         "stdio-jsonl",
@@ -272,13 +272,13 @@ def test_pvp_010_contract_drift_changes_provider_replay_binding() -> None:
 
 
 def test_pvp_011_source_code_introspection_is_not_semantic_authority() -> None:
-    from portable_runtime.core import provider_semantics
+    from agent_kernel.core import provider_semantics
 
     assert not hasattr(provider_semantics, "infer_semantic_contract_from_provider")
 
 
 def test_pvp_012_semantic_contract_is_non_executing_authority() -> None:
-    from portable_runtime.core import provider_semantics
+    from agent_kernel.core import provider_semantics
 
     contract = _contract()
     assert contract.digest

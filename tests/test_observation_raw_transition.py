@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from portable_runtime.observation.raw_transition import build_raw_withdrawal_transition
-from portable_runtime.records.models import Assertion
+from agent_kernel.observation.raw_transition import build_raw_withdrawal_transition
+from agent_kernel.records.models import Assertion
 
 FIXTURE = Path(__file__).parent / "fixtures" / "o0" / "raw_withdrawal_transition_v1.json"
 

@@ -1,6 +1,6 @@
 """Canonical authorization primitive versus explicit legacy normalization."""
 
-from portable_runtime.records.authorization import (
+from agent_kernel.records.authorization import (
     AuthorizationGrant,
     CanonicalAuthorizationRequest,
     is_authorized_for,

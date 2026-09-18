@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from portable_runtime.core.capabilities import CapabilityRequest
-from portable_runtime.core.models import Run, Work
-from portable_runtime.core.qualification import AssessmentContext, QualificationResolutionError
-from portable_runtime.observation.raw_transition import build_raw_withdrawal_transition
-from portable_runtime.records.models import Assertion
-from portable_runtime.records.relations import RecordRelation
-from portable_runtime.records.revalidation import assess_revalidation
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.core.capabilities import CapabilityRequest
+from agent_kernel.core.models import Run, Work
+from agent_kernel.core.qualification import AssessmentContext, QualificationResolutionError
+from agent_kernel.observation.raw_transition import build_raw_withdrawal_transition
+from agent_kernel.records.models import Assertion
+from agent_kernel.records.relations import RecordRelation
+from agent_kernel.records.revalidation import assess_revalidation
+from agent_kernel.stores.memory import InMemoryStateStore
 
 
 def test_rsc001_raw_withdrawal_stays_runtime_native() -> None:

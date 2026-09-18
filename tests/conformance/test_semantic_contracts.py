@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from portable_runtime.records.authorization import AuthorizationGrant
-from portable_runtime.records.models import Assertion, EvidenceArtifact, PolicyRecord, RevisionRecord
-from portable_runtime.records.relations import RecordRelation
-from portable_runtime.records.validation import validate_record_graph
-from portable_runtime.protocol.validation import validate_state_graph
+from agent_kernel.records.authorization import AuthorizationGrant
+from agent_kernel.records.models import Assertion, EvidenceArtifact, PolicyRecord, RevisionRecord
+from agent_kernel.records.relations import RecordRelation
+from agent_kernel.records.validation import validate_record_graph
+from agent_kernel.protocol.validation import validate_state_graph
 
 
 def test_causes_is_not_a_canonical_relation_type() -> None:

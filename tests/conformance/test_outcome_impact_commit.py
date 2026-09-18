@@ -10,23 +10,23 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.models import Action, Event, Run, Step, StepAttempt, Work
-from portable_runtime.governance.outcome_impact import OutcomeGovernanceDependency
-from portable_runtime.governance.outcome_impact_commit import (
+from agent_kernel.core.models import Action, Event, Run, Step, StepAttempt, Work
+from agent_kernel.governance.outcome_impact import OutcomeGovernanceDependency
+from agent_kernel.governance.outcome_impact_commit import (
     OUTCOME_DISPOSITION_EVENT,
     OUTCOME_IMPACT_JUDGMENT_EVENT,
     OutcomeImpactCommitRequest,
 )
-from portable_runtime.governance.outcome_impact_judgment import OutcomeImpact, OutcomeImpactJudgment
-from portable_runtime.governance.persistence import (
+from agent_kernel.governance.outcome_impact_judgment import OutcomeImpact, OutcomeImpactJudgment
+from agent_kernel.governance.persistence import (
     InMemoryDistinctionGovernancePersistence,
     SQLiteDistinctionGovernancePersistence,
 )
-from portable_runtime.records.models import EvidenceArtifact
-from portable_runtime.records.revalidation import RevalidationDisposition
-from portable_runtime.records.verified_outcome import VerifiedOutcomeAuthority
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.records.models import EvidenceArtifact
+from agent_kernel.records.revalidation import RevalidationDisposition
+from agent_kernel.records.verified_outcome import VerifiedOutcomeAuthority
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 _SCOPE = {"resource": "repo/app", "operation": "effect"}
 _GOVERNED_SCOPE = frozenset({"repo/app", "repo/shared"})

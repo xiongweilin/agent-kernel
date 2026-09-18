@@ -13,21 +13,21 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from portable_runtime.core.capabilities import CapabilityRequest, InvocationContext, ProviderDescriptor
-from portable_runtime.core.models import Event
-from portable_runtime.core.provider_semantics import (
+from agent_kernel.core.capabilities import CapabilityRequest, InvocationContext, ProviderDescriptor
+from agent_kernel.core.models import Event
+from agent_kernel.core.provider_semantics import (
     ProviderSemanticContract,
     build_provider_replay_binding,
     project_provider_semantics,
 )
-from portable_runtime.governance.dispatch import GovernanceDispatchCommitter
-from portable_runtime.stores.invocation_specification import (
+from agent_kernel.governance.dispatch import GovernanceDispatchCommitter
+from agent_kernel.stores.invocation_specification import (
     InvocationSpecificationInMemoryStateStore,
     InvocationSpecificationSQLiteStateStore,
 )
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
-from portable_runtime.workflows.invocation_specification import (
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
+from agent_kernel.workflows.invocation_specification import (
     DurableInvocationSpecification,
     InvocationSpecificationCommitRequest,
     build_invocation_specification,
@@ -122,7 +122,7 @@ def test_dis_dispatch_and_runtime_integration_remain_absent() -> None:
     assert "invocation_spec_ref" not in source
     assert "InvocationSpecificationRecorded" not in source
 
-    from portable_runtime.core import runtime
+    from agent_kernel.core import runtime
 
     runtime_source = inspect.getsource(runtime)
     assert "DurableInvocationSpecification" not in runtime_source
@@ -366,7 +366,7 @@ def test_dis_017_provider_binding_drift_cannot_replay_old_specification_identity
 
 
 def test_dis_018_retry_materialization_api_remains_absent() -> None:
-    from portable_runtime.workflows import invocation_specification
+    from agent_kernel.workflows import invocation_specification
 
     assert not hasattr(invocation_specification, "materialize_authorized_retry")
     assert not hasattr(invocation_specification, "consume_recovery_application")

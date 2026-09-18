@@ -18,12 +18,12 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.models import Action, Event, Run, Step, StepAttempt, Work
-from portable_runtime.records.models import EvidenceArtifact
-from portable_runtime.records.verified_outcome import VerifiedOutcomeAuthority
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
-from portable_runtime.workflows.recovery_observation import (
+from agent_kernel.core.models import Action, Event, Run, Step, StepAttempt, Work
+from agent_kernel.records.models import EvidenceArtifact
+from agent_kernel.records.verified_outcome import VerifiedOutcomeAuthority
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
+from agent_kernel.workflows.recovery_observation import (
     RecoveryObservationCommitRequest,
 )
 
@@ -246,7 +246,7 @@ def test_p3c_001_exact_basis_replay_is_one_durable_decision(
     backend: str,
     tmp_path: Path,
 ) -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_disposition")
+    module = importlib.import_module("agent_kernel.workflows.recovery_disposition")
     with _store(backend, tmp_path, f"replay-{backend}") as store:
         graph = _seed_subject(store, f"replay-{backend}")
         obs_a = _observe(store, graph, instance_ref=f"obs:{backend}:a")
@@ -277,7 +277,7 @@ def test_p3c_002_observation_and_outcome_basis_order_is_canonical(
     backend: str,
     tmp_path: Path,
 ) -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_disposition")
+    module = importlib.import_module("agent_kernel.workflows.recovery_disposition")
     with _store(backend, tmp_path, f"order-{backend}") as store:
         graph = _seed_subject(store, f"order-{backend}")
         obs_a = _observe(store, graph, instance_ref=f"obs:{backend}:a")
@@ -311,7 +311,7 @@ def test_p3c_003_new_observation_creates_new_decision_without_supersession(
     backend: str,
     tmp_path: Path,
 ) -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_disposition")
+    module = importlib.import_module("agent_kernel.workflows.recovery_disposition")
     with _store(backend, tmp_path, f"new-observation-{backend}") as store:
         graph = _seed_subject(store, f"new-observation-{backend}")
         obs_a = _observe(store, graph, instance_ref=f"obs:{backend}:a")
@@ -335,7 +335,7 @@ def test_p3c_004_new_confirmed_outcome_identity_creates_new_decision(
     backend: str,
     tmp_path: Path,
 ) -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_disposition")
+    module = importlib.import_module("agent_kernel.workflows.recovery_disposition")
     with _store(backend, tmp_path, f"new-outcome-{backend}") as store:
         graph = _seed_subject(store, f"new-outcome-{backend}")
         obs = _observe(store, graph, instance_ref=f"obs:{backend}")
@@ -370,7 +370,7 @@ def test_p3c_005_policy_drift_replay_does_not_call_current_policy(
     backend: str,
     tmp_path: Path,
 ) -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_disposition")
+    module = importlib.import_module("agent_kernel.workflows.recovery_disposition")
     with _store(backend, tmp_path, f"policy-drift-{backend}") as store:
         graph = _seed_subject(store, f"policy-drift-{backend}")
         obs = _observe(store, graph, instance_ref=f"obs:{backend}")
@@ -389,7 +389,7 @@ def test_p3c_006_same_basis_identity_cannot_rebind_decision_semantics(
     backend: str,
     tmp_path: Path,
 ) -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_disposition")
+    module = importlib.import_module("agent_kernel.workflows.recovery_disposition")
     with _store(backend, tmp_path, f"rebound-{backend}") as store:
         graph = _seed_subject(store, f"rebound-{backend}")
         obs = _observe(store, graph, instance_ref=f"obs:{backend}")
@@ -432,7 +432,7 @@ def test_p3c_007_direct_recovery_disposition_event_append_is_denied(
 
 
 def test_p3c_008_recovery_disposition_module_has_no_execution_or_terminal_authority() -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_disposition")
+    module = importlib.import_module("agent_kernel.workflows.recovery_disposition")
     source = inspect.getsource(module)
     forbidden = (
         "provider.invoke",
@@ -450,7 +450,7 @@ def test_p3c_008_recovery_disposition_module_has_no_execution_or_terminal_author
 
 
 def test_p3c_a01_commit_request_does_not_accept_caller_recovery_mode() -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_disposition")
+    module = importlib.import_module("agent_kernel.workflows.recovery_disposition")
     fields = set(module.RecoveryDispositionCommitRequest.__dataclass_fields__)
     assert "dispatch_commit_ref" in fields
     assert "observation_refs" in fields

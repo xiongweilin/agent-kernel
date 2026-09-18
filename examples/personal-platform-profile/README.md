@@ -5,7 +5,7 @@ deployment shape (Codex / Prometheus / Alertmanager / Docker); the
 deployment-specific scripts, credentials, and host configuration are not part
 of this repository.
 
-The profile is a historical reference for how a portable Runtime can load the
+The profile is a historical reference for how a Agent Kernel can load the
 same Work/Run/Artifact/Evidence/Knowledge graph with a different provider set.
 There is no `profiles/personal-platform/` alias or runnable deployment tree in
 this repository.
@@ -27,5 +27,5 @@ repository paths; the old `deployments/portable-local/` tree is not present.
 
 Task Scheduler / PowerShell / VBS / watchdog scripts belonged to the historical
 host deployment and are intentionally not claimed as files in this example.
-The profile never leaks into `portable_runtime/core`.
+The profile never leaks into `agent_kernel/core`.
 

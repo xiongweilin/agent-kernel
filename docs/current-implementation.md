@@ -28,9 +28,9 @@ None owns permanent execution authority. External effects continue to cross the 
 | Axis | Current value |
 |---|---|
 | Repository/product | `agent-kernel` |
-| Contract catalog | `portable-runtime-contracts-v1` |
-| Python distribution | `portable-runtime` |
-| Python namespace | `portable_runtime` |
+| Contract catalog | `agent-kernel-contracts-v1` |
+| Python distribution | `agent-kernel` |
+| Python namespace | `agent_kernel` |
 | Runtime protocol | `2.0` |
 | External provider protocol | `1` (`stdio-jsonl`) |
 | Persistent Responsibility | `persistent-responsibility-v1` |
@@ -52,11 +52,11 @@ contracts/semantics/core/revision-control-v1.md
 Reference implementation:
 
 ```text
-src/portable_runtime/controller/models.py
-src/portable_runtime/controller/service.py
-src/portable_runtime/controller/closure.py
-src/portable_runtime/controller/revision.py
-src/portable_runtime/controller/handoff.py
+src/agent_kernel/controller/models.py
+src/agent_kernel/controller/service.py
+src/agent_kernel/controller/closure.py
+src/agent_kernel/controller/revision.py
+src/agent_kernel/controller/handoff.py
 ```
 
 ## Cognitive-control implementation
@@ -201,7 +201,7 @@ TaskCompleted -/-> ResponsibilityDischarged
 
 ## Legacy reopen migration
 
-`src/portable_runtime/records/reopen.py` remains readable for historical/observation compatibility. `create_reopen_work()` is retained only as a fail-loud compatibility symbol and cannot mint Work.
+`src/agent_kernel/records/reopen.py` remains readable for historical/observation compatibility. `create_reopen_work()` is retained only as a fail-loud compatibility symbol and cannot mint Work.
 
 New Work after cognitive failure must pass through:
 
@@ -265,9 +265,9 @@ special cross-agent interoperability semantics
 | Concern | Primary source |
 |---|---|
 | Canonical semantics | `contracts/README.md`, `contracts/catalog.toml`, `contracts/semantics/` |
-| Cognitive control | `contracts/semantics/core/cognitive-control-v2.md`, `src/portable_runtime/controller/` |
+| Cognitive control | `contracts/semantics/core/cognitive-control-v2.md`, `src/agent_kernel/controller/` |
 | Cognitive closure | `contracts/semantics/core/cognitive-closure-v1.md` |
 | Revision control | `contracts/semantics/core/revision-control-v1.md` |
-| Persistent responsibility | `contracts/semantics/core/persistent-responsibility-v1.md`, `src/portable_runtime/responsibility/` |
-| Runtime implementation | `src/portable_runtime/core/runtime.py` |
+| Persistent responsibility | `contracts/semantics/core/persistent-responsibility-v1.md`, `src/agent_kernel/responsibility/` |
+| Runtime implementation | `src/agent_kernel/core/runtime.py` |
 | Exact executable status | GitHub CI for the exact commit |

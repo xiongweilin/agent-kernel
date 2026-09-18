@@ -1,7 +1,7 @@
 # Responsibility discharge lifecycle — v1
 
 Status: candidate
-Owner: `portable-runtime/contracts`
+Owner: `agent-kernel/contracts`
 
 This public seam exposes existing generic persistent-responsibility semantics:
 

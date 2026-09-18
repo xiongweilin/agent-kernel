@@ -13,11 +13,11 @@ import inspect
 
 import pytest
 
-from portable_runtime.core.capabilities import CapabilityRequest, ProviderDescriptor
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.router import DeterministicPriorityRouting
-from portable_runtime.governance.dispatch import dispatch_recovery_mode
-from portable_runtime.workflows.recovery_application import RecoveryApplication
+from agent_kernel.core.capabilities import CapabilityRequest, ProviderDescriptor
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.router import DeterministicPriorityRouting
+from agent_kernel.governance.dispatch import dispatch_recovery_mode
+from agent_kernel.workflows.recovery_application import RecoveryApplication
 
 
 def _xfail(reason: str) -> pytest.MarkDecorator:
@@ -54,7 +54,7 @@ def test_exact_pin_audit_provider_descriptor_has_version_but_no_idempotency_doma
 
 
 def test_exact_pin_audit_dispatch_does_not_bind_provider_version() -> None:
-    module = importlib.import_module("portable_runtime.governance.dispatch")
+    module = importlib.import_module("agent_kernel.governance.dispatch")
     source = inspect.getsource(module.GovernanceDispatchCommitter.commit)
     assert '"provider_id"' in source
     assert '"provider_version"' not in source
@@ -79,13 +79,13 @@ def test_exact_pin_audit_preferred_provider_is_soft_routing_not_hard_pin() -> No
 
 
 def test_exact_pin_audit_no_production_retry_pin_module_exists() -> None:
-    assert importlib.util.find_spec("portable_runtime.workflows.retry_provider_binding") is None
-    assert importlib.util.find_spec("portable_runtime.core.idempotency_domain") is None
+    assert importlib.util.find_spec("agent_kernel.workflows.retry_provider_binding") is None
+    assert importlib.util.find_spec("agent_kernel.core.idempotency_domain") is None
 
 
 @_xfail("B4 exact-provider production: v1 retry target provider id must equal source provider id")
 def test_epp_001_changed_provider_id_fails_closed() -> None:
-    module = importlib.import_module("portable_runtime.workflows.retry_provider_binding")
+    module = importlib.import_module("agent_kernel.workflows.retry_provider_binding")
     source = module.ProviderReplayBinding.example(provider_id="provider:a")
     with pytest.raises(ValueError, match="provider|source|pin|mismatch"):
         module.assert_exact_retry_target(source, target_provider_id="provider:b")
@@ -93,7 +93,7 @@ def test_epp_001_changed_provider_id_fails_closed() -> None:
 
 @_xfail("B4 exact-provider production: same provider id after replacement is not stable provider identity")
 def test_epp_002_same_id_replaced_provider_identity_fails_closed() -> None:
-    module = importlib.import_module("portable_runtime.workflows.retry_provider_binding")
+    module = importlib.import_module("agent_kernel.workflows.retry_provider_binding")
     source = module.ProviderReplayBinding.example(
         provider_id="provider:a",
         provider_binding_digest="binding:old",
@@ -108,7 +108,7 @@ def test_epp_002_same_id_replaced_provider_identity_fails_closed() -> None:
 
 @_xfail("B4 exact-provider production: historical provider identity cannot be backfilled from current registry")
 def test_epp_003_missing_historical_provider_binding_is_not_retry_eligible() -> None:
-    module = importlib.import_module("portable_runtime.workflows.retry_provider_binding")
+    module = importlib.import_module("agent_kernel.workflows.retry_provider_binding")
     with pytest.raises(ValueError, match="historical|binding|missing|backfill"):
         module.retry_binding_from_historical_dispatch(
             dispatch_ref="dispatch:old-with-provider-id-only",
@@ -119,7 +119,7 @@ def test_epp_003_missing_historical_provider_binding_is_not_retry_eligible() -> 
 
 @_xfail("B4 exact-provider production: retry requires exact source idempotency identity")
 def test_epp_004_missing_source_idempotency_identity_is_ineligible() -> None:
-    module = importlib.import_module("portable_runtime.workflows.retry_provider_binding")
+    module = importlib.import_module("agent_kernel.workflows.retry_provider_binding")
     binding = module.ProviderReplayBinding.example(idempotency_key=None)
     eligibility = module.exact_retry_eligibility(binding)
     assert eligibility.allowed is False
@@ -128,7 +128,7 @@ def test_epp_004_missing_source_idempotency_identity_is_ineligible() -> None:
 
 @_xfail("B4 exact-provider production: changing idempotency identity must fail closed")
 def test_epp_005_changed_idempotency_identity_fails_closed() -> None:
-    module = importlib.import_module("portable_runtime.workflows.retry_provider_binding")
+    module = importlib.import_module("agent_kernel.workflows.retry_provider_binding")
     source = module.ProviderReplayBinding.example(idempotency_key="idem:source")
     with pytest.raises(ValueError, match="idempotency|replay|identity"):
         module.assert_retry_idempotency(source, retry_idempotency_key="idem:new")
@@ -136,7 +136,7 @@ def test_epp_005_changed_idempotency_identity_fails_closed() -> None:
 
 @_xfail("B4 exact-provider production: reconcile/opaque semantics cannot be promoted to idempotent retry")
 def test_epp_006_non_retryable_effect_semantics_remain_ineligible() -> None:
-    module = importlib.import_module("portable_runtime.workflows.retry_provider_binding")
+    module = importlib.import_module("agent_kernel.workflows.retry_provider_binding")
     for semantics in ("reconcilable", "irreversible-opaque"):
         binding = module.ProviderReplayBinding.example(effect_semantics=semantics)
         eligibility = module.exact_retry_eligibility(binding)
@@ -145,7 +145,7 @@ def test_epp_006_non_retryable_effect_semantics_remain_ineligible() -> None:
 
 @_xfail("B4 exact-provider production: exact provider unavailable must STOP, never fallback")
 def test_epp_007_exact_source_provider_unavailable_has_no_fallback() -> None:
-    module = importlib.import_module("portable_runtime.workflows.retry_provider_binding")
+    module = importlib.import_module("agent_kernel.workflows.retry_provider_binding")
     source = module.ProviderReplayBinding.example(provider_id="provider:a")
     result = module.select_exact_retry_provider(
         source,
@@ -158,7 +158,7 @@ def test_epp_007_exact_source_provider_unavailable_has_no_fallback() -> None:
 
 @_xfail("B4 exact-provider production: preferred_provider_ids is not a hard retry pin")
 def test_epp_008_routing_preference_cannot_satisfy_exact_pin() -> None:
-    module = importlib.import_module("portable_runtime.workflows.retry_provider_binding")
+    module = importlib.import_module("agent_kernel.workflows.retry_provider_binding")
     request = CapabilityRequest(
         id="request:retry",
         capability="example.write",
@@ -170,7 +170,7 @@ def test_epp_008_routing_preference_cannot_satisfy_exact_pin() -> None:
 
 @_xfail("B4 exact-provider production: provider replay eligibility is not execution authorization")
 def test_epp_009_provider_pin_creates_no_execution_authority() -> None:
-    module = importlib.import_module("portable_runtime.workflows.retry_provider_binding")
+    module = importlib.import_module("agent_kernel.workflows.retry_provider_binding")
     fixture = module.ProviderReplayAuditFixture.example()
     binding = fixture.commit_binding()
     assert binding is not None
@@ -184,7 +184,7 @@ def test_epp_009_provider_pin_creates_no_execution_authority() -> None:
 
 @_xfail("B4 exact-provider production: semantic/provider binding drift invalidates exact retry")
 def test_epp_010_provider_semantic_binding_drift_requires_revalidation() -> None:
-    module = importlib.import_module("portable_runtime.workflows.retry_provider_binding")
+    module = importlib.import_module("agent_kernel.workflows.retry_provider_binding")
     source = module.ProviderReplayBinding.example(
         provider_id="provider:a",
         semantic_contract_digest="semantic:v1",
@@ -199,7 +199,7 @@ def test_epp_010_provider_semantic_binding_drift_requires_revalidation() -> None
 
 @_xfail("B4 exact-provider production: same-looking key across providers has no shared-domain authority")
 def test_epp_011_cross_provider_same_key_remains_unsupported() -> None:
-    module = importlib.import_module("portable_runtime.workflows.retry_provider_binding")
+    module = importlib.import_module("agent_kernel.workflows.retry_provider_binding")
     with pytest.raises(ValueError, match="cross-provider|domain|idempotency|unsupported"):
         module.authorize_cross_provider_retry(
             source_provider_id="provider:a",
@@ -211,7 +211,7 @@ def test_epp_011_cross_provider_same_key_remains_unsupported() -> None:
 
 @_xfail("B4 exact-provider production: replay binding existence does not authorize retry execution")
 def test_epp_012_binding_object_is_non_executing_authority() -> None:
-    module = importlib.import_module("portable_runtime.workflows.retry_provider_binding")
+    module = importlib.import_module("agent_kernel.workflows.retry_provider_binding")
     fixture = module.ProviderReplayAuditFixture.example()
     binding = fixture.commit_binding()
     assert binding is not None

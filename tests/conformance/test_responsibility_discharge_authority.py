@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from portable_runtime.responsibility import (
+from agent_kernel.responsibility import (
     ResponsibilityAdmission,
     ResponsibilityAssessment,
     ResponsibilityDischargeDecision,
@@ -16,7 +16,7 @@ from portable_runtime.responsibility import (
     ResponsibilityStatus,
     StandingResponsibility,
 )
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.stores.memory import InMemoryStateStore
 
 
 def _now() -> datetime:

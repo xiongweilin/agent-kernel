@@ -9,10 +9,10 @@ import json
 
 import pytest
 
-from portable_runtime.core.models import Step, StepAttempt
-from portable_runtime.governance.dispatch import dispatch_recovery_mode
-from portable_runtime.records.verified_outcome_commit import prepare_verified_outcome_commit
-from portable_runtime.workflows.recovery_observation import RecoveryObservation
+from agent_kernel.core.models import Step, StepAttempt
+from agent_kernel.governance.dispatch import dispatch_recovery_mode
+from agent_kernel.records.verified_outcome_commit import prepare_verified_outcome_commit
+from agent_kernel.workflows.recovery_observation import RecoveryObservation
 
 
 def _xfail(reason: str) -> pytest.MarkDecorator:
@@ -75,7 +75,7 @@ def test_p3_audit_dispatch_recovery_mode_is_classification_not_disposition() -> 
         attempt,
     ) == "unknown"
 
-    source = inspect.getsource(importlib.import_module("portable_runtime.governance.dispatch"))
+    source = inspect.getsource(importlib.import_module("agent_kernel.governance.dispatch"))
     assert "RecoveryDisposition" not in source
 
 
@@ -93,7 +93,7 @@ def test_p3_audit_recovery_observation_carries_no_decision_or_application_author
 
 def test_p3_audit_recovery_observation_module_does_not_construct_follow_on_authority() -> None:
     source = inspect.getsource(
-        importlib.import_module("portable_runtime.workflows.recovery_observation")
+        importlib.import_module("agent_kernel.workflows.recovery_observation")
     )
     assert "RecoveryDisposition" not in source
     assert "RecoveryApplicationRecorded" not in source
@@ -115,9 +115,9 @@ def test_p3_audit_verified_outcome_authority_does_not_become_recovery_policy() -
 
 def test_p3_audit_governance_q_is_not_an_implicit_recovery_decision_input() -> None:
     recovery_source = inspect.getsource(
-        importlib.import_module("portable_runtime.workflows.recovery_observation")
+        importlib.import_module("agent_kernel.workflows.recovery_observation")
     )
-    dispatch_source = inspect.getsource(importlib.import_module("portable_runtime.governance.dispatch"))
+    dispatch_source = inspect.getsource(importlib.import_module("agent_kernel.governance.dispatch"))
     for source in (recovery_source, dispatch_source):
         assert "ReviewObligation" not in source
         assert "GovernanceDecision" not in source
@@ -161,7 +161,7 @@ def test_p3_audit_candidate_identity_is_exact_basis_not_latest_state() -> None:
 
 @_xfail("B4-P3 production: exact-basis RecoveryDisposition replay is not implemented")
 def test_p3_future_same_exact_basis_replays_same_durable_disposition() -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_disposition")
+    module = importlib.import_module("agent_kernel.workflows.recovery_disposition")
     first = module.decide_recovery(
         dispatch_commit_ref="dispatch:p3",
         observation_refs=("obs:1", "obs:2"),
@@ -181,7 +181,7 @@ def test_p3_future_same_exact_basis_replays_same_durable_disposition() -> None:
 
 @_xfail("B4-P3 production: new observation basis must create a new decision instance")
 def test_p3_future_new_observation_basis_is_not_latest_wins_supersession() -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_disposition")
+    module = importlib.import_module("agent_kernel.workflows.recovery_disposition")
     first = module.decide_recovery(
         dispatch_commit_ref="dispatch:p3",
         observation_refs=("obs:1",),
@@ -201,7 +201,7 @@ def test_p3_future_new_observation_basis_is_not_latest_wins_supersession() -> No
 
 @_xfail("B4-P3 production: durable same-basis replay must not drift with current policy")
 def test_p3_future_existing_exact_basis_replay_ignores_newer_policy_execution() -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_disposition")
+    module = importlib.import_module("agent_kernel.workflows.recovery_disposition")
     first = module.decide_recovery(
         dispatch_commit_ref="dispatch:p3",
         observation_refs=("obs:1",),
@@ -215,7 +215,7 @@ def test_p3_future_existing_exact_basis_replay_ignores_newer_policy_execution() 
 
 @_xfail("B4-P3 production: RecoveryDisposition remains non-self-executing")
 def test_p3_future_disposition_does_not_authorize_application_or_provider_calls() -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_disposition")
+    module = importlib.import_module("agent_kernel.workflows.recovery_disposition")
     disposition = module.RecoveryDisposition(
         id="recovery-disposition:p3",
         dispatch_commit_ref="dispatch:p3",

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from portable_runtime.core.reliability import (
+from agent_kernel.core.reliability import (
     CircuitBreaker,
     DefaultLocalReliabilityPolicy,
     ReliabilityControls,

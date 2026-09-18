@@ -4,18 +4,18 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from portable_runtime.core.boundary import RealityBoundary
-from portable_runtime.core.capabilities import CapabilityRequest
-from portable_runtime.core.capability_contract import (
+from agent_kernel.core.boundary import RealityBoundary
+from agent_kernel.core.capabilities import CapabilityRequest
+from agent_kernel.core.capability_contract import (
     CapabilityContract,
     CapabilityContractRegistry,
 )
-from portable_runtime.responsibility.admission import (
+from agent_kernel.responsibility.admission import (
     BoundedLocalResponsibilityAdmissionPolicy,
     admit_responsibility_proposal,
 )
-from portable_runtime.responsibility.domain import record_domain_assessment
-from portable_runtime.responsibility.domain_effect_authorization import (
+from agent_kernel.responsibility.domain import record_domain_assessment
+from agent_kernel.responsibility.domain_effect_authorization import (
     ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE,
     DomainEffectAuthorizationAdmission,
     DomainEffectAuthorizationContext,
@@ -24,7 +24,7 @@ from portable_runtime.responsibility.domain_effect_authorization import (
     REFERENCE_AUTHORIZATION_POLICY_REF,
     RUNTIME_ADMINISTRATIVE_ACTOR,
 )
-from portable_runtime.responsibility.models import (
+from agent_kernel.responsibility.models import (
     EffectClass,
     ResourceVector,
     ResponsibilityAdmission,
@@ -32,8 +32,8 @@ from portable_runtime.responsibility.models import (
     StandingResponsibility,
     WorkProposal,
 )
-from portable_runtime.responsibility.service import ResponsibilityKernel
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.responsibility.service import ResponsibilityKernel
+from agent_kernel.stores.memory import InMemoryStateStore
 
 NOW = datetime(2026, 9, 8, 12, 30, tzinfo=UTC)
 CASE_REF = "case-1"

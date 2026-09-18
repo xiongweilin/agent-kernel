@@ -3,7 +3,7 @@
 Implement the `CapabilityProvider` contract:
 
 ```python
-from portable_runtime.core.capabilities import (
+from agent_kernel.core.capabilities import (
     CapabilityRequest, CapabilityResult, InvocationContext,
     ProviderDescriptor, ProviderHealth,
 )
@@ -42,8 +42,8 @@ class UppercaseProvider:
 Register at runtime:
 
 ```python
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.providers.fake import EchoProvider
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.providers.fake import EchoProvider
 
 runtime = Runtime()
 runtime.registry.register(UppercaseProvider())
@@ -55,8 +55,8 @@ result = await runtime.run_capability(work.id, "text.uppercase", instruction="he
 For a tiny provider, use the decorator:
 
 ```python
-from portable_runtime.plugin import provider
-from portable_runtime.core.capabilities import CapabilityRequest, CapabilityResult
+from agent_kernel.plugin import provider
+from agent_kernel.core.capabilities import CapabilityRequest, CapabilityResult
 
 @provider(id="echo", version="1.0.0", capabilities=["text.echo"])
 async def invoke(request: CapabilityRequest) -> CapabilityResult:
@@ -96,6 +96,6 @@ Deployment-specific process isolation is an optional injected
 working directory/environment, a session directory, transcript redaction, and
 cleanup; the base provider does not import or know about any deployment
 package. Personal profiles may inject host-specific worktree, credential, or
-container isolation while keeping those policies outside the portable runtime.
+container isolation while keeping those policies outside the agent kernel.
 
 See `docs/provider-protocol.md` for the language-neutral stdio JSONL transport, `docs/plugin-authoring.md` for the file layout.

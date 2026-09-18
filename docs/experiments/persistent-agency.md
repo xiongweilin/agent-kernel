@@ -9,7 +9,7 @@ The promotion decision has now happened: the responsibility positions that survi
 ```text
 contracts/semantics/core/persistent-responsibility-v1.md
 contracts/schemas/responsibility/persistent-responsibility-v1.schema.json
-src/portable_runtime/responsibility/
+src/agent_kernel/responsibility/
 ```
 
 Therefore this experiment is **not** the current product-status or semantic authority for promoted concepts such as `StandingResponsibility`, `ResponsibilityAssessment`, `WorkProposal`, resource reservation/commitment separation, process/provider/model/session continuity, or the negative invariants cataloged by `persistent-responsibility-v1`.

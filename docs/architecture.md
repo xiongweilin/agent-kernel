@@ -260,9 +260,9 @@ Additional cognitive concepts are promoted only after a concrete runtime failure
 | Concern | Primary source |
 |---|---|
 | Canonical semantic ownership | `contracts/README.md`, `contracts/catalog.toml`, `contracts/semantics/` |
-| Cognitive control | `contracts/semantics/core/cognitive-control-v2.md`, `src/portable_runtime/controller/` |
+| Cognitive control | `contracts/semantics/core/cognitive-control-v2.md`, `src/agent_kernel/controller/` |
 | Cognitive closure | `contracts/semantics/core/cognitive-closure-v1.md` |
 | Revision control | `contracts/semantics/core/revision-control-v1.md` |
-| Persistent responsibility | `contracts/semantics/core/persistent-responsibility-v1.md`, `src/portable_runtime/responsibility/` |
-| Runtime composition | `src/portable_runtime/core/runtime.py` |
+| Persistent responsibility | `contracts/semantics/core/persistent-responsibility-v1.md`, `src/agent_kernel/responsibility/` |
+| Runtime composition | `src/agent_kernel/core/runtime.py` |
 | Exact executable status | GitHub CI for the exact commit |

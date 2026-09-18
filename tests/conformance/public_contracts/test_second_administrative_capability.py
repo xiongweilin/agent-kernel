@@ -5,32 +5,32 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.capabilities import (
+from agent_kernel.core.capabilities import (
     CapabilityRequest,
     CapabilityResult,
     InvocationContext,
     ProviderDescriptor,
     ProviderHealth,
 )
-from portable_runtime.core.capability_contract import CapabilityContract, CapabilityContractRegistry
-from portable_runtime.core.provider_semantics import ProviderSemanticContract
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.public_contracts.domain_effect import (
+from agent_kernel.core.capability_contract import CapabilityContract, CapabilityContractRegistry
+from agent_kernel.core.provider_semantics import ProviderSemanticContract
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.public_contracts.domain_effect import (
     BoundedDomainEffectExecutionProfile,
     BoundedDomainEffectExecutionService,
     BoundedDomainEffectExecutionV1,
 )
-from portable_runtime.records.open_validation import ClosedVerificationResult
-from portable_runtime.responsibility.admission import (
+from agent_kernel.records.open_validation import ClosedVerificationResult
+from agent_kernel.responsibility.admission import (
     BoundedLocalResponsibilityAdmissionPolicy,
     admit_responsibility_proposal,
 )
-from portable_runtime.responsibility.domain import record_domain_assessment
-from portable_runtime.responsibility.domain_effect_verified_outcome import (
+from agent_kernel.responsibility.domain import record_domain_assessment
+from agent_kernel.responsibility.domain_effect_verified_outcome import (
     domain_effect_verification_capability,
 )
-from portable_runtime.responsibility.models import (
+from agent_kernel.responsibility.models import (
     EffectClass,
     ResourceVector,
     ResponsibilityAdmission,
@@ -38,8 +38,8 @@ from portable_runtime.responsibility.models import (
     StandingResponsibility,
     WorkProposal,
 )
-from portable_runtime.responsibility.service import ResponsibilityKernel
-from portable_runtime.stores.invocation_specification import (
+from agent_kernel.responsibility.service import ResponsibilityKernel
+from agent_kernel.stores.invocation_specification import (
     InvocationSpecificationInMemoryStateStore,
 )
 from tests.conformance.test_domain_effect_provider_binding import _HrisProvider, _register

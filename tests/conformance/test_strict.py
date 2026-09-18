@@ -1,16 +1,16 @@
-"""P0 Strict Conformance Suite per portable-runtime-strict-enforcement-plan §14."""
+"""P0 Strict Conformance Suite per agent-kernel-strict-enforcement-plan §14."""
 
 import datetime
 from datetime import UTC
 
 import pytest
 
-from portable_runtime.core.capabilities import CapabilityRequest, CapabilityResult, InvocationContext, ProviderDescriptor, ProviderHealth
-from portable_runtime.core.models import Run, Work, new_id
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.router import CapabilityService, ConstraintRouter
-from portable_runtime.records.authorization import AuthorizationGrant, create_grant_for_approval, is_authorized_for_legacy as is_authorized_for
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.core.capabilities import CapabilityRequest, CapabilityResult, InvocationContext, ProviderDescriptor, ProviderHealth
+from agent_kernel.core.models import Run, Work, new_id
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.router import CapabilityService, ConstraintRouter
+from agent_kernel.records.authorization import AuthorizationGrant, create_grant_for_approval, is_authorized_for_legacy as is_authorized_for
+from agent_kernel.stores.memory import InMemoryStateStore
 
 
 class CountingProvider:
@@ -57,7 +57,7 @@ async def test_i007_stale_fencing_generation_blocks():
     store.acquire_lease(run.id, owner="workerB", ttl_seconds=30)
     run2 = store.get_run(run.id)
     assert run2.lease_generation != gen
-    from portable_runtime.core.boundary import validate_fencing
+    from agent_kernel.core.boundary import validate_fencing
     stale_req = CapabilityRequest(id=new_id("req"), capability="test.read", work_id=work.id, run_id=run.id, lease_generation=gen, lease_owner="workerA")
     ok, reason = validate_fencing(stale_req, run2)
     assert ok is False
@@ -76,19 +76,19 @@ async def test_i006_effect_ceiling_blocks():
     assert is_authorized_for({"capability": "test.read", "effect_class": "read", "actor_ref": "agent:x"}, grant) is True
 
 def test_epistemic_no_auto_inference():
-    from portable_runtime.records.open_validation import open_validate
+    from agent_kernel.records.open_validation import open_validate
     with pytest.raises((TypeError, ValueError)):
         open_validate("struct1", ["e1"], [])  # type: ignore
     r = open_validate(judgment="supports", assertion_refs=["a1"], evidence_refs=["e1"], provider_id="p1", scope={"domain": "test"})
     assert r.judgment == "supports"
-    from portable_runtime.core.knowledge import promote
-    from portable_runtime.core.models import KnowledgeItem as KI
+    from agent_kernel.core.knowledge import promote
+    from agent_kernel.core.models import KnowledgeItem as KI
     ki = KI(id="k1", kind="doc", title="t", content_ref="ref", status="candidate", evidence_refs=["e1"])
     with pytest.raises(ValueError):
         promote(ki)
 
 def test_procedure_hint_is_not_proof():
-    from portable_runtime.workflows.procedure import check_procedure, ProcedureProfile
+    from agent_kernel.workflows.procedure import check_procedure, ProcedureProfile
     w = Work(id=new_id("work"), title="t", description="d", kind="incident", metadata={"authorized": True, "verified": True})
     r = Run(id=new_id("run"), work_id=w.id, status="running", metadata={"result_confirmed": True})
     std = check_procedure(w, r, ProcedureProfile.standard)

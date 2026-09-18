@@ -4,31 +4,31 @@ from __future__ import annotations
 
 import pytest
 
-from portable_runtime.core.capabilities import CapabilityRequest
-from portable_runtime.core.models import Evidence, Run, Work
-from portable_runtime.core.qualification import AssessmentContext, InvocationPermit
-from portable_runtime.records.knowledge import KnowledgeProjection
-from portable_runtime.records.experiment import ExperimentPlan, create_experiment_work, is_low_cost_discriminative
-from portable_runtime.records.models import Assertion, BaseRecord, Derivation, EvidenceArtifact
-from portable_runtime.records.reopen import (
+from agent_kernel.core.capabilities import CapabilityRequest
+from agent_kernel.core.models import Evidence, Run, Work
+from agent_kernel.core.qualification import AssessmentContext, InvocationPermit
+from agent_kernel.records.knowledge import KnowledgeProjection
+from agent_kernel.records.experiment import ExperimentPlan, create_experiment_work, is_low_cost_discriminative
+from agent_kernel.records.models import Assertion, BaseRecord, Derivation, EvidenceArtifact
+from agent_kernel.records.reopen import (
     LegacyReopenWorkBypassError,
     ReopenAssessment,
     build_reopen_package,
     create_reopen_work,
 )
-from portable_runtime.records.revalidation import (
+from agent_kernel.records.revalidation import (
     DefaultRevalidationPolicyProfile,
     assess_revalidation,
     detect_dependency_impacts,
     derive_revalidation_disposition,
     derive_risk_assessment,
 )
-from portable_runtime.records.relations import RecordRelation
-from portable_runtime.core.qualification import QualificationRef, QualificationResolutionError
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
-from portable_runtime.workflows.context import WorkflowContext
-from portable_runtime.workflows.daily_scan.workflow import KnowledgeConsolidationWorkflow
+from agent_kernel.records.relations import RecordRelation
+from agent_kernel.core.qualification import QualificationRef, QualificationResolutionError
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
+from agent_kernel.workflows.context import WorkflowContext
+from agent_kernel.workflows.daily_scan.workflow import KnowledgeConsolidationWorkflow
 
 
 def test_deep_reopen_preserves_handoff_but_cannot_create_work() -> None:

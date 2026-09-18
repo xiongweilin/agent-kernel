@@ -4,26 +4,26 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from portable_runtime.core.models import Work
-from portable_runtime.responsibility.domain_effect_responsibility_reassessment import (
+from agent_kernel.core.models import Work
+from agent_kernel.responsibility.domain_effect_responsibility_reassessment import (
     DOMAIN_EFFECT_RESPONSIBILITY_BLOCKED,
     DOMAIN_EFFECT_RESPONSIBILITY_CLEAR,
     DomainEffectResponsibilityReassessment,
     DomainEffectResponsibilityReassessmentInput,
 )
-from portable_runtime.responsibility.domain_effect_terminal_completion import (
+from agent_kernel.responsibility.domain_effect_terminal_completion import (
     DomainEffectTerminalCompletion,
     DomainEffectTerminalCompletionInput,
 )
-from portable_runtime.responsibility.domain_effect_verified_outcome import (
+from agent_kernel.responsibility.domain_effect_verified_outcome import (
     DomainEffectVerifiedOutcomeVerification,
 )
-from portable_runtime.responsibility.models import (
+from agent_kernel.responsibility.models import (
     ResponsibilityExpectation,
     ResponsibilityRevision,
     ResponsibilityStatus,
 )
-from portable_runtime.responsibility.service import ResponsibilityKernel
+from agent_kernel.responsibility.service import ResponsibilityKernel
 from tests.conformance.test_domain_effect_verified_outcome import (
     _ReadbackVerifier,
     _authorization_context,

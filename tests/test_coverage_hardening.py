@@ -12,33 +12,33 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-from portable_runtime.api.http import create_app
-from portable_runtime.core.capabilities import CapabilityRequest, InvocationContext
-from portable_runtime.core.knowledge import archive, deprecate, promote
-from portable_runtime.core.models import Artifact, KnowledgeItem, Run, Work, new_id
-from portable_runtime.core.policies import (
+from agent_kernel.api.http import create_app
+from agent_kernel.core.capabilities import CapabilityRequest, InvocationContext
+from agent_kernel.core.knowledge import archive, deprecate, promote
+from agent_kernel.core.models import Artifact, KnowledgeItem, Run, Work, new_id
+from agent_kernel.core.policies import (
     CandidateMergePolicy,
     ExternalSideEffectPolicy,
     PolicyContext,
     SensitivePathPolicy,
 )
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.plugin.loader import validate_manifest
-from portable_runtime.protocol.manifest import ProviderManifest
-from portable_runtime.providers.fake import EchoProvider
-from portable_runtime.stores.bundle import (
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.plugin.loader import validate_manifest
+from agent_kernel.protocol.manifest import ProviderManifest
+from agent_kernel.providers.fake import EchoProvider
+from agent_kernel.stores.bundle import (
     _is_safe_member_name,
     bundle_contains_absolute_paths,
     export_bundle,
     import_bundle,
 )
-from portable_runtime.stores.filesystem import FilesystemArtifactStore
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
-from portable_runtime.triggers.alertmanager.trigger import AlertmanagerTrigger
-from portable_runtime.triggers.schedule.trigger import ScheduleTrigger
-from portable_runtime.triggers.webhook.trigger import WebhookTrigger
+from agent_kernel.stores.filesystem import FilesystemArtifactStore
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
+from agent_kernel.triggers.alertmanager.trigger import AlertmanagerTrigger
+from agent_kernel.triggers.schedule.trigger import ScheduleTrigger
+from agent_kernel.triggers.webhook.trigger import WebhookTrigger
 
 
 def test_memory_store_crud():
@@ -132,7 +132,7 @@ def test_bundle_export_import_roundtrip(tmp_path: Path):
         info.size = len(data)
         tar.addfile(info, io.BytesIO(data))
         info2 = tarfile.TarInfo(name="manifest.json")
-        m = json.dumps({"schema_version": "1", "format": "portable-runtime-bundle-v1", "runtime_id": "x", "exported_at": "now", "counts": {}, "artifact_files": []}).encode()
+        m = json.dumps({"schema_version": "1", "format": "agent-kernel-bundle-v1", "runtime_id": "x", "exported_at": "now", "counts": {}, "artifact_files": []}).encode()
         info2.size = len(m)
         tar.addfile(info2, io.BytesIO(m))
     mal_path.write_bytes(buf.getvalue())
@@ -224,8 +224,8 @@ def test_api_http_work_run_capability():
 
 @pytest.mark.asyncio
 async def test_stdio_provider_timeout_and_large_output():
-    from portable_runtime.core.capabilities import CapabilityRequest, InvocationContext
-    from portable_runtime.providers.stdio import StdioJsonlProvider
+    from agent_kernel.core.capabilities import CapabilityRequest, InvocationContext
+    from agent_kernel.providers.stdio import StdioJsonlProvider
     manifest = ProviderManifest(id="test-stdio", name="test", version="1.0.0", capabilities=["code.read"], transport="stdio-jsonl", command=["python", "-c", "import sys, json; l=sys.stdin.readline(); d=json.loads(l); print(json.dumps({'status':'succeeded','output_artifacts':[],'message':'ok','request_id':d['id'],'provider_id':'test-stdio'}))"])
     provider = StdioJsonlProvider(manifest)
     req = CapabilityRequest(id="req1", capability="code.read", work_id="w", run_id="r", timeout_seconds=5)
@@ -254,9 +254,9 @@ async def test_stdio_provider_timeout_and_large_output():
 
 @pytest.mark.asyncio
 async def test_verifiers_http_promql_logs():
-    from portable_runtime.core.capabilities import CapabilityRequest, InvocationContext
-    from portable_runtime.providers.verifiers.http_promql import HttpVerifierProvider, PromqlVerifierProvider
-    from portable_runtime.providers.verifiers.logs_tests import (
+    from agent_kernel.core.capabilities import CapabilityRequest, InvocationContext
+    from agent_kernel.providers.verifiers.http_promql import HttpVerifierProvider, PromqlVerifierProvider
+    from agent_kernel.providers.verifiers.logs_tests import (
         GitDiffVerifierProvider,
         LogsVerifierProvider,
         TestsVerifierProvider,
@@ -340,7 +340,7 @@ async def test_triggers_webhook_alertmanager_schedule():
             await am.handle_webhook(dup_payload)
             assert True
         except Exception as exc:
-            from portable_runtime.triggers.base import TriggerError as TE
+            from agent_kernel.triggers.base import TriggerError as TE
             if isinstance(exc, TE):
                 assert exc.category.value in ("duplicate", "validation", "signature")
             else:
@@ -388,7 +388,7 @@ async def test_policies_and_registry_router():
     assert len(descs) == 1 and descs[0].id == "p2"
     reg.unregister("p2")
     assert len(reg.list()) == 1
-    from portable_runtime.core.router import CapabilityService
+    from agent_kernel.core.router import CapabilityService
     service = CapabilityService(reg, store=InMemoryStateStore())
     store = service.store
     w = Work(id="work_x", title="t", description="d")
@@ -432,7 +432,7 @@ def test_plugin_loader_and_manager(tmp_path: Path):
     assert validate_manifest(good_dir / "manifest.json") == []
     import shutil
     shutil.copytree(good_dir, plugins_dir / "good_plugin")
-    from portable_runtime.plugin.manager import PluginManager
+    from agent_kernel.plugin.manager import PluginManager
     reg = ProviderRegistry()
     mgr = PluginManager(reg, plugin_dir=plugins_dir)
     found = mgr.discover()
@@ -440,7 +440,7 @@ def test_plugin_loader_and_manager(tmp_path: Path):
 
 @pytest.mark.asyncio
 async def test_process_executor_and_codex_provider(tmp_path: Path):
-    from portable_runtime.core.process import PortableSubprocessExecutor, ProcessSpec
+    from agent_kernel.core.process import PortableSubprocessExecutor, ProcessSpec
     exe = PortableSubprocessExecutor()
     res = await exe.run(ProcessSpec(argv=["python", "-c", "print('hello')"], timeout_seconds=5))
     assert res.exit_code == 0
@@ -449,8 +449,8 @@ async def test_process_executor_and_codex_provider(tmp_path: Path):
     assert res2.timed_out
     res3 = await exe.run(ProcessSpec(argv=["python", "-c", "print('x'*300000)"], timeout_seconds=5))
     assert res3.truncated or len(res3.stdout) <= 200000
-    from portable_runtime.core.process import ProcessResult
-    from portable_runtime.providers.codex.provider import CodexProvider
+    from agent_kernel.core.process import ProcessResult
+    from agent_kernel.providers.codex.provider import CodexProvider
     mock_exec = AsyncMock()
     mock_exec.run.return_value = ProcessResult(exit_code=0, stdout=json.dumps({"status": "succeeded", "message": "ok"}), stderr="", timed_out=False)
     provider = CodexProvider(provider_id="codex-test", executor=mock_exec, working_directory=tmp_path)
@@ -461,8 +461,8 @@ async def test_process_executor_and_codex_provider(tmp_path: Path):
     assert result.request_id == "req_codex"
 
 def test_config_and_compat(tmp_path: Path):
-    from portable_runtime.compat.legacy_control_plane import import_legacy_repair
-    from portable_runtime.config import PortableConfig
+    from agent_kernel.compat.legacy_control_plane import import_legacy_repair
+    from agent_kernel.config import PortableConfig
     cfg = PortableConfig.load(tmp_path / "nonexistent.toml")
     assert cfg.runtime.id == "personal-runtime"
     toml_path = tmp_path / "config.toml"
@@ -479,7 +479,7 @@ def test_config_and_compat(tmp_path: Path):
 
 
 def test_legacy_task_adapter_preserves_personal_task_workflow():
-    from portable_runtime.compat.legacy_control_plane import import_legacy_repair
+    from agent_kernel.compat.legacy_control_plane import import_legacy_repair
 
     store = InMemoryStateStore()
     work, run = import_legacy_repair(
@@ -514,7 +514,7 @@ def test_runtime_bundle_helpers(tmp_path: Path):
     assert rt3.get_work(w.id) is not None
 
 def test_cli_commands(tmp_path: Path):
-    from portable_runtime.api.cli import run_cli
+    from agent_kernel.api.cli import run_cli
     state = tmp_path / "cli.db"
     assert run_cli(["--state", str(state), "init"]) == 0
     assert run_cli(["--state", str(state), "status"]) == 0
@@ -526,14 +526,14 @@ def test_cli_commands(tmp_path: Path):
     assert run_cli(["--state", str(state), "provider", "health"]) == 0
 
 def test_store_conformance_helpers():
-    from portable_runtime.stores.conformance import _run_crud
+    from agent_kernel.stores.conformance import _run_crud
     mem = InMemoryStateStore()
     _run_crud(mem)
     import os
     import tempfile
     from pathlib import Path as P
 
-    from portable_runtime.stores.sqlite import SQLiteStateStore
+    from agent_kernel.stores.sqlite import SQLiteStateStore
     fd, p = tempfile.mkstemp(suffix=".db")
     os.close(fd)
     s = SQLiteStateStore(P(p))

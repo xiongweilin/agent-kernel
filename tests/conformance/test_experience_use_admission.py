@@ -4,16 +4,16 @@ from dataclasses import FrozenInstanceError, fields
 
 import pytest
 
-from portable_runtime.experience.use_admission import (
+from agent_kernel.experience.use_admission import (
     ExperienceUseAdmission,
     ExperienceUseAdmissionEvaluator,
     ExperienceUseRequirement,
 )
-from portable_runtime.records.authorization import create_grant_for_approval
-from portable_runtime.records.knowledge import KnowledgeProjection
-from portable_runtime.records.models import Assertion, ChangeObjectRecord, Derivation, EvidenceArtifact
-from portable_runtime.records.relations import RecordRelation
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.records.authorization import create_grant_for_approval
+from agent_kernel.records.knowledge import KnowledgeProjection
+from agent_kernel.records.models import Assertion, ChangeObjectRecord, Derivation, EvidenceArtifact
+from agent_kernel.records.relations import RecordRelation
+from agent_kernel.stores.memory import InMemoryStateStore
 
 
 def _seed_official(

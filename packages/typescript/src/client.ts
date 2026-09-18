@@ -6,24 +6,24 @@ import type {
   HistoricalExperienceUseV1,
 } from "./types.generated.js";
 
-const SUPPORTED_CATALOG_VERSION = "portable-runtime-contracts-v1";
-const SUPPORTED_OWNER = "portable-runtime/contracts";
+const SUPPORTED_CATALOG_VERSION = "agent-kernel-contracts-v1";
+const SUPPORTED_OWNER = "agent-kernel/contracts";
 
-export class PortableRuntimeContractError extends Error {
+export class AgentKernelContractError extends Error {
   constructor(readonly problem: ApiProblemV1, readonly status: number) {
     super(problem.message);
-    this.name = "PortableRuntimeContractError";
+    this.name = "AgentKernelContractError";
   }
 }
 
 export class ContractVersionMismatch extends Error {
   constructor(readonly received: unknown) {
-    super(`unsupported portable-runtime contract catalog: ${String(received)}`);
+    super(`unsupported agent-kernel contract catalog: ${String(received)}`);
     this.name = "ContractVersionMismatch";
   }
 }
 
-export class PortableRuntimeClient {
+export class AgentKernelClient {
   constructor(
     readonly baseUrl = "http://127.0.0.1:8000",
     readonly fetcher: typeof fetch = fetch,
@@ -37,7 +37,7 @@ export class PortableRuntimeClient {
     const payload = await response.json();
     if (!response.ok) {
       const detail = (payload?.detail ?? payload) as ApiProblemV1;
-      throw new PortableRuntimeContractError(detail, response.status);
+      throw new AgentKernelContractError(detail, response.status);
     }
     return payload as T;
   }

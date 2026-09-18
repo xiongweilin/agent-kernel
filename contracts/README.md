@@ -4,7 +4,7 @@
 
 No external repository, document set, commit SHA, theorem repository, or research note is required to interpret the kernel's supported product semantics. Historical or research material may motivate a contract, but it has no normative authority over this repository unless its semantics are explicitly adopted into this directory.
 
-Existing `portable-runtime-*` contract/version identifiers remain compatibility tokens. The repository/product owner is `agent-kernel`; repository naming does not silently change previously published contract meaning.
+Contract/version identifiers use the `agent-kernel-*` prefix. The repository is a single-owner personal environment with no external consumers, so the legacy `portable-runtime-*` prefix was retired in one recorded step (2026-09-18, see the repository README) instead of being carried as a compatibility alias. Changing an identifier again still requires an explicit versioned decision; it is never implied by repository or implementation edits.
 
 ## Canonical precedence
 
@@ -32,7 +32,7 @@ agent-kernel/contracts
     public structural contracts,
     and conformance vectors
 
-Python portable_runtime
+Python agent_kernel
     is the normative reference implementation / oracle
 
 packages/typescript
@@ -95,6 +95,6 @@ Public contracts may expose read-only views of authority-bearing runtime objects
 
 ## Compatibility
 
-`distinction-governance-1.0`, runtime protocol `2.0`, provider protocol `1`, the `portable-runtime-contracts-v1` catalog identifier, and existing persisted/event tokens remain compatible unless a versioned contract explicitly declares a breaking change.
+`distinction-governance-1.0`, runtime protocol `2.0`, provider protocol `1`, the `agent-kernel-contracts-v1` catalog identifier, and existing persisted/event tokens remain compatible unless a versioned contract explicitly declares a breaking change.
 
 See `catalog.toml` for the machine-readable contract index and `semantics/core/ownership-v1.md` for the ownership rule.

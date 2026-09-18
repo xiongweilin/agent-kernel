@@ -2,13 +2,13 @@ from pathlib import Path
 
 import pytest
 
-from portable_runtime.api.cli import _safe_state_path
-from portable_runtime.stores.bundle import _safe_output_path
-from portable_runtime.stores.sqlite import SQLiteStateStore, _safe_db_path
+from agent_kernel.api.cli import _safe_state_path
+from agent_kernel.stores.bundle import _safe_output_path
+from agent_kernel.stores.sqlite import SQLiteStateStore, _safe_db_path
 
 
 def test_safe_state_path_valid():
-    p = Path("data/portable-runtime.db")
+    p = Path("data/agent-kernel.db")
     assert _safe_state_path(p) == p
     p2 = Path.cwd() / "data" / "test.db"
     assert _safe_state_path(p2) == p2
@@ -62,7 +62,7 @@ def test_safe_db_path_traversal():
 
 def test_run_cli_state_validation(tmp_path: Path):
     """Test that run_cli uses _safe_state_path for --state."""
-    from portable_runtime.api.cli import run_cli
+    from agent_kernel.api.cli import run_cli
 
     state_path = tmp_path / "test.db"
     ret = run_cli(["--state", str(state_path), "init"])
@@ -77,9 +77,9 @@ def test_run_cli_state_validation(tmp_path: Path):
 
 
 def test_export_bundle_path_validation(tmp_path: Path):
-    from portable_runtime.core.runtime import Runtime
-    from portable_runtime.stores.bundle import export_bundle
-    from portable_runtime.stores.memory import InMemoryStateStore
+    from agent_kernel.core.runtime import Runtime
+    from agent_kernel.stores.bundle import export_bundle
+    from agent_kernel.stores.memory import InMemoryStateStore
 
     store = InMemoryStateStore()
     out = tmp_path / "bundle.tar.zst"
@@ -90,7 +90,7 @@ def test_export_bundle_path_validation(tmp_path: Path):
 
 
 def test_sqlite_store_path_validation_extra(tmp_path: Path):
-    from portable_runtime.stores.sqlite import SQLiteStateStore
+    from agent_kernel.stores.sqlite import SQLiteStateStore
 
     p = tmp_path / "valid2.db"
     store = SQLiteStateStore(p)
@@ -107,9 +107,9 @@ def test_sqlite_store_path_validation_extra(tmp_path: Path):
 def test_safe_helpers_comprehensive(tmp_path: Path):
     from pathlib import Path
 
-    from portable_runtime.api.cli import _safe_state_path
-    from portable_runtime.stores.bundle import _safe_output_path
-    from portable_runtime.stores.sqlite import _safe_db_path
+    from agent_kernel.api.cli import _safe_state_path
+    from agent_kernel.stores.bundle import _safe_output_path
+    from agent_kernel.stores.sqlite import _safe_db_path
 
     # Test valid without ..
     assert _safe_state_path(Path("data/a.db")) == Path("data/a.db")

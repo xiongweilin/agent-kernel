@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from portable_runtime.core.capabilities import CapabilityResult
-from portable_runtime.responsibility.domain_effect_reality_execution import DomainEffectRealityExecution
+from agent_kernel.core.capabilities import CapabilityResult
+from agent_kernel.responsibility.domain_effect_reality_execution import DomainEffectRealityExecution
 from tests.conformance.public_contracts.test_bounded_domain_effect_execution import _fixture
 
 

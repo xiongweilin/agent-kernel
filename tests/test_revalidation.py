@@ -6,15 +6,15 @@ import random
 
 import pytest
 
-from portable_runtime.records.models import Assertion, EvidenceArtifact, Goal
-from portable_runtime.records.authorization import create_grant_for_approval
-from portable_runtime.records.relations import RecordRelation
-from portable_runtime.records.revalidation import (
+from agent_kernel.records.models import Assertion, EvidenceArtifact, Goal
+from agent_kernel.records.authorization import create_grant_for_approval
+from agent_kernel.records.relations import RecordRelation
+from agent_kernel.records.revalidation import (
     assess_revalidation,
     should_block,
 )
-from portable_runtime.records.revision import apply_revision, create_revision, supersede
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.records.revision import apply_revision, create_revision, supersede
+from agent_kernel.stores.memory import InMemoryStateStore
 
 
 def _rand_id(prefix: str = "obj") -> str:
@@ -249,8 +249,8 @@ def test_stores_persist_revision_changeobject():
     import tempfile
     from pathlib import Path
 
-    from portable_runtime.records.models import ChangeObjectRecord
-    from portable_runtime.stores.sqlite import SQLiteStateStore
+    from agent_kernel.records.models import ChangeObjectRecord
+    from agent_kernel.stores.sqlite import SQLiteStateStore
 
     store = InMemoryStateStore()
     rev = create_revision("old_v1", "new_v2")

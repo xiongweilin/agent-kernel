@@ -4,15 +4,15 @@ from datetime import timedelta
 
 import pytest
 
-from portable_runtime.core.qualification import InvocationPermit
-from portable_runtime.responsibility.domain_effect_action_authority import (
+from agent_kernel.core.qualification import InvocationPermit
+from agent_kernel.responsibility.domain_effect_action_authority import (
     DomainEffectActionAuthorityResolver,
 )
-from portable_runtime.responsibility.domain_effect_invocation_specification import (
+from agent_kernel.responsibility.domain_effect_invocation_specification import (
     DomainEffectInvocationSpecificationCapture,
     DomainEffectInvocationSpecificationInput,
 )
-from portable_runtime.stores.invocation_specification import (
+from agent_kernel.stores.invocation_specification import (
     InvocationSpecificationInMemoryStateStore,
 )
 from tests.conformance.test_domain_effect_invocation_specification import _bound

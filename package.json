@@ -1,14 +1,14 @@
 {
-  "name": "portable-runtime-workspace",
+  "name": "agent-kernel-workspace",
   "private": true,
   "workspaces": [
     "packages/typescript",
     "packages/inspector"
   ],
   "scripts": {
-    "typecheck:contracts": "npm run typecheck --workspace=@portable-runtime/contracts-client",
-    "conformance:contracts": "npm run conformance --workspace=@portable-runtime/contracts-client",
-    "typecheck:inspector": "npm run typecheck --workspace=@portable-runtime/responsibility-inspector",
-    "build:inspector": "npm run build --workspace=@portable-runtime/responsibility-inspector"
+    "typecheck:contracts": "npm run typecheck --workspace=@agent-kernel/contracts-client",
+    "conformance:contracts": "npm run conformance --workspace=@agent-kernel/contracts-client",
+    "typecheck:inspector": "npm run typecheck --workspace=@agent-kernel/responsibility-inspector",
+    "build:inspector": "npm run build --workspace=@agent-kernel/responsibility-inspector"
   }
 }

@@ -15,12 +15,12 @@ from dataclasses import replace
 
 import pytest
 
-from portable_runtime.core.boundary_stages import BoundaryStagePlan, precommit_execution_records
-from portable_runtime.core.models import Action, Event, StepAttempt
-from portable_runtime.core.qualification import InvocationPermit
-from portable_runtime.governance.dispatch import GovernanceDispatchCommitter
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.workflows.recovery_disposition import RecoveryDispositionCommitRequest
+from agent_kernel.core.boundary_stages import BoundaryStagePlan, precommit_execution_records
+from agent_kernel.core.models import Action, Event, StepAttempt
+from agent_kernel.core.qualification import InvocationPermit
+from agent_kernel.governance.dispatch import GovernanceDispatchCommitter
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.workflows.recovery_disposition import RecoveryDispositionCommitRequest
 from tests.conformance.test_recovery_disposition_counterexamples import (
     _Policy,
     _observe,
@@ -81,7 +81,7 @@ def test_p4_audit_p3_request_remains_decision_only() -> None:
         "policy_ref",
     }
     source = inspect.getsource(
-        importlib.import_module("portable_runtime.workflows.recovery_disposition")
+        importlib.import_module("agent_kernel.workflows.recovery_disposition")
     )
     assert "RecoveryApplication" not in source
     assert "provider.invoke" not in source
@@ -89,7 +89,7 @@ def test_p4_audit_p3_request_remains_decision_only() -> None:
 
 
 def test_p4_audit_runtime_does_not_consume_recovery_dispositions() -> None:
-    source = inspect.getsource(importlib.import_module("portable_runtime.core.runtime"))
+    source = inspect.getsource(importlib.import_module("agent_kernel.core.runtime"))
     assert "RecoveryDispositionRecorded" not in source
     assert "commit_recovery_disposition" not in source
     assert "RecoveryApplication" not in source
@@ -103,7 +103,7 @@ def test_p4_audit_execution_reenters_qualification_before_fresh_precommit() -> N
     assert plan.names.index("precommit") < plan.names.index("invocation")
 
     boundary_source = inspect.getsource(
-        importlib.import_module("portable_runtime.core.boundary").RealityBoundary.execute
+        importlib.import_module("agent_kernel.core.boundary").RealityBoundary.execute
     )
     permit_position = boundary_source.index("InvocationPermit.issue(")
     precommit_position = boundary_source.index("precommit_execution_records(")
@@ -164,13 +164,13 @@ def test_p4_audit_retry_request_specification_is_not_yet_durable() -> None:
 
 
 def test_p4c_001_application_request_carries_only_exact_disposition_ref() -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_application")
+    module = importlib.import_module("agent_kernel.workflows.recovery_application")
     fields = set(module.RecoveryApplicationCommitRequest.__dataclass_fields__)
     assert fields == {"disposition_ref"}
 
 
 def test_p4c_002_same_disposition_replays_one_application_intent() -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_application")
+    module = importlib.import_module("agent_kernel.workflows.recovery_application")
     store, _graph, disposition = _seed_disposition(
         "hold-unresolved",
         suffix="p4-replay",
@@ -183,7 +183,7 @@ def test_p4c_002_same_disposition_replays_one_application_intent() -> None:
 
 
 def test_p4c_003_same_application_identity_exposes_semantic_rebound() -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_application")
+    module = importlib.import_module("agent_kernel.workflows.recovery_application")
     store, _graph, disposition = _seed_disposition(
         "hold-unresolved",
         suffix="p4-rebound",
@@ -199,7 +199,7 @@ def test_p4c_003_same_application_identity_exposes_semantic_rebound() -> None:
 
 
 def test_p4c_004_retry_application_is_intent_not_fresh_execution() -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_application")
+    module = importlib.import_module("agent_kernel.workflows.recovery_application")
     store, graph, disposition = _seed_disposition(
         "retry-idempotent",
         effect_semantics="idempotent",
@@ -222,7 +222,7 @@ def test_p4c_004_retry_application_is_intent_not_fresh_execution() -> None:
 
 
 def test_p4c_005_application_module_has_no_reality_exit_or_terminal_authority() -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_application")
+    module = importlib.import_module("agent_kernel.workflows.recovery_application")
     source = inspect.getsource(module)
     forbidden = (
         "provider.invoke",
@@ -253,7 +253,7 @@ def test_p4c_006_application_kind_is_derived_from_durable_disposition(
     action: str,
     application_kind: str,
 ) -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_application")
+    module = importlib.import_module("agent_kernel.workflows.recovery_application")
     semantics = "idempotent" if action == "retry-idempotent" else "reconcilable"
     store, _graph, disposition = _seed_disposition(
         action,
@@ -268,7 +268,7 @@ def test_p4c_006_application_kind_is_derived_from_durable_disposition(
 
 
 def test_p4c_007_direct_application_event_append_is_denied() -> None:
-    importlib.import_module("portable_runtime.workflows.recovery_application")
+    importlib.import_module("agent_kernel.workflows.recovery_application")
     store = InMemoryStateStore()
     with pytest.raises(ValueError, match="RecoveryApplication|commit_recovery_application"):
         store.append_event(
@@ -287,7 +287,7 @@ def test_p4c_007_direct_application_event_append_is_denied() -> None:
 
 @_xfail("B4-P4b prerequisite: retry materialization must fail closed without authoritative invocation specification")
 def test_p4c_008_retry_materialization_refuses_missing_durable_request_spec() -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_application")
+    module = importlib.import_module("agent_kernel.workflows.recovery_application")
     store, _graph, disposition = _seed_disposition(
         "retry-idempotent",
         effect_semantics="idempotent",
@@ -303,10 +303,10 @@ def test_p4c_008_retry_materialization_refuses_missing_durable_request_spec() ->
 def test_p4_audit_local_application_authority_does_not_close_p5_or_p4b() -> None:
     """Local P4a authority is not portability or Runtime consumption authority."""
 
-    bundle_source = inspect.getsource(importlib.import_module("portable_runtime.stores.bundle"))
-    memory_source = inspect.getsource(importlib.import_module("portable_runtime.stores.memory"))
-    sqlite_source = inspect.getsource(importlib.import_module("portable_runtime.stores.sqlite"))
-    runtime_source = inspect.getsource(importlib.import_module("portable_runtime.core.runtime"))
+    bundle_source = inspect.getsource(importlib.import_module("agent_kernel.stores.bundle"))
+    memory_source = inspect.getsource(importlib.import_module("agent_kernel.stores.memory"))
+    sqlite_source = inspect.getsource(importlib.import_module("agent_kernel.stores.sqlite"))
+    runtime_source = inspect.getsource(importlib.import_module("agent_kernel.core.runtime"))
     assert "RecoveryApplicationRecorded" not in bundle_source
     assert "commit_recovery_application" in memory_source
     assert "commit_recovery_application" in sqlite_source

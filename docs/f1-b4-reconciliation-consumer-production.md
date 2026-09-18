@@ -33,7 +33,7 @@ Caller-supplied dispatch, request, provider, B, C, observation, or reported-stat
 
 ## Production service
 
-`portable_runtime.workflows.reconciliation_consumer` defines:
+`agent_kernel.workflows.reconciliation_consumer` defines:
 
 - `RecoveryReconciliationConsumer`
 - `RecoveryReconciliationRequest`
@@ -71,7 +71,7 @@ If those surfaces are unavailable, the consumer is unavailable and crosses no pr
 
 ## Exact-target reality exit
 
-`portable_runtime.core.reconciliation_boundary.RecoveryReconciliationRealityBoundary` owns one narrow operation:
+`agent_kernel.core.reconciliation_boundary.RecoveryReconciliationRealityBoundary` owns one narrow operation:
 
 ```text
 reconcile_exact_target(

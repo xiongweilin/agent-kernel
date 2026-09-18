@@ -4,18 +4,18 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from portable_runtime.core.boundary import RealityBoundary
-from portable_runtime.core.capabilities import CapabilityRequest, CapabilityResult, InvocationContext, ProviderDescriptor, ProviderHealth
-from portable_runtime.core.capability_contract import (
+from agent_kernel.core.boundary import RealityBoundary
+from agent_kernel.core.capabilities import CapabilityRequest, CapabilityResult, InvocationContext, ProviderDescriptor, ProviderHealth
+from agent_kernel.core.capability_contract import (
     CapabilityContractRegistry,
     EffectContractMissing,
     compute_effective_procedure_profile,
 )
-from portable_runtime.core.invocation import InvocationFactory
-from portable_runtime.core.models import Run, Work
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.records.authorization import AuthorizationGrant
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.core.invocation import InvocationFactory
+from agent_kernel.core.models import Run, Work
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.records.authorization import AuthorizationGrant
+from agent_kernel.stores.memory import InMemoryStateStore
 
 
 class _Provider:
@@ -124,7 +124,7 @@ async def test_reality_boundary_does_not_downgrade_work_run_request_profile(
     provider_registry.register(_Provider())
     observed_profiles: list[str] = []
 
-    from portable_runtime.workflows import procedure
+    from agent_kernel.workflows import procedure
 
     def capture_profile(work_value, run_value, profile, **kwargs):
         observed_profiles.append(str(profile))

@@ -1,7 +1,7 @@
 # Responsibility Work admission — v1
 
 Status: candidate
-Owner: `portable-runtime/contracts`
+Owner: `agent-kernel/contracts`
 Command: `responsibility-work-admission-v1`
 Receipt: `responsibility-work-admission-receipt-v1`
 

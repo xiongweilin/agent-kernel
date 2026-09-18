@@ -6,12 +6,12 @@ import io
 import json
 import pathlib
 
-from portable_runtime.api.cli import run_cli
-from portable_runtime.core.models import KnowledgeItem
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.records.models import Assertion
-from portable_runtime.records.relations import RecordRelation
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.api.cli import run_cli
+from agent_kernel.core.models import KnowledgeItem
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.records.models import Assertion
+from agent_kernel.records.relations import RecordRelation
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 
 def _capture(args: list[str]) -> tuple[int, str]:
@@ -212,7 +212,7 @@ def test_cli_unresolved(tmp_path):
     store.save_record(contested)
     # blocked work as well
     work = runtime.create_work(title="blocked work")
-    from portable_runtime.core.models import utcnow
+    from agent_kernel.core.models import utcnow
     blocked = work.model_copy(update={"status": "blocked", "updated_at": utcnow()})
     store.save_work(blocked)
     store.close()

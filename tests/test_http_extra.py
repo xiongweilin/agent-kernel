@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
 
-from portable_runtime.api.http import create_app
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.api.http import create_app
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.stores.memory import InMemoryStateStore
 
 
 def test_http_endpoints():

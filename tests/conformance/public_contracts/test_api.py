@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
 
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.public_contracts.http import create_public_app
-from portable_runtime.public_contracts.models import (
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.public_contracts.http import create_public_app
+from agent_kernel.public_contracts.models import (
     ConfirmedOutcomeView,
     GovernanceUseAdmissionView,
     InvocationDispatchCommittedView,
@@ -16,18 +16,18 @@ def test_contract_catalog_http_has_only_local_contract_identity() -> None:
     response = TestClient(create_public_app(runtime)).get("/v1/contracts")
     assert response.status_code == 200
     payload = response.json()
-    assert payload["owner"] == "portable-runtime/contracts"
+    assert payload["owner"] == "agent-kernel/contracts"
     rendered = str(payload)
     assert "source_commit" not in rendered.lower()
     assert "source_repository" not in rendered.lower()
 
 
 def test_contract_catalog_http_exposes_optional_generic_build_revision(monkeypatch) -> None:
-    monkeypatch.setenv("PORTABLE_RUNTIME_BUILD_REVISION", "kernel-revision-a")
+    monkeypatch.setenv("AGENT_KERNEL_BUILD_REVISION", "kernel-revision-a")
     client = TestClient(create_public_app(Runtime()))
     assert client.get("/v1/contracts").json()["build_revision"] == "kernel-revision-a"
 
-    monkeypatch.delenv("PORTABLE_RUNTIME_BUILD_REVISION")
+    monkeypatch.delenv("AGENT_KERNEL_BUILD_REVISION")
     assert "build_revision" not in client.get("/v1/contracts").json()
 
 
@@ -63,7 +63,7 @@ def test_public_views_are_explicitly_non_authoritative() -> None:
 
 
 def test_public_contract_module_does_not_define_internal_authority_objects() -> None:
-    from portable_runtime import public_contracts
+    from agent_kernel import public_contracts
 
     assert not hasattr(public_contracts, "InvocationPermit")
     assert not hasattr(public_contracts, "GovernanceUseRequirement")

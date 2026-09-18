@@ -4,17 +4,17 @@ import tempfile
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 import pytest
-from portable_runtime.core.capabilities import CapabilityRequest, CapabilityResult, InvocationContext, ProviderDescriptor, ProviderHealth
-from portable_runtime.core.models import Run, Step, StepAttempt, Work, new_id
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.router import CapabilityService
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.records.models import Assertion
-from portable_runtime.records.open_validation import ClosedVerificationResult
-from portable_runtime.records.relations import RecordRelation
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.workflows.context import WorkflowContext
-from portable_runtime.workflows.incident_repair.workflow import IncidentRepairWorkflow
+from agent_kernel.core.capabilities import CapabilityRequest, CapabilityResult, InvocationContext, ProviderDescriptor, ProviderHealth
+from agent_kernel.core.models import Run, Step, StepAttempt, Work, new_id
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.router import CapabilityService
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.records.models import Assertion
+from agent_kernel.records.open_validation import ClosedVerificationResult
+from agent_kernel.records.relations import RecordRelation
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.workflows.context import WorkflowContext
+from agent_kernel.workflows.incident_repair.workflow import IncidentRepairWorkflow
 from tests._strict_fixtures import seed_action_governance
 
 def make_registry_with_providers(patch_hint="patch:v1"):
@@ -105,7 +105,7 @@ async def test_incident_repair_crash_before_provider_unknown_recover():
     store.save_run(run)
     reg = ProviderRegistry()
     # provider that would succeed but we kill before invoke -> we simulate by not invoking, leaving a pending running step
-    from portable_runtime.core.models import Step, StepAttempt
+    from agent_kernel.core.models import Step, StepAttempt
     # create a running step as if workflow had started but crashed before provider returned
     stale = Step(id=new_id("step"), run_id=run.id, step_key="observe.logs:abcd", status="running", effect_semantics="pure", updated_at=datetime.now(UTC)-timedelta(seconds=60), current_attempt=1)
     store.save_step(stale)
@@ -153,14 +153,14 @@ async def test_incident_repair_crash_after_provider_unknown_and_recovery():
     assert fetched.status != "failed"
     # Verify that compensation distinction holds: irreversible cannot be compensated silently, must remain unknown for human review
     # Also ensure that after unknown, a revalidation or reopen could be triggered (simulated via creating ReopenAssessment)
-    from portable_runtime.records.reopen import ReopenAssessment
+    from agent_kernel.records.reopen import ReopenAssessment
     # ReopenAssessment is available via records/reopen.py
     try:
         ra = ReopenAssessment(target_ref=work.id, reason="unknown deploy after crash", revision_scope="execution")  # type: ignore
         assert ra.target_ref == work.id
     except Exception:
         # fallback: at least ensure we can create a Decision for reopen
-        from portable_runtime.core.models import Decision
+        from agent_kernel.core.models import Decision
         d = Decision(id=new_id("decision"), work_id=work.id, decision_type="reopen", selected_option="reopen", rationale_artifact_refs=[])
         store.save_decision(d)
         assert store.export_state()["decision"]
@@ -168,7 +168,7 @@ async def test_incident_repair_crash_after_provider_unknown_and_recovery():
 @pytest.mark.asyncio
 async def test_incident_repair_auth_gate_blocks_without_grant():
     # Ensure auth gate blocks deployment when grant missing/expired
-    from portable_runtime.records.authorization import is_authorized_for_legacy as is_authorized_for, create_grant_for_approval
+    from agent_kernel.records.authorization import is_authorized_for_legacy as is_authorized_for, create_grant_for_approval
     grant = create_grant_for_approval(principal_ref="human:owner", grantee_ref="agent:allowed", allowed_capabilities=["code.edit"], subject_version_refs=["patch:v1"], ttl_seconds=0.01)
     import asyncio
     await asyncio.sleep(0.02)

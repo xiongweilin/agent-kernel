@@ -5,7 +5,7 @@ Owner: `agent-kernel/contracts`
 Contract: `cognitive-control-v1`
 
 This contract defines the minimum durable separation required for cognitive
-control above the existing portable runtime. It does not define a reasoning
+control above the existing agent kernel. It does not define a reasoning
 algorithm, model policy, agent product, model router, new evidence plane or new
 authorization system.
 

@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-from portable_runtime.core.capabilities import CapabilityRequest
-from portable_runtime.core.models import Run, Step, StepAttempt, Work
-from portable_runtime.core.qualification import InvocationPermit
-from portable_runtime.governance.dispatch import (
+from agent_kernel.core.capabilities import CapabilityRequest
+from agent_kernel.core.models import Run, Step, StepAttempt, Work
+from agent_kernel.core.qualification import InvocationPermit
+from agent_kernel.governance.dispatch import (
     DISPATCH_COMMIT_EVENT,
     GovernanceDispatchCommitter,
 )
-from portable_runtime.governance.distinction import DistinctionState, UseContext
-from portable_runtime.governance.persistence import InMemoryDistinctionGovernancePersistence
-from portable_runtime.governance.use_admission import (
+from agent_kernel.governance.distinction import DistinctionState, UseContext
+from agent_kernel.governance.persistence import InMemoryDistinctionGovernancePersistence
+from agent_kernel.governance.use_admission import (
     GovernanceUseAdmission,
     GovernanceUseRequirement,
 )
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.stores.memory import InMemoryStateStore
 
 
 class _FailDispatchEventStore(InMemoryStateStore):

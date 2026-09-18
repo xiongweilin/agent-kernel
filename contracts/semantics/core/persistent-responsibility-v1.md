@@ -1,7 +1,7 @@
 # Persistent responsibility — v1
 
 Status: stable
-Owner: `portable-runtime/contracts`
+Owner: `agent-kernel/contracts`
 Contract: `persistent-responsibility-v1`
 
 This contract defines durable coordination semantics for responsibilities that

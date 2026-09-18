@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import pytest
 
-from portable_runtime.controller import (
+from agent_kernel.controller import (
     CognitiveController,
     ControllerDecision,
     ControllerDecisionKind,
     ControllerState,
     ControllerStatus,
 )
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.stores.memory import InMemoryStateStore
 
 
 class ClosePolicy:

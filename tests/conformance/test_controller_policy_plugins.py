@@ -5,7 +5,7 @@ from types import ModuleType
 
 import pytest
 
-from portable_runtime.controller import (
+from agent_kernel.controller import (
     CognitiveController,
     ControllerDecision,
     ControllerDecisionKind,
@@ -14,8 +14,8 @@ from portable_runtime.controller import (
     latest_controller_decision,
     load_controller_policy,
 )
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.stores.memory import InMemoryStateStore
 
 
 class PluginPolicy:
@@ -35,7 +35,7 @@ def _factory() -> PluginPolicy:
 
 
 def test_load_external_controller_policy_factory() -> None:
-    module = ModuleType("_portable_runtime_test_plugin")
+    module = ModuleType("_agent_kernel_test_plugin")
     module.factory = _factory  # type: ignore[attr-defined]
     sys.modules[module.__name__] = module
     try:

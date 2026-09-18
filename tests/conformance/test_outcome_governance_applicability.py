@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from portable_runtime.governance.outcome_impact import (
+from agent_kernel.governance.outcome_impact import (
     OutcomeGovernanceDependency,
     resolve_outcome_applicability,
 )
-from portable_runtime.records.models import OutcomeRecord
+from agent_kernel.records.models import OutcomeRecord
 
 _SCOPE = frozenset({"repo/app", "repo/shared"})
 _VERSIONS = ("subject:v1",)

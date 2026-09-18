@@ -4,28 +4,28 @@ from datetime import timedelta
 
 import pytest
 
-from portable_runtime.core.boundary import RealityBoundary
-from portable_runtime.core.models import utcnow
-from portable_runtime.responsibility.domain_effect_action_authority import (
+from agent_kernel.core.boundary import RealityBoundary
+from agent_kernel.core.models import utcnow
+from agent_kernel.responsibility.domain_effect_action_authority import (
     DomainEffectActionAuthorityResolver,
 )
-from portable_runtime.responsibility.domain_effect_activation import (
+from agent_kernel.responsibility.domain_effect_activation import (
     DomainEffectRunActivation,
     DomainEffectRunActivationInput,
 )
-from portable_runtime.responsibility.domain_effect_qualification import (
+from agent_kernel.responsibility.domain_effect_qualification import (
     DOMAIN_EFFECT_QUALIFICATION_EVENT,
     DomainEffectQualificationAssessment,
     DomainEffectQualificationInput,
 )
-from portable_runtime.responsibility.domain_effect_procedure_readiness import (
+from agent_kernel.responsibility.domain_effect_procedure_readiness import (
     DomainEffectProcedureReadinessAssessment,
     DomainEffectProcedureReadinessInput,
 )
-from portable_runtime.responsibility.domain_effect_reality_execution import (
+from agent_kernel.responsibility.domain_effect_reality_execution import (
     DomainEffectRealityExecution,
 )
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.stores.memory import InMemoryStateStore
 from tests.conformance.test_domain_effect_qualification import NOW, _activated
 from tests.conformance.test_domain_effect_reality_cutover import _live_cutover_fixture
 

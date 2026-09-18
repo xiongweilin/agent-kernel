@@ -1,6 +1,6 @@
 """Experimental Stage-4 responsibility coordination.
 
-This module is intentionally outside ``src/portable_runtime`` and the canonical
+This module is intentionally outside ``src/agent_kernel`` and the canonical
 contract catalog. It is a falsifiable specialization for persistent governed
 agency, not a public runtime API.
 

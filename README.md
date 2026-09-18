@@ -1,6 +1,6 @@
 # agent-kernel
 
-[![CI](https://github.com/xiongweilin/agent-kernel/actions/workflows/ci.yml/badge.svg)](https://github.com/xiongweilin/agent-kernel/actions/workflows/ci.yml) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=portable-runtime&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=portable-runtime) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=portable-runtime&metric=coverage)](https://sonarcloud.io/summary/new_code?id=portable-runtime) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](pyproject.toml)
+[![CI](https://github.com/xiongweilin/agent-kernel/actions/workflows/ci.yml/badge.svg)](https://github.com/xiongweilin/agent-kernel/actions/workflows/ci.yml) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=agent-kernel&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=agent-kernel) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=agent-kernel&metric=coverage)](https://sonarcloud.io/summary/new_code?id=agent-kernel) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](pyproject.toml)
 
 A provider-neutral runtime kernel for agents that must perform durable, recoverable real-world work without collapsing model output, execution success, verification, retry permission, or responsibility into the same state.
 
@@ -255,9 +255,9 @@ External research/framework documents can motivate product changes but are not r
 
 | Axis | Current value |
 |---|---|
-| Contract catalog | `portable-runtime-contracts-v1` |
-| Python distribution | `portable-runtime` |
-| Python namespace | `portable_runtime` |
+| Contract catalog | `agent-kernel-contracts-v1` |
+| Python distribution | `agent-kernel` |
+| Python namespace | `agent_kernel` |
 | Runtime protocol | `2.0` |
 | External provider protocol | `1` (`stdio-jsonl`) |
 | Persistent Responsibility | `persistent-responsibility-v1` |
@@ -270,9 +270,11 @@ External research/framework documents can motivate product changes but are not r
 
 These axes are intentionally independent. Repository or implementation changes do not silently rewrite persisted state, contract IDs, imports, or wire meaning.
 
+Recorded exception (2026-09-18): the legacy `portable-runtime` name was retired in one deliberate step across the kernel and its consumers. `portable-runtime` -> `agent-kernel` (distribution), `portable_runtime` -> `agent_kernel` (namespace), `portable-runtime-*` -> `agent-kernel-*` (contract/version identifiers). This is the only rewrite of these axes, and it is recorded here rather than implied.
+
 ## Quick start
 
-The compatibility CLI and Python namespace remain unchanged:
+The CLI entry point (`runtime`) and Python namespace (`agent_kernel`) are:
 
 ```powershell
 uv sync
@@ -292,8 +294,8 @@ uv run runtime work list
 State export/import:
 
 ```powershell
-.venv\Scripts\python.exe -m portable_runtime --state data/agent-kernel.db state export runtime-state.json
-.venv\Scripts\python.exe -m portable_runtime --state data/agent-kernel.db state import runtime-state.json
+.venv\Scripts\python.exe -m agent_kernel --state data/agent-kernel.db state export runtime-state.json
+.venv\Scripts\python.exe -m agent_kernel --state data/agent-kernel.db state import runtime-state.json
 ```
 
 ## Verification
@@ -305,7 +307,7 @@ uv sync --locked --extra dev
 uv run ruff check .
 uv run mypy src
 uv run pytest -q
-uv run python -m portable_runtime.public_contracts.vectors
+uv run python -m agent_kernel.public_contracts.vectors
 ```
 
 ## Public surfaces

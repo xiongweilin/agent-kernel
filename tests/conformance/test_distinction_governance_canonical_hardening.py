@@ -8,14 +8,14 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.models import Work
-from portable_runtime.governance.adapters import (
+from agent_kernel.core.models import Work
+from agent_kernel.governance.adapters import (
     CanonicalFreshnessAdapter,
     CanonicalGovernanceAuthorizationAdapter,
     governance_capability,
 )
-from portable_runtime.governance.canonical import GOVERNANCE_APPLICATION_COMMITTED
-from portable_runtime.governance.distinction import (
+from agent_kernel.governance.canonical import GOVERNANCE_APPLICATION_COMMITTED
+from agent_kernel.governance.distinction import (
     APPLY_QUALIFICATION,
     APPLY_REVIEW_DISCHARGE,
     DECIDE_QUALIFICATION,
@@ -39,16 +39,16 @@ from portable_runtime.governance.distinction import (
     state_anchor,
     usable,
 )
-from portable_runtime.governance.persistence import (
+from agent_kernel.governance.persistence import (
     DistinctionGovernancePersistence,
     GovernancePersistenceError,
     InMemoryDistinctionGovernancePersistence,
     SQLiteDistinctionGovernancePersistence,
 )
-from portable_runtime.governance.revalidation import RevalidationGovernanceLifecycle
-from portable_runtime.records.authorization import AuthorizationGrant
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.governance.revalidation import RevalidationGovernanceLifecycle
+from agent_kernel.records.authorization import AuthorizationGrant
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 BACKENDS = ("memory", "sqlite")
 

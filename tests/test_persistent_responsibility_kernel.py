@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from portable_runtime.responsibility import (
+from agent_kernel.responsibility import (
     Commitment,
     EffectClass,
     PortfolioAdmissionDecision,
@@ -27,9 +27,9 @@ from portable_runtime.responsibility import (
     StandingResponsibility,
     WorkProposal,
 )
-from portable_runtime.stores.bundle import export_bundle, import_bundle
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.stores.bundle import export_bundle, import_bundle
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 
 def _now() -> datetime:

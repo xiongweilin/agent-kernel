@@ -3,15 +3,15 @@ from pathlib import Path
 
 import pytest
 
-from portable_runtime.api.cli import run_cli
-from portable_runtime.core.capabilities import CapabilityRequest, InvocationContext
-from portable_runtime.core.process import ProcessResult, ProcessSpec
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.plugin.manager import PluginManager
-from portable_runtime.providers.codex.provider import CodexProvider
-from portable_runtime.providers.verifiers.http_promql import HttpVerifierProvider, PromqlVerifierProvider
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.migration import dual_write_repair, list_legacy_mappings, stable_work_id
+from agent_kernel.api.cli import run_cli
+from agent_kernel.core.capabilities import CapabilityRequest, InvocationContext
+from agent_kernel.core.process import ProcessResult, ProcessSpec
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.plugin.manager import PluginManager
+from agent_kernel.providers.codex.provider import CodexProvider
+from agent_kernel.providers.verifiers.http_promql import HttpVerifierProvider, PromqlVerifierProvider
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.migration import dual_write_repair, list_legacy_mappings, stable_work_id
 
 
 @pytest.mark.asyncio

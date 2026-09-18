@@ -2,13 +2,13 @@ from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.public_contracts.domain_effect_evidence import (
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.public_contracts.domain_effect_evidence import (
     DOMAIN_EFFECT_VERIFICATION_EVIDENCE_VIEW_SCHEMA,
     project_domain_effect_verification_evidence,
 )
-from portable_runtime.public_contracts.http import create_public_app
-from portable_runtime.records.models import EvidenceArtifact
+from agent_kernel.public_contracts.http import create_public_app
+from agent_kernel.records.models import EvidenceArtifact
 
 NOW = datetime(2026, 9, 9, 6, 0, tzinfo=UTC)
 EVIDENCE_REF = "evidence_domain_effect_verification_test"

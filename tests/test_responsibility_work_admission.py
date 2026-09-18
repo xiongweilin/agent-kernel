@@ -1,12 +1,12 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 
-from portable_runtime.responsibility.admission import (
+from agent_kernel.responsibility.admission import (
     BoundedLocalResponsibilityAdmissionPolicy,
     admit_responsibility_proposal,
 )
-from portable_runtime.responsibility.domain import record_domain_assessment
-from portable_runtime.responsibility.models import (
+from agent_kernel.responsibility.domain import record_domain_assessment
+from agent_kernel.responsibility.models import (
     EffectClass,
     ResourceVector,
     ResponsibilityAdmission,
@@ -14,8 +14,8 @@ from portable_runtime.responsibility.models import (
     StandingResponsibility,
     WorkProposal,
 )
-from portable_runtime.responsibility.service import ResponsibilityKernel
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.responsibility.service import ResponsibilityKernel
+from agent_kernel.stores.memory import InMemoryStateStore
 
 NOW = datetime(2026, 9, 8, 12, 0, tzinfo=UTC)
 

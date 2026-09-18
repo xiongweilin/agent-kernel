@@ -3,16 +3,16 @@ from unittest.mock import AsyncMock, MagicMock
 import httpx
 import pytest
 
-from portable_runtime.api.cli import run_cli
-from portable_runtime.core.capabilities import CapabilityRequest, InvocationContext
-from portable_runtime.core.process import PortableSubprocessExecutor, ProcessSpec
-from portable_runtime.plugin.sdk import FunctionProvider, provider
-from portable_runtime.providers.verifiers.http_promql import (
+from agent_kernel.api.cli import run_cli
+from agent_kernel.core.capabilities import CapabilityRequest, InvocationContext
+from agent_kernel.core.process import PortableSubprocessExecutor, ProcessSpec
+from agent_kernel.plugin.sdk import FunctionProvider, provider
+from agent_kernel.providers.verifiers.http_promql import (
     ContainerVerifierProvider,
     HttpVerifierProvider,
     PromqlVerifierProvider,
 )
-from portable_runtime.providers.verifiers.logs_tests import LogsVerifierProvider, TestsVerifierProvider
+from agent_kernel.providers.verifiers.logs_tests import LogsVerifierProvider, TestsVerifierProvider
 
 
 @pytest.mark.asyncio
@@ -132,7 +132,7 @@ async def test_tests_verifier():
 @pytest.mark.asyncio
 async def test_function_provider_sdk():
     async def my_handler(req, ctx):
-        from portable_runtime.core.capabilities import CapabilityResult
+        from agent_kernel.core.capabilities import CapabilityResult
         return CapabilityResult(request_id=req.id, provider_id="sdk-test", status="succeeded", message="sdk ok")
     prov = FunctionProvider(my_handler, provider_id="sdk-test", version="1.0.0", capabilities=["sdk.test"])
     h = await prov.health()
@@ -143,7 +143,7 @@ async def test_function_provider_sdk():
     # decorator
     @provider(id="dec-test", version="1.0.0", capabilities=["dec.test"])
     async def dec_handler(req):
-        from portable_runtime.core.capabilities import CapabilityResult
+        from agent_kernel.core.capabilities import CapabilityResult
         return CapabilityResult(request_id=req.id, provider_id="dec-test", status="succeeded")
     assert dec_handler.descriptor.id == "dec-test"
 

@@ -1,4 +1,4 @@
-from portable_runtime.public_contracts.vectors import load_vectors, verify_experience_vectors
+from agent_kernel.public_contracts.vectors import load_vectors, verify_experience_vectors
 
 
 def test_experience_vector_family_is_complete() -> None:

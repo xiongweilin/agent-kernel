@@ -17,7 +17,7 @@ actual serialized runtime transition
     -> Lean checker
 ```
 
-A formal checker can validate the artifact it receives; it does not make the Python runtime verified and does not own portable-runtime semantics.
+A formal checker can validate the artifact it receives; it does not make the Python runtime verified and does not own agent-kernel semantics.
 
 ## Contracts
 
@@ -38,7 +38,7 @@ A formal checker can validate the artifact it receives; it does not make the Pyt
 
 ## Local canonical boundary
 
-The current semantic owner is `portable-runtime/contracts`. These former duplicate documentation paths remain intentionally absent and MUST NOT be recreated as canonical definitions:
+The current semantic owner is `agent-kernel/contracts`. These former duplicate documentation paths remain intentionally absent and MUST NOT be recreated as canonical definitions:
 
 ```text
 docs/responsibility-record-plane.md

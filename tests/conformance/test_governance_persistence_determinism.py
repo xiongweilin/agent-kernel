@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from portable_runtime.governance.distinction import DistinctionState
-from portable_runtime.governance.persistence import (
+from agent_kernel.governance.distinction import DistinctionState
+from agent_kernel.governance.persistence import (
     PersistedDistinctionState,
     SQLiteDistinctionGovernancePersistence,
     _semantic_dump,
 )
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 
 def _state() -> DistinctionState:

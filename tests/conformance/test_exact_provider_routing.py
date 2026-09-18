@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from portable_runtime.core.capabilities import CapabilityRequest, ProviderDescriptor
-from portable_runtime.core.router import DeterministicPriorityRouting, ExactProviderRouting
+from agent_kernel.core.capabilities import CapabilityRequest, ProviderDescriptor
+from agent_kernel.core.router import DeterministicPriorityRouting, ExactProviderRouting
 
 
 def _request() -> CapabilityRequest:

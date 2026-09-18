@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from portable_runtime.core.models import Action, Run, Step, StepAttempt, Work
-from portable_runtime.records.models import EvidenceArtifact
-from portable_runtime.records.verification_binding import BoundVerificationEvidenceValidator
+from agent_kernel.core.models import Action, Run, Step, StepAttempt, Work
+from agent_kernel.records.models import EvidenceArtifact
+from agent_kernel.records.verification_binding import BoundVerificationEvidenceValidator
 
 _SCOPE = {"resource": "repo/app", "operation": "effect"}
 _VERSIONS = ["patch:v1"]

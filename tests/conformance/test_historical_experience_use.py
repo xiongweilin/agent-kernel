@@ -7,9 +7,9 @@ from typing import Any
 
 import pytest
 
-import portable_runtime.experience.historical_use as historical_use_module
-from portable_runtime.core.models import Event
-from portable_runtime.experience.historical_use import (
+import agent_kernel.experience.historical_use as historical_use_module
+from agent_kernel.core.models import Event
+from agent_kernel.experience.historical_use import (
     DOMAIN_JUDGMENT_SEMANTIC_ROLE,
     HISTORICAL_EXPERIENCE_USE_EVENT_TYPE,
     HISTORICAL_EXPERIENCE_USE_SCHEMA,
@@ -21,7 +21,7 @@ from portable_runtime.experience.historical_use import (
     historical_experience_use_from_event,
     validate_historical_experience_use_authority_graph,
 )
-from portable_runtime.experience.use_admission import (
+from agent_kernel.experience.use_admission import (
     CURRENT_EXPERIENCE_USE_ADMISSION_CONTRACT,
     EXPERIENCE_USE_ADMISSION_CONTRACT_VERSION,
     EXPERIENCE_USE_REQUIREMENT_SCHEMA,
@@ -31,19 +31,19 @@ from portable_runtime.experience.use_admission import (
     experience_use_requirement_digest,
     experience_use_snapshot_digest,
 )
-from portable_runtime.records.authorization import create_grant_for_approval
-from portable_runtime.records.knowledge import KnowledgeProjection
-from portable_runtime.records.models import (
+from agent_kernel.records.authorization import create_grant_for_approval
+from agent_kernel.records.knowledge import KnowledgeProjection
+from agent_kernel.records.models import (
     Assertion,
     ChangeObjectRecord,
     Derivation,
     EvidenceArtifact,
     RevisionRecord,
 )
-from portable_runtime.records.relations import RecordRelation
-from portable_runtime.records.revision import create_revision
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.records.relations import RecordRelation
+from agent_kernel.records.revision import create_revision
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 
 def _seed_official(store: Any, *, projection_id: str = "hist_projection") -> dict[str, object]:

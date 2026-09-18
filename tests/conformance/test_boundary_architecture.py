@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SRC = ROOT / "src" / "portable_runtime"
+SRC = ROOT / "src" / "agent_kernel"
 BOUNDARY = SRC / "core" / "boundary.py"
 
 
@@ -54,7 +54,7 @@ def test_provider_invoke_is_boundary_owned_and_legacy_shim_is_unreachable() -> N
         calls.extend((path, *call) for call in visitor.calls)
 
     assert calls, "the runtime must have one explicit provider invocation seam"
-    assert {path.relative_to(ROOT) for path, *_rest in calls} == {Path("src/portable_runtime/core/boundary.py")}
+    assert {path.relative_to(ROOT) for path, *_rest in calls} == {Path("src/agent_kernel/core/boundary.py")}
     assert all(class_name == "RealityBoundary" for _path, class_name, _function, _line in calls)
 
     # The private compatibility shim may remain for callers that reached the
@@ -69,7 +69,7 @@ def test_provider_invoke_is_boundary_owned_and_legacy_shim_is_unreachable() -> N
 
 
 def test_boundary_stage_seam_has_explicit_order_and_no_provider_capability() -> None:
-    from portable_runtime.core.boundary_stages import (
+    from agent_kernel.core.boundary_stages import (
         BoundaryStagePlan,
         evaluate_reliability_stage,
         select_provider_stage,
@@ -81,5 +81,5 @@ def test_boundary_stage_seam_has_explicit_order_and_no_provider_capability() -> 
     assert plan.provider_invocation_owner == "RealityBoundary"
     assert callable(evaluate_reliability_stage)
     assert callable(select_provider_stage)
-    stage_source = (ROOT / "src" / "portable_runtime" / "core" / "boundary_stages.py").read_text(encoding="utf-8")
+    stage_source = (ROOT / "src" / "agent_kernel" / "core" / "boundary_stages.py").read_text(encoding="utf-8")
     assert "provider.invoke" not in stage_source

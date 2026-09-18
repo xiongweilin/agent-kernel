@@ -2,10 +2,10 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
 
-from portable_runtime.core.capability_contract import CapabilityContractRegistry
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.public_contracts.http import create_public_app
-from portable_runtime.responsibility.admission_profiles import (
+from agent_kernel.core.capability_contract import CapabilityContractRegistry
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.public_contracts.http import create_public_app
+from agent_kernel.responsibility.admission_profiles import (
     ADMINISTRATIVE_PUBLIC_POLICY_REF,
     ADMINISTRATIVE_PUBLIC_V2_POLICY_REF,
     ADMINISTRATIVE_PUBLIC_V2_PROFILE,
@@ -19,7 +19,7 @@ from portable_runtime.responsibility.admission_profiles import (
     administrative_public_v4_responsibility_admission_policy,
     responsibility_admission_policy_for_profile,
 )
-from portable_runtime.responsibility.models import (
+from agent_kernel.responsibility.models import (
     EffectClass,
     ResourceVector,
     ResponsibilityAdmission,

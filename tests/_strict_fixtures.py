@@ -9,10 +9,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from portable_runtime.core.models import Checkpoint, Run, Work, new_id
-from portable_runtime.records.authorization import create_grant_for_approval
-from portable_runtime.records.models import BaseRecord
-from portable_runtime.records.relations import RecordRelation
+from agent_kernel.core.models import Checkpoint, Run, Work, new_id
+from agent_kernel.records.authorization import create_grant_for_approval
+from agent_kernel.records.models import BaseRecord
+from agent_kernel.records.relations import RecordRelation
 
 
 def seed_action_governance(

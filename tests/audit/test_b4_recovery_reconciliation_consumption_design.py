@@ -12,20 +12,20 @@ from __future__ import annotations
 import importlib.util
 import inspect
 
-from portable_runtime.core.boundary import RealityBoundary
-from portable_runtime.core.capabilities import ProviderDescriptor
-from portable_runtime.core.reconciliation_boundary import (
+from agent_kernel.core.boundary import RealityBoundary
+from agent_kernel.core.capabilities import ProviderDescriptor
+from agent_kernel.core.reconciliation_boundary import (
     RecoveryReconciliationRealityBoundary,
 )
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.interfaces.provider import CapabilityProvider
-from portable_runtime.workflows.reconciliation_consumer import (
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.interfaces.provider import CapabilityProvider
+from agent_kernel.workflows.reconciliation_consumer import (
     RecoveryReconciliationConsumer,
     RecoveryReconciliationRequest,
 )
-from portable_runtime.workflows.recovery_application import RecoveryApplication
-from portable_runtime.workflows.recovery_observation import (
+from agent_kernel.workflows.recovery_application import RecoveryApplication
+from agent_kernel.workflows.recovery_observation import (
     RecoveryObservation,
     RecoveryObservationCommitRequest,
 )
@@ -156,11 +156,11 @@ def test_rc_audit_local_invocation_specification_is_not_consumer_authority() -> 
 
 
 def test_rc_audit_original_hypothetical_module_name_remains_absent() -> None:
-    assert importlib.util.find_spec("portable_runtime.workflows.recovery_reconciliation") is None
+    assert importlib.util.find_spec("agent_kernel.workflows.recovery_reconciliation") is None
 
 
 def test_rc_audit_production_consumer_module_is_present() -> None:
-    assert importlib.util.find_spec("portable_runtime.workflows.reconciliation_consumer") is not None
+    assert importlib.util.find_spec("agent_kernel.workflows.reconciliation_consumer") is not None
 
 
 def test_rc_audit_consumer_creates_no_attempt_or_consumed_fact_types() -> None:

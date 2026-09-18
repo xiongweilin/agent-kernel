@@ -9,14 +9,14 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.models import Event
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
-from portable_runtime.workflows import recovery_application as application_module
-from portable_runtime.workflows.recovery_application import (
+from agent_kernel.core.models import Event
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
+from agent_kernel.workflows import recovery_application as application_module
+from agent_kernel.workflows.recovery_application import (
     RecoveryApplicationCommitRequest,
 )
-from portable_runtime.workflows.recovery_disposition import RecoveryDispositionCommitRequest
+from agent_kernel.workflows.recovery_disposition import RecoveryDispositionCommitRequest
 from tests.conformance.test_recovery_disposition_counterexamples import (
     _Policy,
     _observe,

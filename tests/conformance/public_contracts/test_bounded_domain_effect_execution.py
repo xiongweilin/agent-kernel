@@ -7,23 +7,23 @@ from types import ModuleType
 import pytest
 from fastapi.testclient import TestClient
 
-from portable_runtime.core.models import utcnow
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.public_contracts.domain_effect import (
+from agent_kernel.core.models import utcnow
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.public_contracts.domain_effect import (
     BoundedDomainEffectExecutionProfile,
     BoundedDomainEffectExecutionService,
     BoundedDomainEffectExecutionV1,
 )
-from portable_runtime.public_contracts.http import (
+from agent_kernel.public_contracts.http import (
     BOUNDED_DOMAIN_EFFECT_FACTORY_ENV,
     create_configured_public_app,
     create_public_app,
 )
-from portable_runtime.responsibility.domain_effect_authorization import (
+from agent_kernel.responsibility.domain_effect_authorization import (
     ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE,
 )
-from portable_runtime.stores.invocation_specification import (
+from agent_kernel.stores.invocation_specification import (
     InvocationSpecificationInMemoryStateStore,
 )
 from tests.conformance.test_domain_effect_authorization_admission import (

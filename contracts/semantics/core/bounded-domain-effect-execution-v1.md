@@ -2,7 +2,7 @@
 
 Status: candidate
 
-Owner: `portable-runtime/contracts`
+Owner: `agent-kernel/contracts`
 
 Command: `bounded-domain-effect-execution-v1`
 

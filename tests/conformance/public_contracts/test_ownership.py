@@ -25,7 +25,7 @@ def test_local_contract_root_is_present_and_legacy_sources_are_absent() -> None:
 
     for relative in (
         "semantic-" + "sources.toml",
-        "src/portable_runtime/governance/semantic_" + "sources.py",
+        "src/agent_kernel/governance/semantic_" + "sources.py",
         "docs/responsibility-record-plane.md",
         "docs/action-responsibility-practice.md",
     ):
@@ -36,7 +36,7 @@ def test_external_source_pin_model_cannot_reenter_active_tree() -> None:
     text = _tracked_text()
     banned = (
         "semantic-" + "sources.toml",
-        "portable_runtime.governance.semantic_" + "sources",
+        "agent_kernel.governance.semantic_" + "sources",
         "DISTINCTION_GOVERNANCE_" + "SOURCE_COMMIT",
         "ef9e" + "490987ed47ebef3ac455851109304f24a97c",
         "10b6" + "f8d4de6f4e4a247a30ebd915136532cfd4f6",
@@ -52,4 +52,4 @@ def test_formal_relationship_is_explicitly_non_normative() -> None:
     text = (ROOT / "docs" / "formal-kernel-relationship.md").read_text(encoding="utf-8")
     assert "non-normative" in text.lower()
     assert "No external repository is a normative dependency" in text
-    assert "portable-runtime/contracts/" in text
+    assert "agent-kernel/contracts/" in text

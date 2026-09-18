@@ -4,10 +4,10 @@ Export and import prove the Runtime is decoupled from the deployment:
 
 ```powershell
 # A: Windows + SQLite + Codex
-.venv\Scripts\python.exe -m portable_runtime --state data/portable-runtime.db state export runtime-state.json
+.venv\Scripts\python.exe -m agent_kernel --state data/agent-kernel.db state export runtime-state.json
 
 # B: Linux + SQLite (or Postgres test backend) + FakeProvider
-.venv\Scripts\python.exe -m portable_runtime --state /tmp/new.db state import runtime-state.json
+.venv\Scripts\python.exe -m agent_kernel --state /tmp/new.db state import runtime-state.json
 ```
 
 ## State export versus Bundle export
@@ -52,7 +52,7 @@ import.
 Legacy migration:
 
 ```python
-from portable_runtime.stores.migration import dual_write_repair
+from agent_kernel.stores.migration import dual_write_repair
 
 dual_write_repair({"id": "repair-1", "fingerprint": "fp", "status": "closed"}, store)
 ```

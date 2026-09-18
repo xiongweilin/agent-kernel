@@ -1,5 +1,5 @@
-from portable_runtime.core.router import CapabilityService, ExactProviderRouting
-from portable_runtime.core.runtime import Runtime
+from agent_kernel.core.router import CapabilityService, ExactProviderRouting
+from agent_kernel.core.runtime import Runtime
 
 
 def test_shared_boundary_preserves_explicit_scoped_routing() -> None:

@@ -8,15 +8,15 @@ import httpx
 import pytest
 from fastapi import HTTPException
 
-from portable_runtime.api.http import _require_local_control, create_app
-from portable_runtime.core.models import Event, Run, Work
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.records.authorization import create_grant_for_approval
-from portable_runtime.records.models import Assertion
-from portable_runtime.records.relations import RecordRelation
-from portable_runtime.protocol.validation import validate_state_graph
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.api.http import _require_local_control, create_app
+from agent_kernel.core.models import Event, Run, Work
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.records.authorization import create_grant_for_approval
+from agent_kernel.records.models import Assertion
+from agent_kernel.records.relations import RecordRelation
+from agent_kernel.protocol.validation import validate_state_graph
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 
 def _valid_state() -> dict[str, list[dict[str, object]]]:

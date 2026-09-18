@@ -5,21 +5,21 @@ from datetime import timedelta
 
 import pytest
 
-from portable_runtime.core.capabilities import CapabilityRequest, CapabilityResult, InvocationContext
-from portable_runtime.core.provider_semantics import ProviderSemanticContract
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.providers.fake import EchoProvider
-from portable_runtime.responsibility.domain_effect_procedure_readiness import (
+from agent_kernel.core.capabilities import CapabilityRequest, CapabilityResult, InvocationContext
+from agent_kernel.core.provider_semantics import ProviderSemanticContract
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.providers.fake import EchoProvider
+from agent_kernel.responsibility.domain_effect_procedure_readiness import (
     DomainEffectProcedureReadinessAssessment,
     DomainEffectProcedureReadinessInput,
 )
-from portable_runtime.responsibility.domain_effect_provider_binding import (
+from agent_kernel.responsibility.domain_effect_provider_binding import (
     DOMAIN_EFFECT_PROVIDER_BINDING_EVENT,
     DOMAIN_EFFECT_PROVIDER_BINDING_SCHEMA,
     DomainEffectProviderBindingAssessment,
     DomainEffectProviderBindingInput,
 )
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.stores.memory import InMemoryStateStore
 from tests.conformance.test_domain_effect_procedure_readiness import NOW, _qualified
 
 

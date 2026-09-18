@@ -2,10 +2,10 @@ from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.public_contracts.catalog import contract_catalog
-from portable_runtime.public_contracts.http import create_public_app
-from portable_runtime.responsibility.models import (
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.public_contracts.catalog import contract_catalog
+from agent_kernel.public_contracts.http import create_public_app
+from agent_kernel.responsibility.models import (
     EffectClass,
     ResourceVector,
     ResponsibilityAdmission,
@@ -13,7 +13,7 @@ from portable_runtime.responsibility.models import (
     StandingResponsibility,
     WorkProposal,
 )
-from portable_runtime.responsibility.service import ResponsibilityKernel
+from agent_kernel.responsibility.service import ResponsibilityKernel
 
 NOW = datetime(2026, 9, 8, 10, 0, tzinfo=UTC)
 

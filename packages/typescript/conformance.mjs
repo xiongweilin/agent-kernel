@@ -6,7 +6,7 @@ const clientUrl = new URL("./src/client.ts", import.meta.url);
 const typesUrl = new URL("./src/types.generated.ts", import.meta.url);
 
 const document = JSON.parse(fs.readFileSync(vectorsUrl, "utf8"));
-if (document.schema !== "portable-runtime-conformance-vectors-v1") {
+if (document.schema !== "agent-kernel-conformance-vectors-v1") {
   throw new Error("unsupported conformance vector schema");
 }
 
@@ -54,7 +54,7 @@ for (const authorityName of ["GovernanceUseRequirement", "InvocationPermit"]) {
     throw new Error(`TypeScript must not define authority object ${authorityName}`);
   }
 }
-for (const marker of ["ContractVersionMismatch", "portable-runtime-contracts-v1", "portable-runtime/contracts"]) {
+for (const marker of ["ContractVersionMismatch", "agent-kernel-contracts-v1", "agent-kernel/contracts"]) {
   if (!client.includes(marker)) throw new Error(`contract negotiation fail-closed marker missing: ${marker}`);
 }
 

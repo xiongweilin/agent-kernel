@@ -3,14 +3,14 @@ from pathlib import Path
 
 import pytest
 
-from portable_runtime.observation import (
+from agent_kernel.observation import (
     QualificationWithdrawalCertificate,
     RuntimeObservationBundle0,
     alpha_r0,
     build_qualification_withdrawal_certificate,
     render_lean_certificate,
 )
-from portable_runtime.records.models import Assertion
+from agent_kernel.records.models import Assertion
 
 T0 = datetime(2026, 8, 24, 0, 0, tzinfo=UTC)
 FIXTURE = Path("tests/fixtures/o0/qualification_withdrawal_certificate.json")

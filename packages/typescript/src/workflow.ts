@@ -1,4 +1,4 @@
-import { PortableRuntimeClient } from "./client.js";
+import { AgentKernelClient } from "./client.js";
 import type {
   ExperienceUseAdmissionV1,
   ExperienceUseRequirementV1,
@@ -19,7 +19,7 @@ export interface DomainJudgmentInput {
  * useKnowledgeAndDecideAndExecute shortcut.
  */
 export class ResponsibilityWorkflow {
-  constructor(readonly client: PortableRuntimeClient) {}
+  constructor(readonly client: AgentKernelClient) {}
 
   evaluateExperience(requirement: ExperienceUseRequirementV1): Promise<ExperienceUseAdmissionV1> {
     return this.client.evaluateExperience(requirement);

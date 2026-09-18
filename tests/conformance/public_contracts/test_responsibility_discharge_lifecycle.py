@@ -4,10 +4,10 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
 
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.public_contracts.http import create_public_app
-from portable_runtime.public_contracts.catalog import contract_catalog
-from portable_runtime.responsibility import (
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.public_contracts.http import create_public_app
+from agent_kernel.public_contracts.catalog import contract_catalog
+from agent_kernel.responsibility import (
     ResponsibilityAdmission,
     ResponsibilityKernel,
     StandingResponsibility,

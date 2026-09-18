@@ -11,16 +11,16 @@ import inspect
 
 import pytest
 
-from portable_runtime.core.boundary import RealityBoundary
-from portable_runtime.core.capabilities import (
+from agent_kernel.core.boundary import RealityBoundary
+from agent_kernel.core.capabilities import (
     CapabilityRequest,
     CapabilityResult,
     InvocationContext,
     ProviderDescriptor,
     ProviderHealth,
 )
-from portable_runtime.core.models import Event
-from portable_runtime.core.reconciliation_repeatability import (
+from agent_kernel.core.models import Event
+from agent_kernel.core.reconciliation_repeatability import (
     ReconciliationRepeatabilityAuthority,
     ReconciliationRepeatabilityConfiguration,
     build_reconciliation_repeatability_authority,
@@ -28,14 +28,14 @@ from portable_runtime.core.reconciliation_repeatability import (
     evaluate_reconciliation_repeatability,
     reconciliation_repeatability_authority_from_dispatch,
 )
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.governance.provider_execution_binding import (
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.governance.provider_execution_binding import (
     ProviderExecutionBinding,
     build_provider_execution_binding,
 )
-from portable_runtime.interfaces.provider import CapabilityProvider
-from portable_runtime.workflows.recovery_application import RecoveryApplication
-from portable_runtime.workflows.recovery_observation import RecoveryObservation
+from agent_kernel.interfaces.provider import CapabilityProvider
+from agent_kernel.workflows.recovery_application import RecoveryApplication
+from agent_kernel.workflows.recovery_observation import RecoveryObservation
 
 
 class _Provider:

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from portable_runtime.governance.distinction import (
+from agent_kernel.governance.distinction import (
     APPLY_QUALIFICATION,
     APPLY_REVIEW_DISCHARGE,
     DECIDE_QUALIFICATION,
@@ -22,7 +22,7 @@ from portable_runtime.governance.distinction import (
     obligations_anchor,
     state_anchor,
 )
-from portable_runtime.governance.persistence import (
+from agent_kernel.governance.persistence import (
     GOVERNANCE_APPLICATION_KIND,
     GOVERNANCE_KINDS,
     DistinctionGovernancePersistence,
@@ -30,8 +30,8 @@ from portable_runtime.governance.persistence import (
     InMemoryDistinctionGovernancePersistence,
     SQLiteDistinctionGovernancePersistence,
 )
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 BACKENDS = ("memory", "sqlite")
 

@@ -6,20 +6,20 @@ from pathlib import Path
 
 import pytest
 
-from portable_runtime.core.knowledge import can_promote, promote
-from portable_runtime.core.models import KnowledgeItem
-from portable_runtime.core.qualification import _KIND_TO_PROOF, _REF_KEYS
-from portable_runtime.experience.use_admission import (
+from agent_kernel.core.knowledge import can_promote, promote
+from agent_kernel.core.models import KnowledgeItem
+from agent_kernel.core.qualification import _KIND_TO_PROOF, _REF_KEYS
+from agent_kernel.experience.use_admission import (
     ExperienceUseAdmission,
     ExperienceUseAdmissionEvaluator,
     ExperienceUseRequirement,
     ResolvedExperienceUseSnapshot,
 )
-from portable_runtime.protocol.validation import validate_state_graph
-from portable_runtime.records.authorization import create_grant_for_approval
-from portable_runtime.records.knowledge import KnowledgeProjection
-from portable_runtime.records.models import Assertion, ChangeObjectRecord, Derivation, EvidenceArtifact
-from portable_runtime.records.relations import RecordRelation
+from agent_kernel.protocol.validation import validate_state_graph
+from agent_kernel.records.authorization import create_grant_for_approval
+from agent_kernel.records.knowledge import KnowledgeProjection
+from agent_kernel.records.models import Assertion, ChangeObjectRecord, Derivation, EvidenceArtifact
+from agent_kernel.records.relations import RecordRelation
 
 
 def test_eua_a_001_knowledge_projection_already_carries_canonical_qualification_graph_refs() -> None:
@@ -133,7 +133,7 @@ def test_eua_a_004_generic_qualification_vocabulary_remains_distinct_from_experi
 
 
 def _source_text() -> str:
-    root = Path("src/portable_runtime")
+    root = Path("src/agent_kernel")
     return "\n".join(path.read_text(encoding="utf-8") for path in root.rglob("*.py"))
 
 

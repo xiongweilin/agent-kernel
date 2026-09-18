@@ -59,14 +59,14 @@ jobs:
           wheels = glob.glob("dist-contract-check/*.whl")
           assert len(wheels) == 1, wheels
           with zipfile.ZipFile(wheels[0]) as archive:
-              name = "portable_runtime/_contracts/catalog.toml"
+              name = "agent_kernel/_contracts/catalog.toml"
               assert name in archive.namelist(), "canonical contract catalog missing from wheel"
               catalog = tomllib.loads(archive.read(name).decode("utf-8"))
-              assert catalog["owner"] == "portable-runtime/contracts"
-              assert catalog["catalog_version"] == "portable-runtime-contracts-v1"
+              assert catalog["owner"] == "agent-kernel/contracts"
+              assert catalog["catalog_version"] == "agent-kernel-contracts-v1"
           PY
       - name: Public contract canonicalization oracle
-        run: uv run python -m portable_runtime.public_contracts.vectors
+        run: uv run python -m agent_kernel.public_contracts.vectors
       - name: Strict conformance
         run: >-
           uv run pytest -q
@@ -151,13 +151,13 @@ jobs:
       - name: Install locked Node workspace
         run: npm ci
       - name: Typecheck TypeScript contract client
-        run: npm run typecheck --workspace=@portable-runtime/contracts-client
+        run: npm run typecheck --workspace=@agent-kernel/contracts-client
       - name: TypeScript public-contract conformance
-        run: npm run conformance --workspace=@portable-runtime/contracts-client
+        run: npm run conformance --workspace=@agent-kernel/contracts-client
       - name: Typecheck Responsibility Inspector
-        run: npm run typecheck --workspace=@portable-runtime/responsibility-inspector
+        run: npm run typecheck --workspace=@agent-kernel/responsibility-inspector
       - name: Build Responsibility Inspector
-        run: npm run build --workspace=@portable-runtime/responsibility-inspector
+        run: npm run build --workspace=@agent-kernel/responsibility-inspector
 
   sonarcloud:
     if: github.ref == 'refs/heads/main'

@@ -1,6 +1,6 @@
 from dataclasses import replace
 
-from portable_runtime.governance.distinction import (
+from agent_kernel.governance.distinction import (
     APPLY_QUALIFICATION,
     APPLY_REVIEW_DISCHARGE,
     DECIDE_QUALIFICATION,

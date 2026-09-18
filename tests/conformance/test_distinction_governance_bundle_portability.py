@@ -8,14 +8,14 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.governance.canonical import (
+from agent_kernel.governance.canonical import (
     GOVERNANCE_HISTORY_SCHEMA,
     GovernanceHistoryVersionError,
     reconstruct_governance_history,
 )
-from portable_runtime.governance.distinction import DistinctionState, grant_authority
-from portable_runtime.governance.history_epoch import detect_governance_history_epoch
-from portable_runtime.governance.persistence import (
+from agent_kernel.governance.distinction import DistinctionState, grant_authority
+from agent_kernel.governance.history_epoch import detect_governance_history_epoch
+from agent_kernel.governance.persistence import (
     GOVERNANCE_APPLICATION_KIND,
     GOVERNANCE_STATE_KIND,
     DistinctionGovernancePersistence,
@@ -24,10 +24,10 @@ from portable_runtime.governance.persistence import (
     PersistedGovernedApplication,
     SQLiteDistinctionGovernancePersistence,
 )
-from portable_runtime.governance.revalidation import RevalidationGovernanceLifecycle
-from portable_runtime.stores.bundle import export_bundle, import_bundle
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.governance.revalidation import RevalidationGovernanceLifecycle
+from agent_kernel.stores.bundle import export_bundle, import_bundle
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 BACKENDS = ("memory", "sqlite")
 

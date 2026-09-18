@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from portable_runtime.governance.distinction import (
+from agent_kernel.governance.distinction import (
     APPLY_REVIEW_DISCHARGE,
     DECIDE_REVIEW,
     AuthorityGrant,
@@ -17,18 +17,18 @@ from portable_runtime.governance.distinction import (
     grant_authority,
     state_anchor,
 )
-from portable_runtime.governance.persistence import (
+from agent_kernel.governance.persistence import (
     DistinctionGovernancePersistence,
     InMemoryDistinctionGovernancePersistence,
     SQLiteDistinctionGovernancePersistence,
 )
-from portable_runtime.governance.revalidation import (
+from agent_kernel.governance.revalidation import (
     GovernanceProjectionUnavailable,
     RevalidationGovernanceLifecycle,
 )
-from portable_runtime.records.revalidation import DefaultRevalidationPolicyProfile
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.records.revalidation import DefaultRevalidationPolicyProfile
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 BACKENDS = ("memory", "sqlite")
 

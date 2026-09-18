@@ -7,16 +7,16 @@ import importlib
 import inspect
 from dataclasses import dataclass
 
-from portable_runtime.core.models import Event
-from portable_runtime.governance.outcome_impact import (
+from agent_kernel.core.models import Event
+from agent_kernel.governance.outcome_impact import (
     OutcomeConfirmedTriggerResolution,
     OutcomeGovernanceApplicability,
 )
-from portable_runtime.governance.outcome_impact_judgment import (
+from agent_kernel.governance.outcome_impact_judgment import (
     OutcomeImpact,
     evaluate_outcome_impact,
 )
-from portable_runtime.records.models import OutcomeRecord
+from agent_kernel.records.models import OutcomeRecord
 
 
 @dataclass(frozen=True)
@@ -138,7 +138,7 @@ def test_b3_p2a_missing_authoritative_trigger_or_applicability_fails_closed() ->
 
 
 def test_b3_p2a_judgment_module_has_no_persistence_or_mutation_capability() -> None:
-    module = importlib.import_module("portable_runtime.governance.outcome_impact_judgment")
+    module = importlib.import_module("agent_kernel.governance.outcome_impact_judgment")
     source = inspect.getsource(module)
     tree = ast.parse(source)
     forbidden = {

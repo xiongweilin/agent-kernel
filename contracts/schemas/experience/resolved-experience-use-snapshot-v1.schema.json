@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "portable-runtime://contracts/resolved-experience-use-snapshot-v1",
+  "$id": "agent-kernel://contracts/resolved-experience-use-snapshot-v1",
   "title": "ResolvedExperienceUseSnapshotV1",
   "type": "object",
   "additionalProperties": true,

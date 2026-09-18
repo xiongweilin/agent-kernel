@@ -8,37 +8,37 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.boundary import RealityBoundary
-from portable_runtime.core.capabilities import (
+from agent_kernel.core.boundary import RealityBoundary
+from agent_kernel.core.capabilities import (
     CapabilityRequest,
     CapabilityResult,
     InvocationContext,
     ProviderDescriptor,
     ProviderHealth,
 )
-from portable_runtime.core.models import Run, Work
-from portable_runtime.core.qualification import (
+from agent_kernel.core.models import Run, Work
+from agent_kernel.core.qualification import (
     GOVERNANCE_NOT_APPLICABLE_DIGEST,
     InvocationPermit,
 )
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.reliability import ReliabilityControls
-from portable_runtime.core.router import CapabilityService
-from portable_runtime.governance.canonical import state_seed_event
-from portable_runtime.governance.distinction import DistinctionState, ReviewObligation, UseContext
-from portable_runtime.governance.persistence import (
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.reliability import ReliabilityControls
+from agent_kernel.core.router import CapabilityService
+from agent_kernel.governance.canonical import state_seed_event
+from agent_kernel.governance.distinction import DistinctionState, ReviewObligation, UseContext
+from agent_kernel.governance.persistence import (
     DistinctionGovernancePersistence,
     InMemoryDistinctionGovernancePersistence,
     SQLiteDistinctionGovernancePersistence,
 )
-from portable_runtime.governance.use_admission import (
+from agent_kernel.governance.use_admission import (
     GovernanceUseAdmission,
     GovernanceUseRequirement,
     governance_not_applicable_digest,
 )
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
-from portable_runtime.workflows.context import WorkflowContext
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
+from agent_kernel.workflows.context import WorkflowContext
 from tests._strict_fixtures import seed_action_governance
 
 BACKENDS = ("memory", "sqlite")

@@ -4,15 +4,15 @@ import json
 import tempfile
 from pathlib import Path
 import pytest
-from portable_runtime.core.models import Artifact, Run, Step, Work, new_id
-from portable_runtime.core.capabilities import CapabilityRequest, CapabilityResult, InvocationContext, ProviderDescriptor, ProviderHealth
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.records.models import Assertion, EvidenceArtifact
-from portable_runtime.records.relations import RecordRelation
-from portable_runtime.stores.bundle import export_bundle, import_bundle
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.core.models import Artifact, Run, Step, Work, new_id
+from agent_kernel.core.capabilities import CapabilityRequest, CapabilityResult, InvocationContext, ProviderDescriptor, ProviderHealth
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.records.models import Assertion, EvidenceArtifact
+from agent_kernel.records.relations import RecordRelation
+from agent_kernel.stores.bundle import export_bundle, import_bundle
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 def populate_store(store):
     w = Work(id=new_id("work"), title="critical work", kind="incident", description="must survive migration")
@@ -93,7 +93,7 @@ def test_model_verifier_bundle_os_credential_takeover():
         assert dst.get_run(r.id) is not None
         # OS portability: artifact URI rewritten to new root (tested via bundle payload existence)
         # CredentialDomain rotation: old grant with old cred domain not auto-carried to new provider -> but store still has grant if it was exported
-        from portable_runtime.records.authorization import create_grant_for_approval
+        from agent_kernel.records.authorization import create_grant_for_approval
         grant = create_grant_for_approval(principal_ref="human:owner", grantee_ref="agent:old", allowed_capabilities=["code.edit"], subject_version_refs=["v1"])
         # grants are stored via save_authorization or _records; not via save_record (BaseRecord validation fails for AuthorizationGrant)
         if hasattr(src, "_records"):
@@ -124,7 +124,7 @@ def test_old_bundle_on_new_schema_no_silent_loss():
         r = new_store.get_run("run_old1"); assert r is not None
         # Ensure extra unknown fields are preserved via extra="allow" (metadata roundtrip)
         # Inject a record with extra field "future_field"
-        from portable_runtime.records.models import BaseRecord
+        from agent_kernel.records.models import BaseRecord
         rec = BaseRecord(record_type="Assertion", lifecycle_status="draft", metadata={"future_field":"keep-me"})  # type: ignore
         # BaseRecord extra allow should preserve
         store2 = InMemoryStateStore(); store2.save_record(rec)
@@ -141,7 +141,7 @@ def test_old_bundle_on_new_schema_no_silent_loss():
         buf = io.BytesIO()
         with tarfile.open(fileobj=buf, mode="w") as tar:
             # manifest
-            m = json.dumps({"schema_version":"1","format":"portable-runtime-bundle-v1","runtime_id":"x","counts":{},"artifact_files":[],"checksums":{}}).encode()
+            m = json.dumps({"schema_version":"1","format":"agent-kernel-bundle-v1","runtime_id":"x","counts":{},"artifact_files":[],"checksums":{}}).encode()
             info = tarfile.TarInfo(name="manifest.json"); info.size=len(m); tar.addfile(info, io.BytesIO(m))
             # records.jsonl with invalid EvidenceArtifact carrying epistemic (should be rejected on import or at least not silently ignored)
             bad_rec = {"id":"record_bad","record_type":"EvidenceArtifact","lifecycle_status":"current","epistemic_status":"supported","created_at":"2024-01-01T00:00:00+00:00","created_by":"system","system_boundary":"runtime","metadata":{}}

@@ -46,7 +46,7 @@ export function App() {
   return (
     <main>
       <header>
-        <p className="eyebrow">PORTABLE RUNTIME</p>
+        <p className="eyebrow">AGENT KERNEL</p>
         <h1>Responsibility Inspector</h1>
         <p>Read-only inspection of current, historical, authority and open-responsibility facts.</p>
       </header>

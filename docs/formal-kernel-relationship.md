@@ -7,7 +7,7 @@ updated: 2026-08-27
 
 # Non-normative relationship to the Framework and formal kernel
 
-This document records research lineage, formal-verification evidence and cross-repository correspondence. It is **not** a portable-runtime semantic contract.
+This document records research lineage, formal-verification evidence and cross-repository correspondence. It is **not** a agent-kernel semantic contract.
 
 Current ownership is:
 
@@ -20,8 +20,8 @@ responsibility_topology
     owns its formal research governance,
     Lean theorem/checker/proof semantics and frozen research artifacts
 
-portable-runtime/contracts/
-    owns portable-runtime canonical product semantics,
+agent-kernel/contracts/
+    owns agent-kernel canonical product semantics,
     interoperability contracts and conformance meaning
 ```
 
@@ -33,11 +33,11 @@ upstream Framework semantic/design source
 != formal-specialization/proof owner
 ```
 
-`ratio/元模型` may motivate or define an upstream Framework distinction, but it is not a runtime dependency. A Framework change does not change portable-runtime behavior unless the relevant semantics are deliberately adopted and versioned in `portable-runtime/contracts/`.
+`ratio/元模型` may motivate or define an upstream Framework distinction, but it is not a runtime dependency. A Framework change does not change agent-kernel behavior unless the relevant semantics are deliberately adopted and versioned in `agent-kernel/contracts/`.
 
-`responsibility_topology` may prove or check a formal specialization, but that proof surface does not become portable-runtime semantic authority.
+`responsibility_topology` may prove or check a formal specialization, but that proof surface does not become agent-kernel semantic authority.
 
-No external repository is a normative dependency for determining portable-runtime legal state, legal transition, authority, replay identity, qualification or public wire meaning. If this document or any external source conflicts with `contracts/`, `contracts/` wins for portable-runtime product behavior.
+No external repository is a normative dependency for determining agent-kernel legal state, legal transition, authority, replay identity, qualification or public wire meaning. If this document or any external source conflicts with `contracts/`, `contracts/` wins for agent-kernel product behavior.
 
 ## Current correspondence directions
 
@@ -48,11 +48,11 @@ ratio/元模型 Framework definitions and responsibility cuts
         |
         | reference / boundary-reference / deliberate product adoption
         v
-portable-runtime/contracts
+agent-kernel/contracts
         |
         | normative product protocol
         v
-portable-runtime implementation
+agent-kernel implementation
 ```
 
 The adoption edge is explicit and versioned. Therefore:
@@ -62,7 +62,7 @@ reference / operationalize / represent
 != redefine the upstream Framework
 
 upstream Framework change
--/-> automatic portable-runtime semantic change
+-/-> automatic agent-kernel semantic change
 ```
 
 ### Framework -> formal specialization
@@ -82,7 +82,7 @@ A Lean theorem proves a property of its explicit formal specialization. It does 
 The active runtime-to-formal relation is evidence-oriented:
 
 ```text
-portable-runtime/contracts
+agent-kernel/contracts
         |
         v
 runtime observation / certificate
@@ -100,8 +100,8 @@ restricted formal conclusion about the submitted artifact
 There is no general refinement theorem:
 
 ```text
-responsibility_topology -/-> verified refinement of portable-runtime
-portable-runtime -/-> verified implementation of responsibility_topology
+responsibility_topology -/-> verified refinement of agent-kernel
+agent-kernel -/-> verified implementation of responsibility_topology
 ```
 
 Research lineage may explain why a product contract or proof obligation was investigated, but those arrows are not current normative runtime dependency arrows.
@@ -171,16 +171,16 @@ Not approved:
 
 ```text
 Python runtime verified
-portable-runtime refines responsibility_topology
+agent-kernel refines responsibility_topology
 certificate extraction verified by Lean
 RuntimeStep -> FormalStep*
 ```
 
-Historical implementation/proof references such as portable-runtime PRs #9/#10 and responsibility_topology PRs #73–#75 remain provenance for this research bridge only. They are not compatibility pins and are not loaded by runtime code.
+Historical implementation/proof references such as agent-kernel PRs #9/#10 and responsibility_topology PRs #73–#75 remain provenance for this research bridge only. They are not compatibility pins and are not loaded by runtime code.
 
 ## Cross-domain and adequacy boundary
 
-Formal similarity, case-model encodings and cross-domain counterexamples are evidence, not portable-runtime semantic ownership and not verification of external domains.
+Formal similarity, case-model encodings and cross-domain counterexamples are evidence, not agent-kernel semantic ownership and not verification of external domains.
 
 Keep distinct:
 

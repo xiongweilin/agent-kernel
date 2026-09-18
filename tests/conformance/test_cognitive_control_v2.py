@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from portable_runtime.controller import (
+from agent_kernel.controller import (
     CognitiveClosure,
     CognitiveController,
     ControllerDecision,
@@ -15,27 +15,27 @@ from portable_runtime.controller import (
     RevisionDisposition,
     RevisionScope,
 )
-from portable_runtime.controller.service import CONTROLLER_RESULT_EVENT
-from portable_runtime.core.capabilities import (
+from agent_kernel.controller.service import CONTROLLER_RESULT_EVENT
+from agent_kernel.core.capabilities import (
     CapabilityRequest,
     CapabilityResult,
     InvocationContext,
     ProviderDescriptor,
     ProviderHealth,
 )
-from portable_runtime.core.models import Work, utcnow
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.responsibility.models import (
+from agent_kernel.core.models import Work, utcnow
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.responsibility.models import (
     ResponsibilityAdmission,
     ResponsibilityExpectation,
     ResponsibilityStatus,
     StandingResponsibility,
     WorkProposal,
 )
-from portable_runtime.responsibility.service import ResponsibilityKernel
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.responsibility.service import ResponsibilityKernel
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 
 class ReasonProvider:

@@ -6,11 +6,11 @@ from typing import Any
 
 from pydantic import BaseModel
 
-import portable_runtime.stores.sqlite as sqlite_store_module
-from portable_runtime.records.models import ChangeObjectRecord
-from portable_runtime.records.relations import RecordRelation
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+import agent_kernel.stores.sqlite as sqlite_store_module
+from agent_kernel.records.models import ChangeObjectRecord
+from agent_kernel.records.relations import RecordRelation
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 
 def _seed_endpoints(store: Any, prefix: str) -> tuple[ChangeObjectRecord, ChangeObjectRecord]:

@@ -1,7 +1,7 @@
 # Distinction Governance — `distinction-governance-1.0`
 
 Status: stable
-Canonical owner: `portable-runtime/contracts`
+Canonical owner: `agent-kernel/contracts`
 
 This contract defines the runtime product semantics for governed distinctions. It is self-contained and does not depend on an upstream semantic source.
 

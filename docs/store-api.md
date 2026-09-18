@@ -1,6 +1,6 @@
 # Store API
 
-Core depends on the interfaces in `src/portable_runtime/interfaces/store.py`.
+Core depends on the interfaces in `src/agent_kernel/interfaces/store.py`.
 The small `KnowledgeItem`-oriented surface shown in older versions of this
 document is a legacy compatibility subset, not the canonical write API.
 

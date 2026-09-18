@@ -44,8 +44,8 @@ For an in-process Python provider (registered directly with
 smallest implementation:
 
 ```python
-from portable_runtime.plugin import provider
-from portable_runtime.core.capabilities import CapabilityRequest, CapabilityResult
+from agent_kernel.plugin import provider
+from agent_kernel.core.capabilities import CapabilityRequest, CapabilityResult
 
 @provider(id="uppercase", version="1.0.0", capabilities=["text.uppercase"])
 async def invoke(request: CapabilityRequest) -> CapabilityResult:
@@ -60,8 +60,8 @@ async def invoke(request: CapabilityRequest) -> CapabilityResult:
 ## 4. Validate
 
 ```powershell
-.venv\Scripts\python.exe -m portable_runtime plugin validate ./my-provider
-.venv\Scripts\python.exe -m portable_runtime plugin test ./my-provider
+.venv\Scripts\python.exe -m agent_kernel plugin validate ./my-provider
+.venv\Scripts\python.exe -m agent_kernel plugin test ./my-provider
 ```
 
 `validate` checks `manifest.json` and capabilities. `test` runs the conformance suite:
@@ -82,8 +82,8 @@ provider exit does not kill Runtime
 ## 5. Register / reload
 
 ```python
-from portable_runtime.plugin import PluginManager
-from portable_runtime.core.registry import ProviderRegistry
+from agent_kernel.plugin import PluginManager
+from agent_kernel.core.registry import ProviderRegistry
 
 manager = PluginManager(ProviderRegistry())
 record = await manager.load(Path("./my-provider"))

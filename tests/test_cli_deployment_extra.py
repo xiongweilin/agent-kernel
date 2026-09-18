@@ -1,4 +1,4 @@
-from portable_runtime.api.cli import run_cli
+from agent_kernel.api.cli import run_cli
 
 
 def test_cli_more_commands(tmp_path):
@@ -8,8 +8,8 @@ def test_cli_more_commands(tmp_path):
     # work submit with capability
     assert run_cli(["--state", str(db), "work", "submit", "--title","t2","--capability","text.echo"]) == 0
     # get work id
-    from portable_runtime.core.runtime import Runtime
-    from portable_runtime.stores.sqlite import SQLiteStateStore
+    from agent_kernel.core.runtime import Runtime
+    from agent_kernel.stores.sqlite import SQLiteStateStore
     runtime = Runtime(store=SQLiteStateStore(db))
     works = runtime.list_work()
     assert works
@@ -61,7 +61,7 @@ def test_cli_error_paths(tmp_path):
         pass
 
 def test_deployment_local(tmp_path):
-    from portable_runtime.deployment.local import create_local_runtime
+    from agent_kernel.deployment.local import create_local_runtime
     rt = create_local_runtime(tmp_path / "local.db", tmp_path / "artifacts")
     assert rt is not None
     w = rt.create_work(title="local-test")

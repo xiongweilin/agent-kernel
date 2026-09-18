@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "portable-runtime://contracts/responsibility/responsibility-lifecycle-transition-apply-v1",
+  "$id": "agent-kernel://contracts/responsibility/responsibility-lifecycle-transition-apply-v1",
   "title": "ResponsibilityLifecycleTransitionApplyV1",
   "type": "object",
   "additionalProperties": false,

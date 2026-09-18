@@ -6,11 +6,11 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from portable_runtime.records.authorization import AuthorizationGrant, create_grant_for_approval
-from portable_runtime.records.models import Assertion, RevisionRecord
-from portable_runtime.records.revision import apply_revision, create_revision, supersede
-from portable_runtime.protocol.validation import validate_state_graph
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.records.authorization import AuthorizationGrant, create_grant_for_approval
+from agent_kernel.records.models import Assertion, RevisionRecord
+from agent_kernel.records.revision import apply_revision, create_revision, supersede
+from agent_kernel.protocol.validation import validate_state_graph
+from agent_kernel.stores.memory import InMemoryStateStore
 
 
 def test_revision_apply_uses_explicit_actor_and_binds_supersedes_relation() -> None:

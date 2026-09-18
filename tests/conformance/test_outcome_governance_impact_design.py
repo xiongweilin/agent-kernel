@@ -9,18 +9,18 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.models import Action, Run, Step, StepAttempt, Work
-from portable_runtime.governance.distinction import DistinctionState, ReviewObligation
-from portable_runtime.governance.persistence import InMemoryDistinctionGovernancePersistence
-from portable_runtime.governance.revalidation import project_review_obligation
-from portable_runtime.records.models import Assertion, EvidenceArtifact, OutcomeRecord
-from portable_runtime.records.qualification_transition import (
+from agent_kernel.core.models import Action, Run, Step, StepAttempt, Work
+from agent_kernel.governance.distinction import DistinctionState, ReviewObligation
+from agent_kernel.governance.persistence import InMemoryDistinctionGovernancePersistence
+from agent_kernel.governance.revalidation import project_review_obligation
+from agent_kernel.records.models import Assertion, EvidenceArtifact, OutcomeRecord
+from agent_kernel.records.qualification_transition import (
     QUALIFICATION_TRANSITION_EVENT_TYPE,
     build_qualification_transition_event,
 )
-from portable_runtime.records.revalidation import AffectedAssessment, CHANGE_TYPES, RevalidationDisposition
-from portable_runtime.records.verified_outcome import VerifiedOutcomeAuthority
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.records.revalidation import AffectedAssessment, CHANGE_TYPES, RevalidationDisposition
+from agent_kernel.records.verified_outcome import VerifiedOutcomeAuthority
+from agent_kernel.stores.memory import InMemoryStateStore
 
 _SCHEME = "scheme:b3"
 _CONTEXT = "use:deploy"
@@ -144,7 +144,7 @@ def _open_existing_review(
 
 
 def _future_module() -> Any:
-    return importlib.import_module("portable_runtime.governance.outcome_impact")
+    return importlib.import_module("agent_kernel.governance.outcome_impact")
 
 
 def _confirmed_claim(result: str = "pass", suffix: str = "future") -> OutcomeRecord:
@@ -195,7 +195,7 @@ def test_b3_design_assertion_epistemic_axis_is_not_distinction_qualification() -
     )
     assert event.type == QUALIFICATION_TRANSITION_EVENT_TYPE
     assert distinction.qualification == "qualified"
-    source = inspect.getsource(importlib.import_module("portable_runtime.records.qualification_transition"))
+    source = inspect.getsource(importlib.import_module("agent_kernel.records.qualification_transition"))
     assert "DistinctionState" not in source
     assert "APPLY_QUALIFICATION" not in source
 
@@ -242,7 +242,7 @@ def test_b3_003_mismatched_dependency_scope_version_or_context_fails_closed() ->
 
 @pytest.mark.parametrize("impact", ["no-governance-impact", "recovery-only"])
 def test_b3_004_no_governance_or_recovery_only_impact_opens_no_review(impact: str) -> None:
-    module = importlib.import_module("portable_runtime.governance.outcome_impact_lifecycle")
+    module = importlib.import_module("agent_kernel.governance.outcome_impact_lifecycle")
     source = inspect.getsource(module.OutcomeGovernanceImpactLifecycle.observe_outcome_confirmed)
     assert 'impact.judgment.impact in {"no-governance-impact", "recovery-only"}' in source
     assert 'impact.disposition.action not in {"none", "warn"}' in source
@@ -251,7 +251,7 @@ def test_b3_004_no_governance_or_recovery_only_impact_opens_no_review(impact: st
 
 @pytest.mark.parametrize("action", ["block-next-use", "require-human-review", "reopen"])
 def test_b3_005_blocking_disposition_may_open_q_but_does_not_mutate_state(action: str) -> None:
-    from portable_runtime.governance.revalidation import project_review_obligation_from_disposition
+    from agent_kernel.governance.revalidation import project_review_obligation_from_disposition
 
     store = InMemoryStateStore()
     persistence, state = _seed_governance(store)
@@ -325,7 +325,7 @@ def test_b3_008_confirmed_fail_does_not_satisfy_existing_review_closure() -> Non
 
 
 def test_b3_009_same_outcome_confirmed_event_replay_is_idempotent() -> None:
-    from portable_runtime.governance.revalidation import project_review_obligation_from_disposition
+    from agent_kernel.governance.revalidation import project_review_obligation_from_disposition
 
     store = InMemoryStateStore()
     persistence, _state = _seed_governance(store)
@@ -350,7 +350,7 @@ def test_b3_009_same_outcome_confirmed_event_replay_is_idempotent() -> None:
 
 
 def test_b3_010_new_verification_closure_is_not_old_event_replay() -> None:
-    from portable_runtime.governance.revalidation import project_review_obligation_from_disposition
+    from agent_kernel.governance.revalidation import project_review_obligation_from_disposition
 
     store = InMemoryStateStore()
     persistence, _state = _seed_governance(store)
@@ -376,12 +376,12 @@ def test_b3_010_new_verification_closure_is_not_old_event_replay() -> None:
 
 
 def test_b3_011_unavailable_impact_judgment_is_not_no_impact() -> None:
-    from portable_runtime.core.models import Event
-    from portable_runtime.governance.outcome_impact import (
+    from agent_kernel.core.models import Event
+    from agent_kernel.governance.outcome_impact import (
         OutcomeConfirmedTriggerResolution,
         OutcomeGovernanceApplicability,
     )
-    from portable_runtime.governance.outcome_impact_judgment import evaluate_outcome_impact
+    from agent_kernel.governance.outcome_impact_judgment import evaluate_outcome_impact
 
     outcome = _confirmed_claim(result="fail", suffix="unavailable-impact")
     event = Event(
@@ -430,7 +430,7 @@ def test_b3_012_confirmed_outcome_does_not_gain_terminal_or_recovery_authority()
     work, run, _action, _outcome = _confirm(store, result="pass", suffix="nonterminal")
     assert store.get_work(work.id).status != "completed"  # type: ignore[union-attr]
     assert store.get_run(run.id).status != "succeeded"  # type: ignore[union-attr]
-    source = inspect.getsource(importlib.import_module("portable_runtime.records.verified_outcome"))
+    source = inspect.getsource(importlib.import_module("agent_kernel.records.verified_outcome"))
     assert "CompletionAuthority" not in source
     assert "recovery" not in source.lower()
     assert "governance" not in source.lower()

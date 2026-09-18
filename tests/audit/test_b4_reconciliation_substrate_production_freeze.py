@@ -14,43 +14,43 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.boundary import RealityBoundary
-from portable_runtime.core.capabilities import (
+from agent_kernel.core.boundary import RealityBoundary
+from agent_kernel.core.capabilities import (
     CapabilityRequest,
     CapabilityResult,
     InvocationContext,
     ProviderDescriptor,
     ProviderHealth,
 )
-from portable_runtime.core.models import Event
-from portable_runtime.core.provider_semantics import ProviderReplayBinding
-from portable_runtime.core.reconciliation_repeatability import (
+from agent_kernel.core.models import Event
+from agent_kernel.core.provider_semantics import ProviderReplayBinding
+from agent_kernel.core.reconciliation_repeatability import (
     ReconciliationRepeatabilityAuthority,
     ReconciliationRepeatabilityConfiguration,
     build_reconciliation_repeatability_authority,
     build_reconciliation_repeatability_contract,
     evaluate_reconciliation_repeatability,
 )
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.governance.dispatch import DISPATCH_COMMIT_EVENT
-from portable_runtime.governance.distinction import DistinctionState, UseContext
-from portable_runtime.governance.persistence import InMemoryDistinctionGovernancePersistence
-from portable_runtime.governance.provider_execution_binding import (
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.governance.dispatch import DISPATCH_COMMIT_EVENT
+from agent_kernel.governance.distinction import DistinctionState, UseContext
+from agent_kernel.governance.persistence import InMemoryDistinctionGovernancePersistence
+from agent_kernel.governance.provider_execution_binding import (
     ProviderExecutionBinding,
     provider_execution_binding_from_dispatch,
     reject_historical_execution_binding_backfill,
 )
-from portable_runtime.governance.use_admission import GovernanceUseRequirement
-from portable_runtime.interfaces.provider import CapabilityProvider
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.recovery_application_observation import (
+from agent_kernel.governance.use_admission import GovernanceUseRequirement
+from agent_kernel.interfaces.provider import CapabilityProvider
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.recovery_application_observation import (
     RecoveryApplicationObservationInMemoryStateStore,
 )
-from portable_runtime.workflows.recovery_application_observation import (
+from agent_kernel.workflows.recovery_application_observation import (
     RecoveryApplicationObservationCommitRequest,
     application_observation_identity,
 )
-from portable_runtime.workflows.recovery_observation import (
+from agent_kernel.workflows.recovery_observation import (
     RECOVERY_OBSERVATION_EVENT,
     RecoveryObservation,
     RecoveryObservationCommitRequest,
@@ -77,11 +77,11 @@ def test_rsf_current_provider_protocol_has_no_repeatability_authority() -> None:
 
 
 def test_rsf_v1_does_not_authorize_reconciliation_attempt_fact() -> None:
-    assert importlib.util.find_spec("portable_runtime.workflows.recovery_reconciliation_attempt") is None
+    assert importlib.util.find_spec("agent_kernel.workflows.recovery_reconciliation_attempt") is None
 
 
 def test_rsf_v1_does_not_authorize_generic_application_consumed_fact() -> None:
-    assert importlib.util.find_spec("portable_runtime.workflows.recovery_application_consumed") is None
+    assert importlib.util.find_spec("agent_kernel.workflows.recovery_application_consumed") is None
 
 
 def test_rsf_local_provider_replay_binding_remains_non_authoritative_representation() -> None:
@@ -91,7 +91,7 @@ def test_rsf_local_provider_replay_binding_remains_non_authoritative_representat
 
 
 def test_rsf_reconciliation_consumer_production_remains_absent() -> None:
-    assert importlib.util.find_spec("portable_runtime.workflows.recovery_reconciliation") is None
+    assert importlib.util.find_spec("agent_kernel.workflows.recovery_reconciliation") is None
 
 
 def test_rsf_001_bound_observation_requires_exact_application_authority() -> None:

@@ -1,5 +1,5 @@
 {
-  "name": "@portable-runtime/responsibility-inspector",
+  "name": "@agent-kernel/responsibility-inspector",
   "version": "0.1.0",
   "private": true,
   "type": "module",

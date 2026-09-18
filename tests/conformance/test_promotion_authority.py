@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from portable_runtime.protocol.validation import validate_state_graph
-from portable_runtime.records.authorization import create_grant_for_approval
-from portable_runtime.records.knowledge import KnowledgeProjection
-from portable_runtime.records.models import Assertion, ChangeObjectRecord, EvidenceArtifact, PolicyRecord
-from portable_runtime.records.models import Derivation
-from portable_runtime.records.relations import RecordRelation
+from agent_kernel.protocol.validation import validate_state_graph
+from agent_kernel.records.authorization import create_grant_for_approval
+from agent_kernel.records.knowledge import KnowledgeProjection
+from agent_kernel.records.models import Assertion, ChangeObjectRecord, EvidenceArtifact, PolicyRecord
+from agent_kernel.records.models import Derivation
+from agent_kernel.records.relations import RecordRelation
 
 
 def test_policy_promotion_capability_cannot_be_selected_by_metadata() -> None:

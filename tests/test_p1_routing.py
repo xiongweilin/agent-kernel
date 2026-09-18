@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from portable_runtime.core.capabilities import CapabilityRequest, ProviderDescriptor
-from portable_runtime.core.router import ConstraintRouter
-from portable_runtime.core.registry import ProviderRegistry
+from agent_kernel.core.capabilities import CapabilityRequest, ProviderDescriptor
+from agent_kernel.core.router import ConstraintRouter
+from agent_kernel.core.registry import ProviderRegistry
 
 
 class _Provider:
@@ -16,7 +16,7 @@ class _Provider:
         return self._descriptor
 
     async def health(self):
-        from portable_runtime.core.capabilities import ProviderHealth
+        from agent_kernel.core.capabilities import ProviderHealth
 
         return ProviderHealth(provider_id=self._descriptor.id, available=True)
 

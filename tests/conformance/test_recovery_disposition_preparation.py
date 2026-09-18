@@ -6,9 +6,9 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.records.models import OutcomeRecord
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.workflows.recovery_disposition import (
+from agent_kernel.records.models import OutcomeRecord
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.workflows.recovery_disposition import (
     RecoveryDispositionCommitRequest,
     prepare_recovery_disposition,
     reconstruct_recovery_disposition_basis,

@@ -4,10 +4,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from portable_runtime.core.models import Decision, Run, Work
-from portable_runtime.core.qualification import AssessmentContext
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.core.models import Decision, Run, Work
+from agent_kernel.core.qualification import AssessmentContext
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 
 @pytest.mark.parametrize("store_kind", ["memory", "sqlite"])

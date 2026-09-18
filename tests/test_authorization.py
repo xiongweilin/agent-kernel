@@ -6,22 +6,22 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from portable_runtime.core.models import Run, Work, new_id
-from portable_runtime.core.policies import (
+from agent_kernel.core.models import Run, Work, new_id
+from agent_kernel.core.policies import (
     Obligation,
     PolicyContext,
     PolicyDecision,
     PolicyEngine,
 )
-from portable_runtime.records.authorization import (
+from agent_kernel.records.authorization import (
     AuthorizationGrant,
     create_grant_for_approval,
     is_authorized_for_legacy as is_authorized_for,
     validate_grant,
 )
-from portable_runtime.records.open_validation import ClosedVerificationResult
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.workflows.procedure import (
+from agent_kernel.records.open_validation import ClosedVerificationResult
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.workflows.procedure import (
     ObligationStatus,
     ProcedureProfile,
     check_procedure,
@@ -103,7 +103,7 @@ def test_unauthorized_action_cannot_pass_execution_gate():
 
     def execution_gate(action: dict, grants: list[AuthorizationGrant]) -> bool:
         # gate passes only if any grant authorizes
-        from portable_runtime.records.authorization import is_authorized_for_any_legacy as is_authorized_for_any
+        from agent_kernel.records.authorization import is_authorized_for_any_legacy as is_authorized_for_any
         return is_authorized_for_any(action, grants)
 
     # correct grantee version passes
@@ -225,16 +225,16 @@ def test_procedure_minimal_standard_enhanced():
     work2 = Work(id=new_id("work"), title="fix bug", description="repair", kind="incident", metadata={"purpose": "fix", "execution_boundary": "x", "authorization_grant_id": "g1", "evidence_refs": ["e1"], "verified": True, "recovery_path": "rollback", "reviewed": True, "candidate": True})
     run2 = Run(id=new_id("run"), work_id=work2.id, status="succeeded", metadata={"result_confirmed": True})
     # provide typed proofs to satisfy strict gates
-    from portable_runtime.records.authorization import AuthorizationGrant as _AG
+    from agent_kernel.records.authorization import AuthorizationGrant as _AG
     from datetime import UTC as _UTC, datetime as _DT
     _dummy_grant = _AG(principal_ref="human:owner", grantee_ref="agent:test", allowed_capabilities=["*"], subject_version_refs=[], valid_from=_DT.now(_UTC))
-    from portable_runtime.records.models import BaseRecord as _BR
+    from agent_kernel.records.models import BaseRecord as _BR
     _ev = _BR(record_type="EvidenceArtifact", lifecycle_status="current", data={"uri": "file://e1"})
-    from portable_runtime.records.relations import RecordRelation as _RR
+    from agent_kernel.records.relations import RecordRelation as _RR
     _rel = _RR(relation_type="supports", subject_ref=_ev.id, object_ref=work2.id)
-    from portable_runtime.records.open_validation import ClosedVerificationResult as _CVR
+    from agent_kernel.records.open_validation import ClosedVerificationResult as _CVR
     _cv = _CVR(result="pass")
-    from portable_runtime.core.models import Checkpoint as _CP
+    from agent_kernel.core.models import Checkpoint as _CP
     _cp = _CP(run_id=run2.id, step_id=None)
     standard2 = check_procedure(work2, run2, ProcedureProfile.standard, grants=[_dummy_grant], evidence_artifacts=[_ev], relations=[_rel], verification_results=[_cv], checkpoints=[_cp], decisions=[{"id": "d1"}])
     # authorization should be satisfied now
@@ -265,17 +265,17 @@ def test_waived_requires_authority():
 @pytest.mark.asyncio
 async def test_human_approve_generates_decision_and_grant():
     """human.approve via workflow hook creates Decision + AuthorizationGrant."""
-    from portable_runtime.core.capabilities import (
+    from agent_kernel.core.capabilities import (
         CapabilityRequest,
         CapabilityResult,
         InvocationContext,
         ProviderDescriptor,
         ProviderHealth,
     )
-    from portable_runtime.core.registry import ProviderRegistry
-    from portable_runtime.core.router import CapabilityService
-    from portable_runtime.workflows.context import WorkflowContext
-    from portable_runtime.workflows.incident_repair.workflow import IncidentRepairWorkflow
+    from agent_kernel.core.registry import ProviderRegistry
+    from agent_kernel.core.router import CapabilityService
+    from agent_kernel.workflows.context import WorkflowContext
+    from agent_kernel.workflows.incident_repair.workflow import IncidentRepairWorkflow
 
     class SucceedProvider:
         def __init__(self, pid, caps):
@@ -321,5 +321,5 @@ async def test_human_approve_generates_decision_and_grant():
     grant = list(auth_bucket.values())[0]
     assert "patch:v1" in grant.subject_version_refs
     # expired v2 should not authorize
-    from portable_runtime.records.authorization import is_authorized_for
+    from agent_kernel.records.authorization import is_authorized_for
     assert is_authorized_for({"capability": "code.edit", "subject_version_refs": ["patch:v2"]}, grant) is False

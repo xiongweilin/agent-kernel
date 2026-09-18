@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from portable_runtime.core.models import Action, Event, Run, Step, StepAttempt, Work
-from portable_runtime.governance.outcome_impact import resolve_outcome_confirmed_trigger
-from portable_runtime.governance.persistence import InMemoryDistinctionGovernancePersistence
-from portable_runtime.records.models import EvidenceArtifact
-from portable_runtime.records.verified_outcome import VerifiedOutcomeAuthority
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.core.models import Action, Event, Run, Step, StepAttempt, Work
+from agent_kernel.governance.outcome_impact import resolve_outcome_confirmed_trigger
+from agent_kernel.governance.persistence import InMemoryDistinctionGovernancePersistence
+from agent_kernel.records.models import EvidenceArtifact
+from agent_kernel.records.verified_outcome import VerifiedOutcomeAuthority
+from agent_kernel.stores.memory import InMemoryStateStore
 
 _SCOPE = {"resource": "repo/app", "operation": "effect"}
 _VERSIONS = ["subject:v1"]

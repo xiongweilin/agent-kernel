@@ -1,5 +1,5 @@
 {
-  "name": "@portable-runtime/contracts-client",
+  "name": "@agent-kernel/contracts-client",
   "version": "0.1.0",
   "private": true,
   "type": "module",

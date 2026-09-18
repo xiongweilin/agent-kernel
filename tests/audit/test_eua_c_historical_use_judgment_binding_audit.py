@@ -11,17 +11,17 @@ from pathlib import Path
 
 import pytest
 
-from portable_runtime.experience.historical_use import (
+from agent_kernel.experience.historical_use import (
     HISTORICAL_EXPERIENCE_USE_GRADUATED_COUNTEREXAMPLES,
     HistoricalExperienceUse,
 )
-from portable_runtime.experience.use_admission import ExperienceUseAdmission
-from portable_runtime.protocol.validation import _iter_ref_edges
-from portable_runtime.records import models as record_models
-from portable_runtime.records.knowledge import KnowledgeProjection
-from portable_runtime.records.models import Assertion, DecisionRecord, Derivation
-from portable_runtime.records.relations import RecordRelation, RelationType
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.experience.use_admission import ExperienceUseAdmission
+from agent_kernel.protocol.validation import _iter_ref_edges
+from agent_kernel.records import models as record_models
+from agent_kernel.records.knowledge import KnowledgeProjection
+from agent_kernel.records.models import Assertion, DecisionRecord, Derivation
+from agent_kernel.records.relations import RecordRelation, RelationType
+from agent_kernel.stores.memory import InMemoryStateStore
 
 
 def test_eua_c_001_existing_assertion_is_structurally_sufficient_as_domain_judgment_carrier() -> None:
@@ -88,7 +88,7 @@ def test_eua_c_006_store_owned_historical_experience_use_commit_now_exists() -> 
 
 
 def test_eua_c_007_typed_historical_authority_exists_without_new_domain_judgment_type() -> None:
-    root = Path("src/portable_runtime")
+    root = Path("src/agent_kernel")
     source = "\n".join(path.read_text(encoding="utf-8") for path in root.rglob("*.py"))
     assert HistoricalExperienceUse.__name__ == "HistoricalExperienceUse"
     assert "class DomainJudgment" not in source

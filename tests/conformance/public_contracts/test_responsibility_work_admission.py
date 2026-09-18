@@ -3,21 +3,21 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from fastapi.testclient import TestClient
 
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.public_contracts.catalog import contract_catalog
-from portable_runtime.public_contracts.http import (
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.public_contracts.catalog import contract_catalog
+from agent_kernel.public_contracts.http import (
     RESPONSIBILITY_ADMISSION_PROFILE_ENV,
     create_configured_public_app,
     create_public_app,
 )
-from portable_runtime.responsibility.admission import BoundedLocalResponsibilityAdmissionPolicy
-from portable_runtime.responsibility.admission_profiles import (
+from agent_kernel.responsibility.admission import BoundedLocalResponsibilityAdmissionPolicy
+from agent_kernel.responsibility.admission_profiles import (
     ADMINISTRATIVE_PUBLIC_POLICY_REF,
     BOUNDED_LOCAL_POLICY_REF,
     administrative_public_responsibility_admission_policy,
     responsibility_admission_policy_for_profile,
 )
-from portable_runtime.responsibility.models import (
+from agent_kernel.responsibility.models import (
     EffectClass,
     ResourceVector,
     ResponsibilityAdmission,
@@ -25,7 +25,7 @@ from portable_runtime.responsibility.models import (
     StandingResponsibility,
     WorkProposal,
 )
-from portable_runtime.responsibility.service import ResponsibilityKernel
+from agent_kernel.responsibility.service import ResponsibilityKernel
 
 NOW = datetime(2026, 9, 8, 10, 0, tzinfo=UTC)
 

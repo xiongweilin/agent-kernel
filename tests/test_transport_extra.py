@@ -1,4 +1,4 @@
-from portable_runtime.interfaces.transport import (
+from agent_kernel.interfaces.transport import (
     IdempotencyStore,
     TransportErrorCategory,
     classify_transport_error,

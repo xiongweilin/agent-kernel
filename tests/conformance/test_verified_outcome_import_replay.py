@@ -5,14 +5,14 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.models import Action, Run, Step, StepAttempt, Work
-from portable_runtime.records.models import EvidenceArtifact, OutcomeRecord
-from portable_runtime.records.verified_outcome_commit import VerifiedOutcomeCommitRequest
-from portable_runtime.records.verified_outcome_replay import (
+from agent_kernel.core.models import Action, Run, Step, StepAttempt, Work
+from agent_kernel.records.models import EvidenceArtifact, OutcomeRecord
+from agent_kernel.records.verified_outcome_commit import VerifiedOutcomeCommitRequest
+from agent_kernel.records.verified_outcome_replay import (
     VerifiedOutcomeAuthorityHistoryError,
     validate_verified_outcome_authority_graph,
 )
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.stores.memory import InMemoryStateStore
 
 _SCOPE = {"resource": "repo/app", "operation": "effect"}
 _VERSIONS = ("patch:v1",)

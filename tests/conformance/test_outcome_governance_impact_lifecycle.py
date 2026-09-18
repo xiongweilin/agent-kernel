@@ -13,20 +13,20 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.models import Action, Event, Run, Step, StepAttempt, Work
-from portable_runtime.governance.distinction import DistinctionState
-from portable_runtime.governance.outcome_impact import OutcomeGovernanceDependency
-from portable_runtime.governance.outcome_impact_judgment import OutcomeImpact, OutcomeImpactJudgment
-from portable_runtime.governance.outcome_impact_lifecycle import OutcomeGovernanceImpactLifecycle
-from portable_runtime.governance.persistence import (
+from agent_kernel.core.models import Action, Event, Run, Step, StepAttempt, Work
+from agent_kernel.governance.distinction import DistinctionState
+from agent_kernel.governance.outcome_impact import OutcomeGovernanceDependency
+from agent_kernel.governance.outcome_impact_judgment import OutcomeImpact, OutcomeImpactJudgment
+from agent_kernel.governance.outcome_impact_lifecycle import OutcomeGovernanceImpactLifecycle
+from agent_kernel.governance.persistence import (
     InMemoryDistinctionGovernancePersistence,
     SQLiteDistinctionGovernancePersistence,
 )
-from portable_runtime.records.models import EvidenceArtifact
-from portable_runtime.records.revalidation import RevalidationDisposition
-from portable_runtime.records.verified_outcome import VerifiedOutcomeAuthority
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.records.models import EvidenceArtifact
+from agent_kernel.records.revalidation import RevalidationDisposition
+from agent_kernel.records.verified_outcome import VerifiedOutcomeAuthority
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 _CONTEXT = "use:deploy"
 _SCHEME = "scheme:b3"
@@ -378,7 +378,7 @@ def test_b3_p3_no_explicit_dependency_opens_no_q_and_does_not_guess_processed() 
 
 
 def test_b3_p3_module_has_no_decision_application_or_terminal_authority() -> None:
-    module = importlib.import_module("portable_runtime.governance.outcome_impact_lifecycle")
+    module = importlib.import_module("agent_kernel.governance.outcome_impact_lifecycle")
     source = inspect.getsource(module)
     tree = ast.parse(source)
     forbidden = {

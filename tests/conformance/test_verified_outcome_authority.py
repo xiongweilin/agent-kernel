@@ -12,11 +12,11 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.compat.legacy_records import legacy_outcome_to_record
-from portable_runtime.core.models import Action, Outcome, Run, Step, StepAttempt, Work
-from portable_runtime.records.models import EvidenceArtifact, OutcomeRecord
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.compat.legacy_records import legacy_outcome_to_record
+from agent_kernel.core.models import Action, Outcome, Run, Step, StepAttempt, Work
+from agent_kernel.records.models import EvidenceArtifact, OutcomeRecord
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 _SCOPE = {"resource": "repo/app", "operation": "effect"}
 _VERSIONS = ["patch:v1"]
@@ -116,7 +116,7 @@ def _proof(
 
 
 def _authority(store: Any) -> Any:
-    module = importlib.import_module("portable_runtime.records.verified_outcome")
+    module = importlib.import_module("agent_kernel.records.verified_outcome")
     return module.VerifiedOutcomeAuthority(store)
 
 
@@ -163,9 +163,9 @@ def test_fb2_entry_persisted_bound_proof_does_not_self_authorize(tmp_path: Path)
 
 
 def test_fb2_003_provider_attached_verification_is_not_authority_input(tmp_path: Path) -> None:
-    from portable_runtime.core.boundary_stages import ExecutionRecordIds, commit_execution_projection
-    from portable_runtime.core.capabilities import CapabilityRequest, CapabilityResult
-    from portable_runtime.records.open_validation import ClosedVerificationResult
+    from agent_kernel.core.boundary_stages import ExecutionRecordIds, commit_execution_projection
+    from agent_kernel.core.capabilities import CapabilityRequest, CapabilityResult
+    from agent_kernel.records.open_validation import ClosedVerificationResult
 
     with _store("memory", tmp_path) as store:
         work, run, step, attempt, action = _seed_execution(store)
@@ -417,7 +417,7 @@ def test_fb2_a03_matching_looking_authority_events_with_wrong_binding_fail_impor
     corruption: str,
     tmp_path: Path,
 ) -> None:
-    from portable_runtime.records.verified_outcome_commit import VerifiedOutcomeCommitRequest
+    from agent_kernel.records.verified_outcome_commit import VerifiedOutcomeCommitRequest
 
     with _store("memory", tmp_path) as source:
         work, run, _step, attempt, action = _seed_execution(source)
@@ -458,9 +458,9 @@ def test_fb2_a03_matching_looking_authority_events_with_wrong_binding_fail_impor
         assert target.get_record(outcome.id) is None
 
 def test_fb2_p6_verified_outcome_authority_is_thin_commit_only_facade() -> None:
-    from portable_runtime.records.verified_outcome_commit import VerifiedOutcomeCommitRequest
+    from agent_kernel.records.verified_outcome_commit import VerifiedOutcomeCommitRequest
 
-    module = importlib.import_module("portable_runtime.records.verified_outcome")
+    module = importlib.import_module("agent_kernel.records.verified_outcome")
     source = inspect.getsource(module)
     tree = ast.parse(source)
     imported_modules = {
@@ -471,8 +471,8 @@ def test_fb2_p6_verified_outcome_authority_is_thin_commit_only_facade() -> None:
     assert imported_modules <= {
         "__future__",
         "typing",
-        "portable_runtime.records.models",
-        "portable_runtime.records.verified_outcome_commit",
+        "agent_kernel.records.models",
+        "agent_kernel.records.verified_outcome_commit",
     }
     attribute_calls = [
         node.func.attr

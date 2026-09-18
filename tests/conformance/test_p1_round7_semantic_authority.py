@@ -7,19 +7,19 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from portable_runtime.api.cli import run_cli
-from portable_runtime.api.http import create_app
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.records.authorization import (
+from agent_kernel.api.cli import run_cli
+from agent_kernel.api.http import create_app
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.records.authorization import (
     AuthorizationGrant,
     CanonicalAuthorizationRequest,
     create_authorization_use,
 )
-from portable_runtime.records.models import Assertion
-from portable_runtime.records.relations import RecordRelation
-from portable_runtime.records.revision import apply_revision, create_revision
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.records.models import Assertion
+from agent_kernel.records.relations import RecordRelation
+from agent_kernel.records.revision import apply_revision, create_revision
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 
 @pytest.mark.parametrize("backend", ["memory", "sqlite"])

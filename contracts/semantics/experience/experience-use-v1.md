@@ -1,7 +1,7 @@
 # Experience Use contracts — v1
 
 Status: stable
-Canonical owner: `portable-runtime/contracts`
+Canonical owner: `agent-kernel/contracts`
 
 This slice defines current-use admission and historical reliance without granting execution authority.
 

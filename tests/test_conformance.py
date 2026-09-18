@@ -7,22 +7,22 @@ import time
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 import pytest
-from portable_runtime.core.capabilities import CapabilityRequest, CapabilityResult, InvocationContext, ProviderDescriptor, ProviderHealth
-from portable_runtime.core.models import Artifact, Run, Step, StepAttempt, Work, new_id
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.router import CapabilityService
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.records.authorization import AuthorizationGrant, create_grant_for_approval, is_authorized_for_legacy as is_authorized_for, validate_grant
-from portable_runtime.records.lifecycle import validate_lifecycle_transition
-from portable_runtime.records.models import Assertion, EvidenceArtifact, PolicyRecord
-from portable_runtime.records.relations import RecordRelation, validate_relation
-from portable_runtime.records.revalidation import assess_revalidation, should_block
-from portable_runtime.records.revision import apply_revision, create_revision, supersede
-from portable_runtime.stores.bundle import BUNDLE_SCHEMA_VERSION, export_bundle, import_bundle
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
-from portable_runtime.workflows.procedure import ObligationStatus, ProcedureProfile, check_procedure, gates_for_profile
-from portable_runtime.core.policies import Obligation
+from agent_kernel.core.capabilities import CapabilityRequest, CapabilityResult, InvocationContext, ProviderDescriptor, ProviderHealth
+from agent_kernel.core.models import Artifact, Run, Step, StepAttempt, Work, new_id
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.router import CapabilityService
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.records.authorization import AuthorizationGrant, create_grant_for_approval, is_authorized_for_legacy as is_authorized_for, validate_grant
+from agent_kernel.records.lifecycle import validate_lifecycle_transition
+from agent_kernel.records.models import Assertion, EvidenceArtifact, PolicyRecord
+from agent_kernel.records.relations import RecordRelation, validate_relation
+from agent_kernel.records.revalidation import assess_revalidation, should_block
+from agent_kernel.records.revision import apply_revision, create_revision, supersede
+from agent_kernel.stores.bundle import BUNDLE_SCHEMA_VERSION, export_bundle, import_bundle
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
+from agent_kernel.workflows.procedure import ObligationStatus, ProcedureProfile, check_procedure, gates_for_profile
+from agent_kernel.core.policies import Obligation
 from tests._strict_fixtures import seed_action_governance
 
 def make_work(title="t", kind="incident", **kw):
@@ -154,13 +154,13 @@ def test_record_semantics_orthogonal_and_evidence_no_epistemic():
     assert ok_artifact.record_type == "EvidenceArtifact"; assert ok_artifact.epistemic_status is None; store.save_record(ok_artifact)
     ass = Assertion(statement="x", lifecycle_status="draft", epistemic_status="supported"); assert ass.epistemic_status == "supported"; store.save_record(ass)
     ass2 = Assertion(statement="y", lifecycle_status="current", epistemic_status="unverified"); store.save_record(ass2)
-    from portable_runtime.records.models import ActionRecord
+    from agent_kernel.records.models import ActionRecord
     with pytest.raises(ValueError): ActionRecord(work_id="w", run_id="r", capability="c", provider_id="p", lifecycle_status="recorded", epistemic_status="supported")  # type: ignore
     e2 = EvidenceArtifact(uri="file://b", lifecycle_status="draft"); assert e2.lifecycle_status == "draft"; assert e2.epistemic_status is None
 
 def test_derivation_does_not_own_epistemic_status_and_observation_requires_provenance():
-    from portable_runtime.records.models import Derivation, Observation
-    from portable_runtime.records.validation import validate_record
+    from agent_kernel.records.models import Derivation, Observation
+    from agent_kernel.records.validation import validate_record
     with pytest.raises(ValueError, match="must not carry epistemic_status"):
         Derivation(epistemic_status="supported")  # type: ignore[arg-type]
     assert any(
@@ -299,7 +299,7 @@ async def test_failure_domain_verifier_independence():
         async def cancel(self, rid): return None
     for d in [provA, provB, provC]: reg.register(DummyProv(d))
     svc = CapabilityService(reg)
-    from portable_runtime.core.policies import independent_verification_obligation
+    from agent_kernel.core.policies import independent_verification_obligation
     obl = independent_verification_obligation(independent_on=["credential_domain"]); assert obl.params["independent_on"] == ["credential_domain"]
     def independent_on_domains(p1: ProviderDescriptor, p2: ProviderDescriptor, domains: list[str]):
         for dom in domains:
@@ -325,16 +325,16 @@ def test_procedure_gates_completeness_and_waiver_and_hard_boundary():
 def test_procedure_gate_invariance_and_expired_invalidated():
     w = Work(id=new_id("work"), title="t", description="d", kind="incident", metadata={"purpose":"x","execution_boundary":"y"})
     r = Run(id=new_id("run"), work_id=w.id, status="succeeded", metadata={"result_confirmed":True, "authorization_grant_id":"g1","evidence_refs":["e1"],"verified":True,"recovery_path":"r","reviewed":True,"candidate":True})
-    from portable_runtime.records.authorization import AuthorizationGrant as _AG2
+    from agent_kernel.records.authorization import AuthorizationGrant as _AG2
     from datetime import UTC as _UTC2, datetime as _DT2
     _g2 = _AG2(principal_ref="human:owner", grantee_ref="agent:test", allowed_capabilities=["*"], valid_from=_DT2.now(_UTC2))
-    from portable_runtime.records.models import BaseRecord as _BR2
+    from agent_kernel.records.models import BaseRecord as _BR2
     _ev2 = _BR2(record_type="EvidenceArtifact", lifecycle_status="current", data={"uri": "file://e1"})
-    from portable_runtime.records.relations import RecordRelation as _RR2
+    from agent_kernel.records.relations import RecordRelation as _RR2
     _rel2 = _RR2(relation_type="supports", subject_ref=_ev2.id, object_ref=w.id)
-    from portable_runtime.records.open_validation import ClosedVerificationResult as _CVR2
+    from agent_kernel.records.open_validation import ClosedVerificationResult as _CVR2
     _cv2 = _CVR2(result="pass")
-    from portable_runtime.core.models import Checkpoint as _CP2
+    from agent_kernel.core.models import Checkpoint as _CP2
     _cp2 = _CP2(run_id=r.id, step_id=None)
     std = check_procedure(w, r, "standard", grants=[_g2], evidence_artifacts=[_ev2], relations=[_rel2], verification_results=[_cv2], checkpoints=[_cp2], decisions=[{"id": "d1"}]); assert any(s.obligation=="authorization" and s.status=="satisfied" for s in std)
     r2 = Run(id=new_id("run"), work_id=w.id, status="running", metadata={"authorization_expired":True})

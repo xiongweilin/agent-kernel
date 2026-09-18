@@ -3,12 +3,12 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from portable_runtime.api.http import create_app
-from portable_runtime.core.models import KnowledgeItem
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.records.models import Assertion, EvidenceArtifact
-from portable_runtime.records.relations import RecordRelation
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.api.http import create_app
+from agent_kernel.core.models import KnowledgeItem
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.records.models import Assertion, EvidenceArtifact
+from agent_kernel.records.relations import RecordRelation
+from agent_kernel.stores.memory import InMemoryStateStore
 
 
 def _client() -> tuple[TestClient, Runtime, InMemoryStateStore]:
@@ -224,7 +224,7 @@ def test_steps_endpoint():
     client, runtime, _store = _client()
     work = runtime.create_work(title="step work")
     run = runtime.start_run(work.id, workflow_id="generic-task")
-    from portable_runtime.core.models import Step
+    from agent_kernel.core.models import Step
 
     step = Step(run_id=run.id, step_key="k1", kind="generic", status="pending")
     runtime.store.save_step(step)

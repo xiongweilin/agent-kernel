@@ -38,7 +38,7 @@ def test_runtime_docs_declare_local_contracts_as_canonical_owner() -> None:
         encoding="utf-8"
     )
 
-    assert "portable-runtime/contracts" in implementation
+    assert "agent-kernel/contracts" in implementation
     assert "contracts/semantics/governance/distinction-governance-v1.md" in implementation
     assert "contracts/semantics/core/responsibility-separation-v1.md" in readable
     assert "If it conflicts with `contracts/`, `contracts/` wins" in readable

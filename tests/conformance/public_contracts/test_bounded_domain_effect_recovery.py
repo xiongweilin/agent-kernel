@@ -5,30 +5,30 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from portable_runtime.core.capabilities import (
+from agent_kernel.core.capabilities import (
     CapabilityRequest,
     CapabilityResult,
     InvocationContext,
     ProviderDescriptor,
     ProviderHealth,
 )
-from portable_runtime.core.provider_semantics import ProviderSemanticContract
-from portable_runtime.core.reconciliation_repeatability import (
+from agent_kernel.core.provider_semantics import ProviderSemanticContract
+from agent_kernel.core.reconciliation_repeatability import (
     ReconciliationRepeatabilityConfiguration,
 )
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.public_contracts.domain_effect import (
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.public_contracts.domain_effect import (
     BoundedDomainEffectExecutionProfile,
     BoundedDomainEffectExecutionService,
     BoundedDomainEffectExecutionV1,
 )
-from portable_runtime.public_contracts.domain_effect_recovery import (
+from agent_kernel.public_contracts.domain_effect_recovery import (
     BoundedDomainEffectRecoveryService,
     BoundedDomainEffectRecoveryV1,
 )
-from portable_runtime.public_contracts.http import create_public_app
-from portable_runtime.stores.bounded_domain_effect_recovery import (
+from agent_kernel.public_contracts.http import create_public_app
+from agent_kernel.stores.bounded_domain_effect_recovery import (
     BoundedDomainEffectRecoveryInMemoryStateStore,
 )
 from tests.conformance.public_contracts.test_second_administrative_capability import (

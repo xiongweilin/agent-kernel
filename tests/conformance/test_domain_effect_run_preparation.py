@@ -5,28 +5,28 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from pydantic import ValidationError
 
-from portable_runtime.core.models import Run
-from portable_runtime.responsibility.admission import admit_responsibility_proposal
-from portable_runtime.responsibility.admission_profiles import (
+from agent_kernel.core.models import Run
+from agent_kernel.responsibility.admission import admit_responsibility_proposal
+from agent_kernel.responsibility.admission_profiles import (
     administrative_public_responsibility_admission_policy,
 )
-from portable_runtime.responsibility.domain import record_domain_assessment
-from portable_runtime.responsibility.domain_effect_authorization import (
+from agent_kernel.responsibility.domain import record_domain_assessment
+from agent_kernel.responsibility.domain_effect_authorization import (
     ADMINISTRATIVE_HRIS_EMPLOYEE_CREATE,
     DomainEffectAuthorizationAdmission,
     DomainEffectIntentEvidenceInput,
 )
-from portable_runtime.responsibility.domain_effect_authorization_use import (
+from agent_kernel.responsibility.domain_effect_authorization_use import (
     DomainEffectAuthorizationUseConsumption,
     DomainEffectAuthorizationUseInput,
 )
-from portable_runtime.responsibility.domain_effect_run import (
+from agent_kernel.responsibility.domain_effect_run import (
     DOMAIN_EFFECT_RUN_SCHEMA,
     DOMAIN_EFFECT_WORKFLOW_ID,
     DomainEffectRunPreparation,
     DomainEffectRunPreparationInput,
 )
-from portable_runtime.responsibility.models import (
+from agent_kernel.responsibility.models import (
     EffectClass,
     ResourceVector,
     ResponsibilityAdmission,
@@ -35,8 +35,8 @@ from portable_runtime.responsibility.models import (
     StandingResponsibility,
     WorkProposal,
 )
-from portable_runtime.responsibility.service import ResponsibilityKernel
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.responsibility.service import ResponsibilityKernel
+from agent_kernel.stores.memory import InMemoryStateStore
 
 NOW = datetime(2026, 9, 8, 14, 0, tzinfo=UTC)
 CASE_REF = "case-run-1"

@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import tomllib
 
-from portable_runtime.governance.distinction import (
+from agent_kernel.governance.distinction import (
     DISTINCTION_GOVERNANCE_CONTRACT_ID,
     DISTINCTION_GOVERNANCE_CONTRACT_VERSION,
 )
@@ -18,8 +18,8 @@ def _catalog() -> dict[str, object]:
 
 def test_catalog_owns_all_registered_contract_paths() -> None:
     catalog = _catalog()
-    assert catalog["owner"] == "portable-runtime/contracts"
-    assert catalog["catalog_version"] == "portable-runtime-contracts-v1"
+    assert catalog["owner"] == "agent-kernel/contracts"
+    assert catalog["catalog_version"] == "agent-kernel-contracts-v1"
     contracts = catalog["contracts"]
     assert isinstance(contracts, dict)
     for name, raw in contracts.items():
@@ -41,7 +41,7 @@ def test_public_schemas_are_valid_local_json_schema_documents() -> None:
             continue
         schema = json.loads((ROOT / str(relative)).read_text(encoding="utf-8"))
         assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema", name
-        assert str(schema["$id"]).startswith("portable-runtime://contracts/"), name
+        assert str(schema["$id"]).startswith("agent-kernel://contracts/"), name
         assert schema["type"] == "object", name
 
 

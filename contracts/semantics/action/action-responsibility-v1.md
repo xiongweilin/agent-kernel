@@ -1,7 +1,7 @@
 # Action Responsibility — `action-responsibility-1.0`
 
 Status: stable
-Canonical owner: `portable-runtime/contracts`
+Canonical owner: `agent-kernel/contracts`
 
 This contract governs the path from a qualified/authorized runtime intention to an effectful reality-boundary invocation.
 

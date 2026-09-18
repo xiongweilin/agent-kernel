@@ -4,17 +4,17 @@ from __future__ import annotations
 
 import pytest
 
-from portable_runtime.core.capabilities import CapabilityRequest
-from portable_runtime.core.qualification import AssessmentContext, QualificationResolutionError
-from portable_runtime.records.authorization import (
+from agent_kernel.core.capabilities import CapabilityRequest
+from agent_kernel.core.qualification import AssessmentContext, QualificationResolutionError
+from agent_kernel.records.authorization import (
     AuthorizationGrant,
     CanonicalAuthorizationRequest,
     create_authorization_use,
 )
-from portable_runtime.records.models import Assertion
-from portable_runtime.records.qualification_transition import commit_qualification_transition
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.records.models import Assertion
+from agent_kernel.records.qualification_transition import commit_qualification_transition
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 
 def _store(backend: str, tmp_path):

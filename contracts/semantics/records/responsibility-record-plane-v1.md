@@ -1,7 +1,7 @@
 # Responsibility Record Plane — `responsibility-record-plane-1.0`
 
 Status: stable
-Canonical owner: `portable-runtime/contracts`
+Canonical owner: `agent-kernel/contracts`
 Control Plane compatibility: `official-1.0.0`
 
 The record plane is an append-oriented semantic interface. A record is evidence that the runtime recorded a typed object; recording alone does not make its contents true, verified, official or authorized.

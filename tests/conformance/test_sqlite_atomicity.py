@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from portable_runtime.core.models import Run, Step, Work, new_id
-from portable_runtime.stores.sqlite import CASExecutionError, SQLiteStateStore
+from agent_kernel.core.models import Run, Step, Work, new_id
+from agent_kernel.stores.sqlite import CASExecutionError, SQLiteStateStore
 
 
 def _seed_step(path: Path, *, version: int = 3) -> tuple[SQLiteStateStore, Work, Run, Step]:

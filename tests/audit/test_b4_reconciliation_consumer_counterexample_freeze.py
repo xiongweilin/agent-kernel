@@ -16,47 +16,47 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.capabilities import (
+from agent_kernel.core.capabilities import (
     CapabilityRequest,
     CapabilityResult,
     InvocationContext,
     ProviderDescriptor,
     ProviderHealth,
 )
-from portable_runtime.core.models import Action, Event, Run, Step, StepAttempt, Work
-from portable_runtime.core.qualification import InvocationPermit
-from portable_runtime.core.reconciliation_boundary import (
+from agent_kernel.core.models import Action, Event, Run, Step, StepAttempt, Work
+from agent_kernel.core.qualification import InvocationPermit
+from agent_kernel.core.reconciliation_boundary import (
     RecoveryReconciliationRealityBoundary,
 )
-from portable_runtime.core.reconciliation_repeatability import (
+from agent_kernel.core.reconciliation_repeatability import (
     ReconciliationRepeatabilityConfiguration,
 )
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.governance.dispatch import GovernanceDispatchCommitter
-from portable_runtime.governance.distinction import DistinctionState, UseContext
-from portable_runtime.governance.persistence import InMemoryDistinctionGovernancePersistence
-from portable_runtime.governance.use_admission import (
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.governance.dispatch import GovernanceDispatchCommitter
+from agent_kernel.governance.distinction import DistinctionState, UseContext
+from agent_kernel.governance.persistence import InMemoryDistinctionGovernancePersistence
+from agent_kernel.governance.use_admission import (
     GovernanceUseAdmission,
     GovernanceUseRequirement,
 )
-from portable_runtime.stores.recovery_application_observation import (
+from agent_kernel.stores.recovery_application_observation import (
     RecoveryApplicationObservationInMemoryStateStore,
 )
-from portable_runtime.workflows.reconciliation_consumer import (
+from agent_kernel.workflows.reconciliation_consumer import (
     RecoveryReconciliationConsumer,
     RecoveryReconciliationRequest,
 )
-from portable_runtime.workflows.recovery_application import (
+from agent_kernel.workflows.recovery_application import (
     RecoveryApplicationCommitRequest,
 )
-from portable_runtime.workflows.recovery_application_observation import (
+from agent_kernel.workflows.recovery_application_observation import (
     RecoveryApplicationObservationCommitRequest,
 )
-from portable_runtime.workflows.recovery_disposition import (
+from agent_kernel.workflows.recovery_disposition import (
     RecoveryDispositionCommitRequest,
 )
-from portable_runtime.workflows.recovery_observation import (
+from agent_kernel.workflows.recovery_observation import (
     RecoveryObservationCommitRequest,
 )
 

@@ -4,22 +4,22 @@ from datetime import timedelta
 
 import pytest
 
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.responsibility.domain_effect_invocation_specification import (
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.responsibility.domain_effect_invocation_specification import (
     DOMAIN_EFFECT_INVOCATION_SPECIFICATION_EVENT,
     DOMAIN_EFFECT_INVOCATION_SPECIFICATION_SCHEMA,
     DomainEffectInvocationSpecificationCapture,
     DomainEffectInvocationSpecificationInput,
 )
-from portable_runtime.responsibility.domain_effect_provider_binding import (
+from agent_kernel.responsibility.domain_effect_provider_binding import (
     DomainEffectProviderBindingAssessment,
     DomainEffectProviderBindingInput,
 )
-from portable_runtime.stores.invocation_specification import (
+from agent_kernel.stores.invocation_specification import (
     InvocationSpecificationInMemoryStateStore,
 )
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.workflows.invocation_specification import (
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.workflows.invocation_specification import (
     INVOCATION_SPECIFICATION_EVENT,
     INVOCATION_SPECIFICATION_SCHEMA,
 )

@@ -1,9 +1,9 @@
 import pytest
 
-from portable_runtime.core.process import PortableSubprocessExecutor, ProcessSpec
-from portable_runtime.triggers.alertmanager.trigger import AlertmanagerTrigger
-from portable_runtime.triggers.base import TriggerEvent
-from portable_runtime.triggers.webhook.trigger import WebhookTrigger
+from agent_kernel.core.process import PortableSubprocessExecutor, ProcessSpec
+from agent_kernel.triggers.alertmanager.trigger import AlertmanagerTrigger
+from agent_kernel.triggers.base import TriggerEvent
+from agent_kernel.triggers.webhook.trigger import WebhookTrigger
 
 
 @pytest.mark.asyncio

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from portable_runtime.core.knowledge import promote
-from portable_runtime.core.models import KnowledgeItem
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.core.knowledge import promote
+from agent_kernel.core.models import KnowledgeItem
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 
 @pytest.mark.parametrize("backend", ["memory", "sqlite"])

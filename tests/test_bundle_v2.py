@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from portable_runtime.core.models import (
+from agent_kernel.core.models import (
     Action,
     Artifact,
     Checkpoint,
@@ -25,13 +25,13 @@ from portable_runtime.core.models import (
     StepAttempt,
     Work,
 )
-from portable_runtime.records.authorization import create_grant_for_approval
-from portable_runtime.records.knowledge import KnowledgeProjection
-from portable_runtime.records.relations import RecordRelation
-from portable_runtime.stores.bundle import BUNDLE_SCHEMA_VERSION, export_bundle, import_bundle
-from portable_runtime.stores.filesystem import FileSystemArtifactStore
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.records.authorization import create_grant_for_approval
+from agent_kernel.records.knowledge import KnowledgeProjection
+from agent_kernel.records.relations import RecordRelation
+from agent_kernel.stores.bundle import BUNDLE_SCHEMA_VERSION, export_bundle, import_bundle
+from agent_kernel.stores.filesystem import FileSystemArtifactStore
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 
 def _make_populated_store():
@@ -55,7 +55,7 @@ def _make_populated_store():
     store.save_checkpoint(Checkpoint(id="cp_1", run_id="run_1"))
     store.save_compensation(Compensation(id="comp_1", action_ref="act_1", compensation_capability="undo"))
     # Records / Relations
-    from portable_runtime.records.models import Assertion
+    from agent_kernel.records.models import Assertion
     rec = Assertion(id="record_assert_1", statement="hello", lifecycle_status="draft", epistemic_status="unverified")
     store.save_record(rec)
     rel = RecordRelation(id="rel_1", relation_type="supports", subject_ref="record_assert_1", object_ref="ev_1")
@@ -181,7 +181,7 @@ def test_bundle_cross_machine_history_explainable(tmp_path: Path):
     """换机器后判断历史可解释：provenance / event / relation still traceable."""
     store, grant = _make_populated_store()
     # add second assertion that is supported by evidence via relation
-    from portable_runtime.records.models import Assertion
+    from agent_kernel.records.models import Assertion
     rec2 = Assertion(id="record_assert_2", statement="world", lifecycle_status="draft", epistemic_status="supported")
     # This will fail validation if not allowed? supported is allowed for Assertion
     store.save_record(rec2)
@@ -214,7 +214,7 @@ def test_bundle_cross_machine_history_explainable(tmp_path: Path):
 
 def test_record_relation_roundtrip_via_bundle(tmp_path: Path):
     store = InMemoryStateStore()
-    from portable_runtime.records.models import Goal, Observation
+    from agent_kernel.records.models import Goal, Observation
     obs = Observation(id="obs_1", source_refs=["artifact:observation-input"], lifecycle_status="current", epistemic_status="unverified")
     store.save_record(obs)
     goal = Goal(id="goal_1", direction="north", lifecycle_status="proposed")

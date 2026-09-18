@@ -12,8 +12,8 @@ This document describes how the Python reference implementation realizes that co
 
 - contract id: `distinction-governance`
 - contract version: `distinction-governance-1.0`
-- canonical owner: `portable-runtime/contracts`
-- Python representation: `src/portable_runtime/governance/distinction.py`
+- canonical owner: `agent-kernel/contracts`
+- Python representation: `src/agent_kernel/governance/distinction.py`
 
 No repository name, external commit SHA, or upstream branch is part of current runtime compatibility identity.
 
@@ -41,7 +41,7 @@ mutate partition membership
 assert ontic truth
 ```
 
-`src/portable_runtime/governance/assignment.py` exposes the alias without changing the serialized `resolve_assignment` capability/token.
+`src/agent_kernel/governance/assignment.py` exposes the alias without changing the serialized `resolve_assignment` capability/token.
 
 ## Semantic ingress
 

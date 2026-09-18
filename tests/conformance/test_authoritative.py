@@ -19,24 +19,24 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.boundary import RealityBoundary
-from portable_runtime.core.capabilities import (
+from agent_kernel.core.boundary import RealityBoundary
+from agent_kernel.core.capabilities import (
     CapabilityRequest,
     CapabilityResult,
     InvocationContext,
     ProviderDescriptor,
     ProviderHealth,
 )
-from portable_runtime.core.knowledge import classify
-from portable_runtime.core.models import Checkpoint, KnowledgeItem, Run, Work, new_id
-from portable_runtime.core.policies import PolicyDecision, approval_obligation
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.router import CapabilityService, ConstraintRouter
-from portable_runtime.records.authorization import AuthorizationGrant, create_grant_for_approval
-from portable_runtime.records.models import BaseRecord
-from portable_runtime.records.open_validation import ClosedVerificationResult
-from portable_runtime.records.relations import RecordRelation
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.core.knowledge import classify
+from agent_kernel.core.models import Checkpoint, KnowledgeItem, Run, Work, new_id
+from agent_kernel.core.policies import PolicyDecision, approval_obligation
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.router import CapabilityService, ConstraintRouter
+from agent_kernel.records.authorization import AuthorizationGrant, create_grant_for_approval
+from agent_kernel.records.models import BaseRecord
+from agent_kernel.records.open_validation import ClosedVerificationResult
+from agent_kernel.records.relations import RecordRelation
+from agent_kernel.stores.memory import InMemoryStateStore
 
 
 InvokeHook = Callable[[CapabilityRequest, InvocationContext], Awaitable[None] | None]
@@ -341,7 +341,7 @@ async def test_e005_procedure_exception_fails_closed(
     def explode(*args: Any, **kwargs: Any) -> list[Any]:
         raise RuntimeError("procedure checker unavailable")
 
-    monkeypatch.setattr("portable_runtime.workflows.procedure.check_procedure", explode)
+    monkeypatch.setattr("agent_kernel.workflows.procedure.check_procedure", explode)
     result = await authoritative_runtime["service"].invoke(
         _request("test.read", work_id=work.id, run_id=run.id)
     )
@@ -354,10 +354,10 @@ async def test_e005_procedure_exception_fails_closed(
 async def test_e006_open_procedure_blocks(authoritative_runtime: dict[str, Any], monkeypatch: pytest.MonkeyPatch) -> None:
     store = authoritative_runtime["store"]
     work, run = _seed_work_run(store)
-    from portable_runtime.workflows.procedure import ObligationStatus
+    from agent_kernel.workflows.procedure import ObligationStatus
 
     monkeypatch.setattr(
-        "portable_runtime.workflows.procedure.check_procedure",
+        "agent_kernel.workflows.procedure.check_procedure",
         lambda *args, **kwargs: [ObligationStatus(obligation="authorization", status="open")],
     )
     result = await authoritative_runtime["service"].invoke(
@@ -520,7 +520,7 @@ async def test_e015_hard_constraints_with_no_eligible_provider(authoritative_run
 async def test_e016_open_circuit_prevents_selection(
     authoritative_runtime: dict[str, Any], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr("portable_runtime.core.boundary._circuit_for", lambda provider_id: ClosedCircuit())
+    monkeypatch.setattr("agent_kernel.core.boundary._circuit_for", lambda provider_id: ClosedCircuit())
 
     result = await authoritative_runtime["service"].invoke(_request("test.read"))
 

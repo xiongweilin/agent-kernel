@@ -6,12 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from portable_runtime.core.capabilities import CapabilityRequest, ProviderDescriptor
-from portable_runtime.core.independence import IndependenceContext
-from portable_runtime.core.models import Run, Step, Work, new_id
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.router import CapabilityService, ConstraintRouter
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.core.capabilities import CapabilityRequest, ProviderDescriptor
+from agent_kernel.core.independence import IndependenceContext
+from agent_kernel.core.models import Run, Step, Work, new_id
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.router import CapabilityService, ConstraintRouter
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 
 def test_sqlite_cas_strict_no_fallback():
@@ -128,7 +128,7 @@ def test_sqlite_lease_two_connections_only_one_winner_and_monotonic():
 async def test_independence_true_comparison():
     reg = ProviderRegistry()
     # Create two providers with different families
-    from portable_runtime.core.capabilities import ProviderHealth, CapabilityResult, InvocationContext
+    from agent_kernel.core.capabilities import ProviderHealth, CapabilityResult, InvocationContext
 
     class Dummy:
         def __init__(self, d):
@@ -180,8 +180,8 @@ async def test_independence_true_comparison():
 
 
 def test_knowledge_retain_candidate():
-    from portable_runtime.core.knowledge import classify, retain_candidate, promote
-    from portable_runtime.core.models import KnowledgeItem
+    from agent_kernel.core.knowledge import classify, retain_candidate, promote
+    from agent_kernel.core.models import KnowledgeItem
 
     # Missing judgment/auth/scope/version -> retain, not archive
     ki = KnowledgeItem(id=new_id("knowledge"), kind="pattern", title="t", content_ref="ref", status="candidate", evidence_refs=["e1"])
@@ -194,8 +194,8 @@ def test_knowledge_retain_candidate():
 
 
 def test_procedure_typed_proof_required():
-    from portable_runtime.workflows.procedure import check_procedure, ProcedureProfile
-    from portable_runtime.core.models import Work, Run, new_id
+    from agent_kernel.workflows.procedure import check_procedure, ProcedureProfile
+    from agent_kernel.core.models import Work, Run, new_id
 
     w = Work(id=new_id("work"), title="t", kind="generic-task", metadata={"purpose": "test"})
     r = Run(id=new_id("run"), work_id=w.id, status="running", metadata={"execution_boundary": "x", "result_confirmed": True, "candidate": True})

@@ -1,7 +1,7 @@
 # Canonical ownership — v1
 
 Status: stable
-Owner: `portable-runtime/contracts`
+Owner: `agent-kernel/contracts`
 
 ## Rule
 

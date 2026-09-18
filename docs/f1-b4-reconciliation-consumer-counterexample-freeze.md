@@ -184,7 +184,7 @@ That would reopen the same-id retargeting counterexamples already closed by B.
 
 ## A store capability seam
 
-Application-bound RecoveryObservation is intentionally available through opt-in authority stores rather than the baseline `portable_runtime.stores` surface.
+Application-bound RecoveryObservation is intentionally available through opt-in authority stores rather than the baseline `agent_kernel.stores` surface.
 
 The future consumer must depend on an exact capability/protocol equivalent to:
 

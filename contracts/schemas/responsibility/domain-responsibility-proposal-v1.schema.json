@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "portable-runtime://contracts/responsibility/domain-responsibility-proposal-v1",
+  "$id": "agent-kernel://contracts/responsibility/domain-responsibility-proposal-v1",
   "title": "DomainResponsibilityProposalV1",
   "type": "object",
   "additionalProperties": false,

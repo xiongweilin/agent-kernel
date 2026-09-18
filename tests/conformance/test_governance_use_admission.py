@@ -8,28 +8,28 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.boundary import RealityBoundary
-from portable_runtime.core.capabilities import (
+from agent_kernel.core.boundary import RealityBoundary
+from agent_kernel.core.capabilities import (
     CapabilityRequest,
     CapabilityResult,
     InvocationContext,
     ProviderDescriptor,
     ProviderHealth,
 )
-from portable_runtime.core.models import Event
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.governance.canonical import (
+from agent_kernel.core.models import Event
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.governance.canonical import (
     GOVERNANCE_STATE_SEEDED,
     state_payload,
 )
-from portable_runtime.governance.distinction import (
+from agent_kernel.governance.distinction import (
     DISTINCTION_GOVERNANCE_CONTRACT_VERSION,
     DistinctionState,
     ReviewObligation,
     UseContext,
 )
-from portable_runtime.governance.history_epoch import detect_governance_history_epoch
-from portable_runtime.governance.persistence import (
+from agent_kernel.governance.history_epoch import detect_governance_history_epoch
+from agent_kernel.governance.persistence import (
     GOVERNANCE_APPLICATION_KIND,
     GOVERNANCE_STATE_KIND,
     DistinctionGovernancePersistence,
@@ -38,9 +38,9 @@ from portable_runtime.governance.persistence import (
     PersistedGovernedApplication,
     SQLiteDistinctionGovernancePersistence,
 )
-from portable_runtime.governance.use_admission import GovernanceUseRequirement
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.governance.use_admission import GovernanceUseRequirement
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 BACKENDS = ("memory", "sqlite")
 

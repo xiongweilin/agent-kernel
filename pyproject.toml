@@ -1,5 +1,5 @@
 [project]
-name = "portable-runtime"
+name = "agent-kernel"
 version = "0.1.0"
 description = "Agent Kernel for durable cognitive control, persistent responsibility, and governed Work/Run execution"
 requires-python = ">=3.12"
@@ -23,20 +23,20 @@ dev = [
 ]
 
 [project.scripts]
-runtime = "portable_runtime.__main__:main"
+runtime = "agent_kernel.__main__:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/portable_runtime"]
+packages = ["src/agent_kernel"]
 
 # `contracts/` remains the sole canonical owner in the source repository.
 # The wheel carries an immutable distribution copy so public contract APIs
 # remain usable by downstream consumers installed from a wheel/VCS source.
 [tool.hatch.build.targets.wheel.force-include]
-"contracts" = "portable_runtime/_contracts"
+"contracts" = "agent_kernel/_contracts"
 
 [tool.ruff]
 target-version = "py312"
@@ -47,32 +47,32 @@ select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM", "S"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "S108", "S105", "S106", "E501", "B017", "N817", "B011", "F841", "S311", "S112", "E702", "E701", "E401", "E402", "I001", "F401", "N806", "SIM110", "N814", "N812"]
-"src/portable_runtime/core/knowledge.py" = ["E501", "S110", "SIM102", "W291"]
-"src/portable_runtime/core/registry.py" = ["E501"]
-"src/portable_runtime/core/reality_boundary.py" = ["S110", "SIM105", "E501", "S112", "B904"]
-"src/portable_runtime/core/router.py" = ["S110", "SIM105", "E501", "S112", "F841", "SIM102"]
-"src/portable_runtime/core/runtime.py" = ["S110", "SIM105", "E501"]
-"src/portable_runtime/stores/memory.py" = ["S110", "SIM105", "E501", "SIM102"]
-"src/portable_runtime/stores/sqlite.py" = ["S110", "SIM105", "E501", "UP017", "F401"]
-"src/portable_runtime/core/policies.py" = ["S110", "SIM105", "E501", "B007", "UP037"]
-"src/portable_runtime/workflows/procedure.py" = ["S110", "SIM105", "E501", "B904", "SIM103", "SIM102", "S112", "SIM108", "W291"]
-"src/portable_runtime/records/*.py" = ["E501", "S110", "SIM102", "SIM103", "B904"]
-"src/portable_runtime/core/workflows.py" = ["S112"]
-"src/portable_runtime/workflows/context.py" = ["S110", "SIM105", "E501"]
-"src/portable_runtime/workflows/daily_scan/workflow.py" = ["S110", "SIM105", "E501"]
-"src/portable_runtime/workflows/knowledge_consolidation/workflow.py" = ["S110", "SIM105", "E501", "W291"]
-"src/portable_runtime/workflows/incident_repair/workflow.py" = ["S110", "SIM105"]
-"src/portable_runtime/api/http.py" = ["S110", "SIM105", "E501"]
-"src/portable_runtime/api/cli.py" = ["S110", "E501", "F841", "E501"]
-"src/portable_runtime/stores/bundle.py" = ["E501", "B007", "S112", "S110", "I001"]
-"src/portable_runtime/interfaces/transport.py" = ["S110", "SIM105", "E501", "UP042", "SIM102"]
-"src/portable_runtime/triggers/base.py" = ["UP042"]
-"src/portable_runtime/triggers/webhook/trigger.py" = ["S110", "SIM105"]
-"src/portable_runtime/triggers/alertmanager/trigger.py" = ["S110", "SIM105"]
-"src/portable_runtime/core/boundary.py" = ["S110", "SIM105", "E501", "S112", "SIM102"]
-"src/portable_runtime/core/capability_contract.py" = ["E501", "SIM103", "W292"]
-"src/portable_runtime/core/invocation.py" = ["E501", "SIM102", "S110", "SIM105"]
-"src/portable_runtime/core/independence.py" = ["E501", "S110", "SIM102", "UP037"]
+"src/agent_kernel/core/knowledge.py" = ["E501", "S110", "SIM102", "W291"]
+"src/agent_kernel/core/registry.py" = ["E501"]
+"src/agent_kernel/core/reality_boundary.py" = ["S110", "SIM105", "E501", "S112", "B904"]
+"src/agent_kernel/core/router.py" = ["S110", "SIM105", "E501", "S112", "F841", "SIM102"]
+"src/agent_kernel/core/runtime.py" = ["S110", "SIM105", "E501"]
+"src/agent_kernel/stores/memory.py" = ["S110", "SIM105", "E501", "SIM102"]
+"src/agent_kernel/stores/sqlite.py" = ["S110", "SIM105", "E501", "UP017", "F401"]
+"src/agent_kernel/core/policies.py" = ["S110", "SIM105", "E501", "B007", "UP037"]
+"src/agent_kernel/workflows/procedure.py" = ["S110", "SIM105", "E501", "B904", "SIM103", "SIM102", "S112", "SIM108", "W291"]
+"src/agent_kernel/records/*.py" = ["E501", "S110", "SIM102", "SIM103", "B904"]
+"src/agent_kernel/core/workflows.py" = ["S112"]
+"src/agent_kernel/workflows/context.py" = ["S110", "SIM105", "E501"]
+"src/agent_kernel/workflows/daily_scan/workflow.py" = ["S110", "SIM105", "E501"]
+"src/agent_kernel/workflows/knowledge_consolidation/workflow.py" = ["S110", "SIM105", "E501", "W291"]
+"src/agent_kernel/workflows/incident_repair/workflow.py" = ["S110", "SIM105"]
+"src/agent_kernel/api/http.py" = ["S110", "SIM105", "E501"]
+"src/agent_kernel/api/cli.py" = ["S110", "E501", "F841", "E501"]
+"src/agent_kernel/stores/bundle.py" = ["E501", "B007", "S112", "S110", "I001"]
+"src/agent_kernel/interfaces/transport.py" = ["S110", "SIM105", "E501", "UP042", "SIM102"]
+"src/agent_kernel/triggers/base.py" = ["UP042"]
+"src/agent_kernel/triggers/webhook/trigger.py" = ["S110", "SIM105"]
+"src/agent_kernel/triggers/alertmanager/trigger.py" = ["S110", "SIM105"]
+"src/agent_kernel/core/boundary.py" = ["S110", "SIM105", "E501", "S112", "SIM102"]
+"src/agent_kernel/core/capability_contract.py" = ["E501", "SIM103", "W292"]
+"src/agent_kernel/core/invocation.py" = ["E501", "SIM102", "S110", "SIM105"]
+"src/agent_kernel/core/independence.py" = ["E501", "S110", "SIM102", "UP037"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -92,19 +92,19 @@ exclude = ["tests/"]
 omit = ["tests/*", ".venv/*"]
 
 [[tool.mypy.overrides]]
-module = "portable_runtime.core.independence"
+module = "agent_kernel.core.independence"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = "portable_runtime.core.capability_contract"
+module = "agent_kernel.core.capability_contract"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = "portable_runtime.core.invocation"
+module = "agent_kernel.core.invocation"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = "portable_runtime.core.boundary"
+module = "agent_kernel.core.boundary"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

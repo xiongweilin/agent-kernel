@@ -14,38 +14,38 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.capabilities import (
+from agent_kernel.core.capabilities import (
     CapabilityRequest,
     CapabilityResult,
     InvocationContext,
     ProviderDescriptor,
     ProviderHealth,
 )
-from portable_runtime.core.models import Event
-from portable_runtime.core.provider_semantics import ProviderReplayBinding
-from portable_runtime.core.qualification import InvocationPermit
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.governance.dispatch import (
+from agent_kernel.core.models import Event
+from agent_kernel.core.provider_semantics import ProviderReplayBinding
+from agent_kernel.core.qualification import InvocationPermit
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.governance.dispatch import (
     DISPATCH_COMMIT_EVENT,
     DISPATCH_COMMIT_SCHEMA,
     GovernanceDispatchCommitter,
     dispatch_commit_identity_from_payload,
 )
-from portable_runtime.governance.distinction import DistinctionState, UseContext
-from portable_runtime.governance.persistence import InMemoryDistinctionGovernancePersistence
-from portable_runtime.governance.provider_execution_binding import (
+from agent_kernel.governance.distinction import DistinctionState, UseContext
+from agent_kernel.governance.persistence import InMemoryDistinctionGovernancePersistence
+from agent_kernel.governance.provider_execution_binding import (
     ProviderExecutionBinding,
     classify_historical_target_capture,
     provider_execution_binding_from_dispatch,
     reject_historical_execution_binding_backfill,
 )
-from portable_runtime.governance.use_admission import (
+from agent_kernel.governance.use_admission import (
     GovernanceUseAdmission,
     GovernanceUseRequirement,
 )
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
-from portable_runtime.workflows.invocation_specification import InvocationSpecificationCommitRequest
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
+from agent_kernel.workflows.invocation_specification import InvocationSpecificationCommitRequest
 
 
 class _Provider:

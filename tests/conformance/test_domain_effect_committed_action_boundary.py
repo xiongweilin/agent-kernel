@@ -1,16 +1,16 @@
 from datetime import UTC, datetime, timedelta
 
-from portable_runtime.core.models import Event, Run, Step, StepAttempt
-from portable_runtime.governance.dispatch import DISPATCH_COMMIT_EVENT
-from portable_runtime.records.authorization import AuthorizationGrant, AuthorizationUse
-from portable_runtime.responsibility.domain_effect_activation import (
+from agent_kernel.core.models import Event, Run, Step, StepAttempt
+from agent_kernel.governance.dispatch import DISPATCH_COMMIT_EVENT
+from agent_kernel.records.authorization import AuthorizationGrant, AuthorizationUse
+from agent_kernel.responsibility.domain_effect_activation import (
     DOMAIN_EFFECT_ACTIVATION_EVENT,
     DOMAIN_EFFECT_ACTIVATION_SCHEMA,
     DomainEffectRunActivation,
 )
-from portable_runtime.responsibility.domain_effect_request import DOMAIN_EFFECT_REQUEST_EVENT
-from portable_runtime.responsibility.domain_effect_run import DOMAIN_EFFECT_WORKFLOW_ID
-from portable_runtime.stores.memory import InMemoryStateStore
+from agent_kernel.responsibility.domain_effect_request import DOMAIN_EFFECT_REQUEST_EVENT
+from agent_kernel.responsibility.domain_effect_run import DOMAIN_EFFECT_WORKFLOW_ID
+from agent_kernel.stores.memory import InMemoryStateStore
 
 NOW = datetime(2026, 9, 9, 12, 0, tzinfo=UTC)
 

@@ -5,35 +5,35 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
-import portable_runtime.core.boundary as boundary_module
-from portable_runtime.core.boundary import RealityBoundary
-from portable_runtime.core.capabilities import (
+import agent_kernel.core.boundary as boundary_module
+from agent_kernel.core.boundary import RealityBoundary
+from agent_kernel.core.capabilities import (
     CapabilityRequest,
     CapabilityResult,
     InvocationContext,
     ProviderDescriptor,
     ProviderHealth,
 )
-from portable_runtime.core.models import Event, Run, Step, StepAttempt, Work
-from portable_runtime.core.qualification import InvocationPermit
-from portable_runtime.core.registry import ProviderRegistry
-from portable_runtime.core.runtime import Runtime
-from portable_runtime.governance.canonical import GOVERNANCE_REVIEW_OPENED
-from portable_runtime.governance.dispatch import (
+from agent_kernel.core.models import Event, Run, Step, StepAttempt, Work
+from agent_kernel.core.qualification import InvocationPermit
+from agent_kernel.core.registry import ProviderRegistry
+from agent_kernel.core.runtime import Runtime
+from agent_kernel.governance.canonical import GOVERNANCE_REVIEW_OPENED
+from agent_kernel.governance.dispatch import (
     DISPATCH_COMMIT_EVENT,
     GovernanceDispatchCommitter,
 )
-from portable_runtime.governance.distinction import DistinctionState, ReviewObligation, UseContext
-from portable_runtime.governance.persistence import (
+from agent_kernel.governance.distinction import DistinctionState, ReviewObligation, UseContext
+from agent_kernel.governance.persistence import (
     InMemoryDistinctionGovernancePersistence,
     SQLiteDistinctionGovernancePersistence,
 )
-from portable_runtime.governance.use_admission import (
+from agent_kernel.governance.use_admission import (
     GovernanceUseAdmission,
     GovernanceUseRequirement,
 )
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
 
 
 def _state() -> DistinctionState:

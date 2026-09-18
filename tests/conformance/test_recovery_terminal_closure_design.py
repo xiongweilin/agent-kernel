@@ -11,19 +11,19 @@ from typing import Any
 
 import pytest
 
-from portable_runtime.core.boundary import RealityBoundary
-from portable_runtime.core.capabilities import CapabilityResult
-from portable_runtime.core.models import Action, Run, Step, StepAttempt, Work
-from portable_runtime.governance.distinction import DistinctionState, ReviewObligation
-from portable_runtime.governance.persistence import (
+from agent_kernel.core.boundary import RealityBoundary
+from agent_kernel.core.capabilities import CapabilityResult
+from agent_kernel.core.models import Action, Run, Step, StepAttempt, Work
+from agent_kernel.governance.distinction import DistinctionState, ReviewObligation
+from agent_kernel.governance.persistence import (
     InMemoryDistinctionGovernancePersistence,
     SQLiteDistinctionGovernancePersistence,
 )
-from portable_runtime.records.models import EvidenceArtifact, OutcomeRecord
-from portable_runtime.records.verified_outcome import VerifiedOutcomeAuthority
-from portable_runtime.stores.memory import InMemoryStateStore
-from portable_runtime.stores.sqlite import SQLiteStateStore
-from portable_runtime.workflows.completion import CompletionAuthority
+from agent_kernel.records.models import EvidenceArtifact, OutcomeRecord
+from agent_kernel.records.verified_outcome import VerifiedOutcomeAuthority
+from agent_kernel.stores.memory import InMemoryStateStore
+from agent_kernel.stores.sqlite import SQLiteStateStore
+from agent_kernel.workflows.completion import CompletionAuthority
 
 _SCOPE = {"resource": "repo/app", "operation": "effect"}
 _VERSIONS = ("subject:v1",)
@@ -272,10 +272,10 @@ async def test_b4_004_reconciliation_result_is_not_objective_or_terminal(status:
 
 def test_b4_005_authority_modules_do_not_silently_cross_own_responsibilities() -> None:
     completion_source = inspect.getsource(
-        importlib.import_module("portable_runtime.workflows.completion")
+        importlib.import_module("agent_kernel.workflows.completion")
     )
-    runtime_source = inspect.getsource(importlib.import_module("portable_runtime.core.runtime"))
-    boundary_source = inspect.getsource(importlib.import_module("portable_runtime.core.boundary"))
+    runtime_source = inspect.getsource(importlib.import_module("agent_kernel.core.runtime"))
+    boundary_source = inspect.getsource(importlib.import_module("agent_kernel.core.boundary"))
 
     assert "ReviewObligation" not in completion_source
     assert "DistinctionGovernancePersistence" not in completion_source
@@ -355,7 +355,7 @@ def test_b4_007_revalidation_proof_does_not_discharge_governance_q(
 
 @_xfail("B4-A01: explicit terminal-governance applicability is not implemented")
 def test_b4_a01_explicit_terminal_governance_requirement_fails_closed_on_unresolved_q() -> None:
-    module = importlib.import_module("portable_runtime.workflows.terminal_governance")
+    module = importlib.import_module("agent_kernel.workflows.terminal_governance")
     requirement = module.TerminalGovernanceRequirement(
         work_id="work:b4",
         run_id="run:b4",
@@ -374,7 +374,7 @@ def test_b4_a01_explicit_terminal_governance_requirement_fails_closed_on_unresol
 
 def test_b4_a02_reconciliation_must_be_durable_before_recovery_judgment() -> None:
     module = importlib.import_module(
-        "portable_runtime.workflows.recovery_observation"
+        "agent_kernel.workflows.recovery_observation"
     )
     assert hasattr(module, "RecoveryObservation")
     assert hasattr(module, "RecoveryObservationCommitRequest")
@@ -384,7 +384,7 @@ def test_b4_a02_reconciliation_must_be_durable_before_recovery_judgment() -> Non
 
 @_xfail("B4-A03: recovery disposition/application authority separation is not implemented")
 def test_b4_a03_recovery_disposition_is_not_recovery_application() -> None:
-    module = importlib.import_module("portable_runtime.workflows.recovery_closure")
+    module = importlib.import_module("agent_kernel.workflows.recovery_closure")
     disposition = module.RecoveryDisposition(
         observation_ref="recovery-observation:b4",
         action="retry-same-idempotency-identity",

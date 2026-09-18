@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from portable_runtime.controller import (
+from agent_kernel.controller import (
     CognitiveController,
     ControllerDecision,
     ControllerDecisionKind,
@@ -10,12 +10,12 @@ from portable_runtime.controller import (
     controller_capability_result,
     latest_controller_decision,
 )
-from portable_runtime.controller.service import (
+from agent_kernel.controller.service import (
     CONTROLLER_DECISION_EVENT,
     CONTROLLER_RESULT_EVENT,
 )
-from portable_runtime.core.models import Event
-from portable_runtime.core.runtime import Runtime
+from agent_kernel.core.models import Event
+from agent_kernel.core.runtime import Runtime
 
 
 def test_latest_controller_decision_uses_event_chronology_not_store_order() -> None:

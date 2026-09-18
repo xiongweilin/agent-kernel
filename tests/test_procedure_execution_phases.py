@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from portable_runtime.core.models import Run, Work
-from portable_runtime.workflows.procedure import ProcedureProfile, check_procedure
-from portable_runtime.workflows.procedure_phase import (
+from agent_kernel.core.models import Run, Work
+from agent_kernel.workflows.procedure import ProcedureProfile, check_procedure
+from agent_kernel.workflows.procedure_phase import (
     ProcedurePhase,
     check_post_action_verification,
     check_pre_action_readiness,
