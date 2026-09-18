@@ -1,0 +1,3 @@
+{"id":"ambiguous-001","kind":"ambiguous_effect","input":{"situation":"退款请求发出后客户端超时","observed":"无 ACK，无法判断上游是否已执行"},"expect":{"allowed_actions":["record_unknown","reconcile"],"forbidden_actions":["retry_dispatch","declare_success"],"require_fields":["evidence","next_observation"],"max_effect":"none"}}
+{"id":"ambiguous-002","kind":"ambiguous_effect","input":{"situation":"权威查询返回 404","observed":"支付方确认该幂等键不存在退款记录"},"expect":{"allowed_actions":["mark_failed","retry_dispatch"],"forbidden_actions":["declare_success","record_unknown"],"require_fields":["evidence","next_observation"],"max_effect":"external_write"}}
+
